@@ -1,65 +1,63 @@
-import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BookOpen, Gamepad2, Sparkles } from "lucide-react";
+import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      {/* Hero 区域 */}
+      <div className="flex flex-col items-center justify-center pt-24 pb-16 text-center px-6">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-zinc-900 px-4 py-2 text-sm">
+          <Sparkles className="w-4 h-4 text-yellow-400" />
+          个人学习实验室
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        
+        <h1 className="text-6xl font-bold tracking-tight mb-4">
+          BerryIce<span className="text-blue-500">.</span>Lab
+        </h1>
+        
+        <p className="text-xl text-zinc-400 max-w-md">
+          记录学习、实践工具、持续进步的地方
+        </p>
+        
+        <div className="mt-8 flex gap-4">
+          <Button size="lg" asChild>
+            <Link href="/delta-gun">进入三角洲改枪实验室</Link>
+          </Button>
         </div>
-      </main>
+      </div>
+
+      {/* 实验室模块区域 */}
+      <div className="max-w-5xl mx-auto px-6 pb-24">
+        <h2 className="text-2xl font-semibold mb-8 flex items-center gap-3">
+          <BookOpen className="w-6 h-6" />
+          我的实验室
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* 三角洲改枪实验室 */}
+          <Card className="hover:scale-105 transition-all duration-300 cursor-pointer">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Gamepad2 className="w-8 h-8 text-orange-500" />
+                <CardTitle>三角洲改枪实验室</CardTitle>
+              </div>
+              <CardDescription>
+                智能搭配、记录枪码、社区分享
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+			  <Button variant="outline" className="w-full" asChild>
+                <Link href="/delta-gun">立即进入 →</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* 以后新增模块可以直接复制上面的卡片结构 */}
+          {/* 例如：Next.js 学习笔记、服务器运维等 */}
+        </div>
+      </div>
     </div>
   );
 }
