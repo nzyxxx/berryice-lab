@@ -23,7 +23,7 @@ export default function HomePage() {
         
         <div className="mt-8 flex gap-4">
           <Button size="lg" asChild>
-            <Link href="/delta-gun">进入三角洲改枪实验室</Link>
+            <Link href="/delta-gun">进入三角洲改枪实验室2</Link>
           </Button>
         </div>
       </div>
