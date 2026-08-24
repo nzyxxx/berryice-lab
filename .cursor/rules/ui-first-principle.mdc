@@ -1,0 +1,29 @@
+---
+description: UI 第一准则 — React Bits / Aceternity / Uiverse / OriginKit / Aura
+alwaysApply: true
+---
+
+# UI 第一准则
+
+做任何页面或组件前，必须优先使用这五套技术，而不是从零手写装饰动效：
+
+1. **React Bits** — 文字动画、点击火花、聚光卡片、背景
+2. **Aceternity UI** — Spotlight / Beams / Hover Border 等 Motion 组件
+3. **Uiverse.io** — 玻璃拟态按钮、微交互 CSS
+4. **OriginKit** — 字重悬停、打乱文字等交互组件
+5. **Aura.build** — 玻璃、光晕、层次深度的视觉语言
+
+## 用法
+
+- 能复制官方源码或走 CLI 就复制，禁止凭记忆发明 API
+- 颜色仍走 `lab-*` token；动效来自上述五套
+- 同一屏只组合 2–3 个效果，禁止五套同时堆满
+- 触控目标 ≥ 44px；尊重 `prefers-reduced-motion`
+
+```tsx
+// ❌ 自己写一套模糊入场
+<h1 className="animate-pulse">{name}</h1>
+
+// ✅ 用 React Bits
+<BlurText text={name} />
+```

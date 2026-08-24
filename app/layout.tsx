@@ -1,5 +1,8 @@
+import { ThemeProvider } from "@/components/lab/theme-provider";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "BerryIce Lab | 个人学习实验室",
-  description: "记录学习、实践工具、持续进步 — 基于 Linear 设计体系的深色产品界面",
+  description: "BerryIce 的个人入口：三角洲改枪实验室、社区枪码与学习记录。",
 };
 
 export default function RootLayout({
@@ -23,8 +26,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" className={`dark ${geistSans.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen font-sans">{children}</body>
+    <html
+      lang="zh-CN"
+      className={`dark ${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-screen font-sans">
+        <Script id="berryice-theme" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

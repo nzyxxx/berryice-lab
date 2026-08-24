@@ -1,6 +1,5 @@
 import { GunsLibrary } from "@/components/delta-gun/guns-library";
-import { Eyebrow } from "@/components/lab/eyebrow";
-import { MotionReveal } from "@/components/lab/motion-reveal";
+import { SectionZone } from "@/components/gallery/section-zone";
 import { PageContainer } from "@/components/lab/page-container";
 import { getGuns } from "@/lib/data/guns";
 
@@ -9,14 +8,14 @@ export default async function GunsPage() {
 
   return (
     <PageContainer>
-      <MotionReveal>
-        <Eyebrow>枪械库</Eyebrow>
-        <h1 className="text-display-section mt-3 text-lab-ink">枪械库</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-lab-ink-subtle">
-          收录三角洲行动 {guns.length} 把武器的基础数值与官方配图。点击卡片查看详细属性，或进入改枪台搭配配件与保存方案。
-        </p>
-      </MotionReveal>
-      <GunsLibrary guns={guns} />
+      <SectionZone
+        index="01"
+        label="Armory"
+        title="枪械库"
+        description={`收录三角洲行动 ${guns.length} 把武器。点卡片看属性，进改枪台配配件。`}
+      >
+        <GunsLibrary guns={guns} />
+      </SectionZone>
     </PageContainer>
   );
 }

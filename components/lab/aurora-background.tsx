@@ -1,3 +1,4 @@
+import { BackgroundBeams } from "@/components/aceternity/background-beams";
 import { cn } from "@/lib/utils";
 
 type AuroraVariant = "hub" | "delta";
@@ -11,13 +12,16 @@ export function AuroraBackground({ variant = "hub" }: { variant?: AuroraVariant 
       {/* 极光层 — Codex / Vercel 风流动渐变 */}
       <div
         className={cn(
-          "absolute -inset-[40%] opacity-70 mix-blend-screen animate-aurora-drift",
+          "absolute -inset-[40%] animate-aurora-drift opacity-30 mix-blend-multiply dark:opacity-70 dark:mix-blend-screen",
           variant === "hub" ? "aurora-hub" : "aurora-delta"
         )}
       />
 
-      {/* 细网格 */}
-      <div className="absolute inset-0 bg-grid-fade opacity-[0.45] animate-grid-pan" />
+      {variant === "hub" ? (
+        <BackgroundBeams className="opacity-70 dark:opacity-90" />
+      ) : (
+        <div className="absolute inset-0 bg-grid-fade opacity-[0.45] animate-grid-pan" />
+      )}
 
       {/* 顶部聚光 */}
       <div className="absolute inset-x-0 top-0 h-[55vh] bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(56,189,248,0.18),transparent)]" />

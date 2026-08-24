@@ -1,5 +1,6 @@
 'use client';
 
+import { SectionZone } from "@/components/gallery/section-zone";
 import { MotionReveal, MotionStagger, MotionStaggerItem } from "@/components/lab/motion-reveal";
 import { PageContainer } from "@/components/lab/page-container";
 import { Badge } from "@/components/ui/badge";
@@ -14,16 +15,20 @@ export default function MyLoadoutsPage() {
 
   return (
     <PageContainer>
-      <MotionReveal>
-        <h1 className="text-display-section text-lab-ink">我的枪码</h1>
-        <p className="mt-3 max-w-lg text-base text-lab-ink-subtle">
-          在改枪台保存的配置会出现在这里。社区热门方案请前往
-          <Link href="/delta-gun/community" className="mx-1 text-lab-primary hover:underline">
-            社区改枪码
-          </Link>
-          浏览与导入。
-        </p>
-      </MotionReveal>
+      <SectionZone
+        index="01"
+        label="Archive"
+        title="我的枪码"
+        description="改枪台保存的配置出现在这里。社区方案去社区改枪码导入。"
+      >
+        <MotionReveal>
+          <p className="text-sm text-lab-ink-subtle">
+            <Link href="/delta-gun/community" className="text-lab-primary hover:underline">
+              去社区改枪码
+            </Link>
+          </p>
+        </MotionReveal>
+      </SectionZone>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button asChild className="rounded-md bg-lab-primary text-lab-canvas hover:bg-lab-primary-hover">

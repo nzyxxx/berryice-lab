@@ -10,7 +10,7 @@ export function DeltaSubNav() {
   const pathname = usePathname();
 
   return (
-    <div className="sticky top-14 z-40 border-b border-lab-hairline bg-lab-canvas/90 backdrop-blur-xl">
+    <div className="sticky top-14 z-40 border-b border-white/10 bg-lab-canvas/40 backdrop-blur-2xl">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <nav
           className="flex gap-1 overflow-x-auto py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

@@ -1,6 +1,8 @@
 "use client";
 
+import { ThemeToggle } from "@/components/lab/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { moduleLinks } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -9,16 +11,19 @@ import { usePathname } from "next/navigation";
 export function SiteHeader({
   backHref,
   backLabel = "返回",
+  minimal = false,
 }: {
   backHref?: string;
   backLabel?: string;
+  minimal?: boolean;
 }) {
   const pathname = usePathname();
   const inDelta = pathname.startsWith("/delta-gun");
+  const inModule = moduleLinks.some((m) => m.href !== "/delta-gun" && pathname.startsWith(m.href));
 
   return (
-    <header className="sticky top-0 z-50 border-b border-lab-hairline/80 bg-lab-canvas/70 backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-lab-canvas/45 backdrop-blur-2xl">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-4">
           {backHref ? (
             <Button
@@ -34,7 +39,7 @@ export function SiteHeader({
             </Button>
           ) : (
             <Link href="/" className="flex items-center gap-2.5">
-              <span className="flex size-7 items-center justify-center rounded-md bg-lab-primary/15 text-xs font-bold text-lab-primary shadow-[0_0_20px_-4px_rgba(56,189,248,0.45)]">
+              <span className="flex size-7 items-center justify-center rounded-full border border-white/15 bg-lab-primary/15 text-[11px] font-bold text-lab-primary">
                 B
               </span>
               <span className="text-sm font-medium tracking-tight text-lab-ink">
@@ -44,35 +49,49 @@ export function SiteHeader({
           )}
         </div>
 
-        <nav className="hidden items-center gap-6 text-sm text-lab-ink-subtle sm:flex">
-          <Link
-            href="/"
-            className={cn(
-              "transition-colors hover:text-lab-ink",
-              pathname === "/" && "text-lab-primary"
-            )}
-          >
-            首页
-          </Link>
-          <Link
-            href="/delta-gun"
-            className={cn(
-              "transition-colors hover:text-lab-ink",
-              inDelta && "text-lab-primary"
-            )}
-          >
-            改枪实验室
-          </Link>
-          <Link
-            href="/delta-gun/community"
-            className={cn(
-              "transition-colors hover:text-lab-ink",
-              pathname.startsWith("/delta-gun/community") && "text-lab-primary"
-            )}
-          >
-            社区改枪码
-          </Link>
-        </nav>
+        <div className="flex items-center gap-3">
+          <span className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] tracking-[0.12em] text-lab-ink-subtle uppercase sm:inline-flex">
+            <span className="size-1.5 rounded-full bg-lab-primary shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+            夜雨
+          </span>
+          {!minimal && (
+            <nav className="hidden items-center gap-5 text-sm text-lab-ink-subtle md:flex">
+              <Link
+                href="/"
+                className={cn(
+                  "transition-colors hover:text-lab-ink",
+                  pathname === "/" && "text-lab-primary"
+                )}
+              >
+                门户
+              </Link>
+              <Link
+                href="/delta-gun"
+                className={cn(
+                  "transition-colors hover:text-lab-ink",
+                  (inDelta || pathname === "/delta-gun") && "text-lab-primary"
+                )}
+              >
+                三角洲
+              </Link>
+              {moduleLinks
+                .filter((m) => m.id !== "delta")
+                .map((m) => (
+                  <Link
+                    key={m.id}
+                    href={m.href}
+                    className={cn(
+                      "transition-colors hover:text-lab-ink",
+                      pathname.startsWith(m.href) && "text-lab-primary"
+                    )}
+                  >
+                    {m.title}
+                  </Link>
+                ))}
+            </nav>
+          )}
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

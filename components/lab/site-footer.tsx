@@ -8,7 +8,7 @@ export function SiteFooter({ className }: { className?: string }) {
   return (
     <footer
       className={cn(
-        "relative z-10 border-t border-lab-hairline bg-lab-canvas/90 backdrop-blur-md",
+        "relative z-10 border-t border-white/10 bg-lab-canvas/40 backdrop-blur-xl",
         className
       )}
     >

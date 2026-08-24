@@ -1,4 +1,5 @@
-import { AuroraBackground } from "@/components/lab/aurora-background";
+import { ClickPulse } from "@/components/atmosphere/click-pulse";
+import { RainField } from "@/components/atmosphere/rain-field";
 import { SiteFooter } from "@/components/lab/site-footer";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -23,7 +24,8 @@ export function SiteShell({
         className
       )}
     >
-      <AuroraBackground variant={variant} />
+      <RainField density={variant === "delta" ? "low" : "normal"} />
+      <ClickPulse />
       <div className="relative z-10 flex flex-1 flex-col">{children}</div>
       {!hideFooter && <SiteFooter />}
     </div>
