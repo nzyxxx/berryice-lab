@@ -19,6 +19,9 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        /** 卡片内次要操作：不用主色实心，低饱和描边 */
+        soft:
+          "border border-lab-secondary-border bg-lab-secondary text-lab-secondary-fg shadow-none hover:border-lab-accent-glow/35 hover:bg-lab-secondary-hover hover:text-lab-ink",
       },
       size: {
         default:

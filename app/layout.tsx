@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+});
 
 export const metadata: Metadata = {
-  title: "BerryIce实验室 | BerryIce Lab",
-  description: "个人学习实验室 - 持续学习、记录、实践的地方",
+  title: "BerryIce Lab | 个人学习实验室",
+  description: "记录学习、实践工具、持续进步 — 基于 Linear 设计体系的深色产品界面",
 };
 
 export default function RootLayout({
@@ -15,10 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
-      <body className={inter.className}>
-        {children}
-      </body>
+    <html lang="zh-CN" className={`dark ${geistSans.variable} ${geistMono.variable}`}>
+      <body className="min-h-screen font-sans">{children}</body>
     </html>
   );
 }

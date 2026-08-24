@@ -1,79 +1,89 @@
+import { CommunityCodesPreview } from "@/components/delta-gun/community-codes-preview";
+import { Eyebrow } from "@/components/lab/eyebrow";
+import {
+  MotionGlowOrb,
+  MotionHoverLift,
+  MotionReveal,
+  MotionStagger,
+  MotionStaggerItem,
+} from "@/components/lab/motion-reveal";
+import { ModuleCard } from "@/components/lab/module-card";
+import { PageContainer } from "@/components/lab/page-container";
+import { DELTA_NAV } from "@/lib/delta-gun/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function DeltaGunLabPage() {
+  const quickLinks = DELTA_NAV.filter((item) => item.href !== "/delta-gun");
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* 返回首页按钮 */}
-      <div className="fixed top-6 left-6 z-50">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          asChild
-          className="flex items-center gap-2 text-zinc-400 hover:text-white"
-        >
-          <Link href="/">
-            <ArrowLeft className="w-4 h-4" />
-            返回首页
-          </Link>
-        </Button>
-      </div>
+    <PageContainer>
+      <section className="relative mb-16 overflow-hidden">
+        <MotionGlowOrb className="right-0 top-0 size-72 bg-lab-primary/20" />
+        <MotionGlowOrb className="-left-20 top-32 size-56 bg-lab-accent-glow/15" />
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-3xl">
-            🔫
+        <MotionReveal>
+          <Eyebrow>三角洲改枪</Eyebrow>
+          <h1 className="text-display-hero mt-4 max-w-3xl text-lab-ink">
+            改枪<span className="text-gradient-hero">实验室</span>
+          </h1>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-lab-ink-subtle">
+            挑枪、配配件、抄社区枪码、保存自己的方案。
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button
+              asChild
+              className="rounded-md bg-lab-primary text-lab-canvas hover:bg-lab-primary-hover btn-glow"
+            >
+              <Link href="/delta-gun/community">
+                社区改枪码
+                <ArrowRight className="ml-2 size-4" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-md border-lab-hairline bg-lab-surface-1"
+            >
+              <Link href="/delta-gun/guns">枪械库</Link>
+            </Button>
           </div>
-          <div>
-            <h1 className="text-5xl font-bold tracking-tight">三角洲改枪实验室</h1>
-            <p className="text-zinc-400 text-xl mt-1">智能搭配 · 枪码记录 · 一键分享</p>
+        </MotionReveal>
+      </section>
+
+      <MotionStagger className="mb-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {quickLinks.map((item) => (
+          <MotionStaggerItem key={item.href}>
+            <MotionHoverLift>
+              <ModuleCard
+                href={item.href}
+                title={item.label}
+                description={item.description}
+                icon={<item.icon className="size-5 text-lab-primary" />}
+              />
+            </MotionHoverLift>
+          </MotionStaggerItem>
+        ))}
+      </MotionStagger>
+
+      <section className="border-t border-lab-hairline pt-12">
+        <MotionReveal>
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-lab-ink">热门改枪码</h2>
+              <p className="mt-1 text-sm text-lab-ink-subtle">大战场 / 烽火地带分区展示，更多去社区页</p>
+            </div>
+            <Link
+              href="/delta-gun/community"
+              className="shrink-0 text-sm text-lab-primary hover:underline"
+            >
+              查看全部 →
+            </Link>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* 枪械库 */}
-          <Link href="/delta-gun/guns">
-            <Card className="bg-zinc-900 border-zinc-700 hover:border-orange-500 transition-all hover:scale-105 cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-zinc-100">
-                  📋 枪械库
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-zinc-400">浏览所有可改装枪械</p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          {/* 智能改枪 */}
-          <Card className="bg-zinc-900 border-zinc-700 hover:border-orange-500 transition-all hover:scale-105 cursor-pointer opacity-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-zinc-100">
-                🛠️ 智能改枪
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-zinc-400">根据地图/模式推荐最优配件（开发中）</p>
-            </CardContent>
-          </Card>
-
-          {/* 我的枪码 */}
-          <Link href="/delta-gun/my-loadouts">
-            <Card className="bg-zinc-900 border-zinc-700 hover:border-orange-500 transition-all hover:scale-105 cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-zinc-100">
-                  💾 我的枪码
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-zinc-400">保存、导入、分享改枪码</p>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-      </div>
-    </div>
+        </MotionReveal>
+        <CommunityCodesPreview limit={6} />
+      </section>
+    </PageContainer>
   );
 }

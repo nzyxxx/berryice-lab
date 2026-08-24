@@ -1,11 +1,13 @@
 import type mysql from "mysql2/promise";
+import { gameModeDbValues, normalizeGameMode } from "@/lib/delta-gun/game-modes";
+import type { GameMode } from "@/lib/delta-gun/game-modes";
 import { getDialect, getMySqlPool, getPgPool } from "@/lib/db";
 import type { GunCodeRecord, StoredGunCode, UpsertSummary } from "@/lib/types/gunCode";
 
 function mapRow(row: Record<string, unknown>): StoredGunCode {
   return {
     id: Number(row.id),
-    game: String(row.game ?? "三角洲行动"),
+    game: normalizeGameMode(String(row.game ?? "大战场")),
     weapon: String(row.weapon ?? ""),
     fullCode: String(row.full_code ?? ""),
     description: String(row.description ?? ""),
@@ -22,7 +24,7 @@ export async function ensureGunCodesTable(): Promise<void> {
     await getPgPool().query(`
       CREATE TABLE IF NOT EXISTS gun_codes (
         id BIGSERIAL PRIMARY KEY,
-        game TEXT NOT NULL DEFAULT '三角洲行动',
+        game TEXT NOT NULL DEFAULT '大战场',
         weapon TEXT NOT NULL,
         full_code TEXT NOT NULL,
         description TEXT DEFAULT '',
@@ -40,7 +42,7 @@ export async function ensureGunCodesTable(): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS gun_codes (
       id BIGINT AUTO_INCREMENT PRIMARY KEY,
-      game VARCHAR(50) NOT NULL DEFAULT '三角洲行动',
+      game VARCHAR(50) NOT NULL DEFAULT '大战场',
       weapon VARCHAR(255) NOT NULL,
       full_code VARCHAR(512) NOT NULL,
       description TEXT,
@@ -54,7 +56,7 @@ export async function ensureGunCodesTable(): Promise<void> {
   // 如果表已存在但没有 game 字段，自动补充
   await pool.query(`
     ALTER TABLE gun_codes
-    ADD COLUMN IF NOT EXISTS game VARCHAR(50) NOT NULL DEFAULT '三角洲行动'
+    ADD COLUMN IF NOT EXISTS game VARCHAR(50) NOT NULL DEFAULT '大战场'
   `).catch(() => { /* 字段已存在则忽略 */ });
 }
 
@@ -118,12 +120,15 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
 
 export async function listGunCodes(limit = 200, game?: string): Promise<StoredGunCode[]> {
   const dialect = getDialect();
+  const mode = game ? normalizeGameMode(game) : undefined;
+  const dbGames = mode ? gameModeDbValues(mode as GameMode) : null;
+
   if (dialect === "postgres") {
-    const result = game
+    const result = dbGames
       ? await getPgPool().query(
           `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, collected_at
-           FROM gun_codes WHERE game = $1 ORDER BY copy_count DESC, collected_at DESC LIMIT $2`,
-          [game, limit]
+           FROM gun_codes WHERE game = ANY($1) ORDER BY copy_count DESC, collected_at DESC LIMIT $2`,
+          [dbGames, limit]
         )
       : await getPgPool().query(
           `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, collected_at
@@ -134,11 +139,11 @@ export async function listGunCodes(limit = 200, game?: string): Promise<StoredGu
   }
 
   const pool = getMySqlPool();
-  const [rows] = game
+  const [rows] = dbGames
     ? await pool.query<mysql.RowDataPacket[]>(
         `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, collected_at
-         FROM gun_codes WHERE game = ? ORDER BY copy_count DESC, collected_at DESC LIMIT ?`,
-        [game, limit]
+         FROM gun_codes WHERE game IN (?, ?) ORDER BY copy_count DESC, collected_at DESC LIMIT ?`,
+        [...dbGames, limit]
       )
     : await pool.query<mysql.RowDataPacket[]>(
         `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, collected_at

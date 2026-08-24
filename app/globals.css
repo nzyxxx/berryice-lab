@@ -5,6 +5,30 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* BerryIce Lab — Aurora 主题（青紫双主色，参考 Codex / Vercel 深色产品站） */
+  --color-lab-canvas: #020204;
+  --color-lab-surface-1: #0a0b0f;
+  --color-lab-surface-2: #12141a;
+  --color-lab-surface-3: #1a1d26;
+  --color-lab-hairline: #252830;
+  --color-lab-hairline-strong: #363b47;
+  --color-lab-ink: #f4f6fb;
+  --color-lab-ink-muted: #c8d0e0;
+  --color-lab-ink-subtle: #8b93a7;
+  --color-lab-ink-tertiary: #5c6370;
+  --color-lab-primary: #38bdf8;
+  --color-lab-primary-hover: #7dd3fc;
+  --color-lab-accent-glow: #a78bfa;
+  --color-lab-secondary: #1a1d26;
+  --color-lab-secondary-hover: #22262f;
+  --color-lab-secondary-border: #3d4352;
+  --color-lab-secondary-fg: #b8c0d0;
+  --color-lab-accent-tactical: #f97316;
+  --color-lab-accent-tactical-hover: #fb923c;
+  --color-lab-accent-beacon: #38bdf8;
+  --color-lab-success: #27a644;
+  --color-lab-error: #ef4444;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -122,9 +146,157 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-lab-canvas text-lab-ink antialiased;
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .text-display-hero {
+    @apply text-[2.75rem] font-semibold tracking-[-0.03em] text-lab-ink md:text-[3.75rem] md:leading-[1.05];
+  }
+  .text-display-section {
+    @apply text-[2rem] font-semibold tracking-[-0.025em] text-lab-ink md:text-[2.5rem] md:leading-[1.12];
+  }
+
+  .text-gradient-hero {
+    background: linear-gradient(
+      115deg,
+      #f4f6fb 0%,
+      #38bdf8 28%,
+      #a78bfa 52%,
+      #22d3ee 78%,
+      #f4f6fb 100%
+    );
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shine-sweep 7s ease-in-out infinite;
+  }
+
+  .bg-grid-fade {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black, transparent);
+  }
+
+  .aurora-hub {
+    background: conic-gradient(
+      from 160deg at 50% 45%,
+      rgba(56, 189, 248, 0.45) 0deg,
+      rgba(167, 139, 250, 0.35) 110deg,
+      rgba(34, 211, 238, 0.25) 220deg,
+      rgba(99, 102, 241, 0.3) 300deg,
+      rgba(56, 189, 248, 0.45) 360deg
+    );
+  }
+
+  .aurora-delta {
+    background: conic-gradient(
+      from 200deg at 50% 40%,
+      rgba(249, 115, 22, 0.35) 0deg,
+      rgba(56, 189, 248, 0.2) 140deg,
+      rgba(167, 139, 250, 0.25) 280deg,
+      rgba(249, 115, 22, 0.35) 360deg
+    );
+  }
+
+  .btn-glow {
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.35),
+      0 0 24px -4px rgba(56, 189, 248, 0.45);
+  }
+
+  .card-glow-hover {
+    @apply transition-[box-shadow,border-color] duration-300;
+  }
+  .card-glow-hover:hover {
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.25),
+      0 12px 40px -16px rgba(56, 189, 248, 0.35);
+  }
+}
+
+@keyframes aurora-drift {
+  0%,
+  100% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(3%, -2%) rotate(120deg) scale(1.06);
+  }
+  66% {
+    transform: translate(-2%, 2%) rotate(240deg) scale(0.96);
+  }
+}
+
+@keyframes grid-pan {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 64px 64px;
+  }
+}
+
+@keyframes shine-sweep {
+  0%,
+  100% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.animate-aurora-drift {
+  animation: aurora-drift 18s ease-in-out infinite;
+}
+
+.animate-grid-pan {
+  animation: grid-pan 24s linear infinite;
+}
+
+.animate-float-y {
+  animation: float-y 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

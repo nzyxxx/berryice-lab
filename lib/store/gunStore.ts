@@ -10,9 +10,16 @@ interface Loadout {
   createdAt: string;
 }
 
+export interface PendingImport {
+  fullCode: string;
+  weapon: string;
+  description?: string;
+}
+
 interface GunStore {
   selectedAttachments: Attachment[];
   savedLoadouts: Loadout[];
+  pendingImport: PendingImport | null;
 
   addAttachment: (attachment: Attachment) => void;
   removeAttachment: (id: string) => void;
@@ -20,6 +27,8 @@ interface GunStore {
 
   saveLoadout: (name: string, gunName: string) => void;
   deleteLoadout: (id: string) => void;
+
+  setPendingImport: (payload: PendingImport | null) => void;
 }
 
 export const useGunStore = create<GunStore>()(
@@ -27,6 +36,7 @@ export const useGunStore = create<GunStore>()(
     (set) => ({
       selectedAttachments: [],
       savedLoadouts: [],
+      pendingImport: null,
 
       addAttachment: (attachment) =>
         set((state) => ({
@@ -58,6 +68,8 @@ export const useGunStore = create<GunStore>()(
         set((state) => ({
           savedLoadouts: state.savedLoadouts.filter((l) => l.id !== id),
         })),
+
+      setPendingImport: (payload) => set({ pendingImport: payload }),
     }),
     { name: "berryice-delta-gun-store" }
   )
