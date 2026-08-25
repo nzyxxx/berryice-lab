@@ -19,7 +19,7 @@ export const profileConfig = {
   tags: ["程序员", "游戏玩家", "创作者"],
   bio:
     process.env.NEXT_PUBLIC_BIO ??
-    "写代码、改枪、听音乐。三角洲改枪实验室是我的主项目。",
+    "写代码、改枪、听音乐。三角洲是我的主项目。",
   avatarSrc: process.env.NEXT_PUBLIC_AVATAR_URL ?? "",
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
@@ -36,7 +36,7 @@ export const moduleLinks: {
   {
     id: "delta",
     href: "/delta-gun",
-    title: "三角洲改枪实验室",
+    title: "三角洲",
     description: "查枪械、抄枪码、保存配置。",
     accent: "#f97316",
   },
@@ -51,7 +51,7 @@ export const moduleLinks: {
     id: "articles",
     href: "/articles",
     title: "文章",
-    description: "项目复盘与技术长文。",
+    description: "希腊神话与荷马史诗。",
     accent: "#38bdf8",
   },
   {

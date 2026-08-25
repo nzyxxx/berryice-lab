@@ -1,4 +1,5 @@
 import { ClickPulse } from "@/components/atmosphere/click-pulse";
+import { LightningFlash } from "@/components/atmosphere/lightning-flash";
 import { RainField } from "@/components/atmosphere/rain-field";
 import { SiteFooter } from "@/components/lab/site-footer";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export function SiteShell({
       )}
     >
       <RainField density={variant === "delta" ? "low" : "normal"} />
+      <LightningFlash />
       <ClickPulse />
       <div className="relative z-10 flex flex-1 flex-col">{children}</div>
       {!hideFooter && <SiteFooter />}

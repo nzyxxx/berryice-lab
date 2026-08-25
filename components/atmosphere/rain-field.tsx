@@ -2,96 +2,174 @@
 
 import { useEffect, useRef } from "react";
 
-type Drop = {
+type Streak = {
   x: number;
   y: number;
   len: number;
   speed: number;
   alpha: number;
+  width: number;
+  layer: number;
+  drift: number;
 };
 
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** 全站夜雨气候层。pointer-events: none，不抢点击。 */
+function getDocHeight() {
+  return Math.max(
+    document.body?.scrollHeight || 0,
+    document.documentElement?.scrollHeight || 0,
+    window.innerHeight
+  );
+}
+
+/** 宙斯之雨：三层景深的冷雨，伴随神话闪电。 */
 export function RainField({ density = "normal" }: { density?: "normal" | "low" }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
-
     if (prefersReducedMotion()) return;
 
     let frame = 0;
     let running = true;
-    const drops: Drop[] = [];
+    let docWidth = window.innerWidth;
+    let docHeight = getDocHeight();
+    const streaks: Streak[] = [];
+    let lastTime = 0;
+    let time = 0;
+    let windOffset = 0;
 
-    const countFor = () => {
-      const base = window.innerWidth < 640 ? 36 : 70;
-      return density === "low" ? Math.round(base * 0.55) : base;
-    };
+    const layerConfig = [
+      { countMul: 0.35, speedMin: 5, speedMax: 9, lenMin: 22, lenMax: 36, alphaMin: 0.05, alphaMax: 0.12, width: 0.5, drift: 0.15 },
+      { countMul: 0.33, speedMin: 8, speedMax: 13, lenMin: 34, lenMax: 52, alphaMin: 0.12, alphaMax: 0.22, width: 0.8, drift: 0.3 },
+      { countMul: 0.32, speedMin: 11, speedMax: 16, lenMin: 46, lenMax: 70, alphaMin: 0.20, alphaMax: 0.30, width: 1.2, drift: 0.45 },
+    ];
+
+    const baseCount = (() => {
+      const w = window.innerWidth;
+      let base = w < 640 ? 55 : w < 1024 ? 90 : 120;
+      if (density === "low") base = Math.round(base * 0.55);
+      return base;
+    })();
 
     const seed = () => {
-      drops.length = 0;
-      const n = countFor();
-      for (let i = 0; i < n; i += 1) {
-        drops.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          len: 8 + Math.random() * 14,
-          speed: 4.2 + Math.random() * 6.5,
-          alpha: 0.18 + Math.random() * 0.35,
-        });
+      streaks.length = 0;
+      for (let layer = 0; layer < 3; layer += 1) {
+        const cfg = layerConfig[layer];
+        const count = Math.round(baseCount * cfg.countMul);
+        for (let i = 0; i < count; i += 1) {
+          const speed = cfg.speedMin + Math.random() * (cfg.speedMax - cfg.speedMin);
+          const len = cfg.lenMin + Math.random() * (cfg.lenMax - cfg.lenMin);
+          streaks.push({
+            x: Math.random() * docWidth,
+            y: Math.random() * docHeight - docHeight * 0.15,
+            len,
+            speed,
+            alpha: cfg.alphaMin + Math.random() * (cfg.alphaMax - cfg.alphaMin),
+            width: cfg.width + Math.random() * 0.25,
+            layer,
+            drift: cfg.drift * (Math.random() - 0.5),
+          });
+        }
       }
+      streaks.sort((a, b) => a.layer - b.layer);
     };
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(window.innerWidth * dpr);
-      canvas.height = Math.floor(window.innerHeight * dpr);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      docWidth = window.innerWidth;
+      docHeight = getDocHeight();
+      canvas.width = Math.floor(docWidth * dpr);
+      canvas.height = Math.floor(docHeight * dpr);
+      canvas.style.width = `${docWidth}px`;
+      canvas.style.height = `${docHeight}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       seed();
     };
 
-    const draw = () => {
-      if (!running) return;
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      ctx.lineWidth = 1;
-      ctx.lineCap = "round";
+    const draw = (dt: number) => {
+      windOffset += (Math.sin(time * 0.0008) + Math.cos(time * 0.0013)) * 0.0015;
 
-      for (const drop of drops) {
-        ctx.strokeStyle = `rgba(184, 212, 232, ${drop.alpha})`;
+      for (const s of streaks) {
+        const dx = s.drift + windOffset * (s.layer + 1) * 0.22;
+        const tailX = s.x - dx * (s.len / s.speed) * 2.2;
+        const tailY = s.y - s.len;
+
+        ctx.save();
+        ctx.lineWidth = s.width;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = `rgba(185, 202, 218, ${s.alpha})`;
         ctx.beginPath();
-        ctx.moveTo(drop.x, drop.y);
-        ctx.lineTo(drop.x - 0.6, drop.y + drop.len);
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(s.x, s.y);
         ctx.stroke();
+        ctx.restore();
 
-        drop.y += drop.speed;
-        drop.x -= 0.35;
-        if (drop.y > window.innerHeight + 12) {
-          drop.y = -drop.len;
-          drop.x = Math.random() * window.innerWidth;
+        if (s.layer === 2) {
+          ctx.fillStyle = `rgba(220, 238, 255, ${s.alpha * 0.35})`;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.width * 0.6, 0, Math.PI * 2);
+          ctx.fill();
         }
-        if (drop.x < -8) drop.x = window.innerWidth + 8;
-      }
 
-      frame = requestAnimationFrame(draw);
+        s.y += s.speed * (dt / 16);
+        s.x += dx * (dt / 16);
+
+        if (s.y > docHeight + 12) {
+          s.y = -s.len - Math.random() * 120;
+          s.x = Math.random() * docWidth;
+        }
+        if (s.x < -50) s.x = docWidth + 50;
+        if (s.x > docWidth + 50) s.x = -50;
+      }
+    };
+
+    const loop = (now: number) => {
+      if (!running) return;
+      const dt = Math.min(now - lastTime, 64);
+      lastTime = now;
+      time += dt;
+
+      ctx.clearRect(0, 0, docWidth, docHeight);
+      draw(dt);
+
+      frame = requestAnimationFrame(loop);
+    };
+
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+    const onResize = () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => resize(), 150);
+    };
+    const onResizeHeight = () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => resize(), 150);
     };
 
     resize();
-    frame = requestAnimationFrame(draw);
-    window.addEventListener("resize", resize);
+    frame = requestAnimationFrame(loop);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onResizeHeight, { passive: true });
+
+    const domObserver = new MutationObserver(() => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => resize(), 180);
+    });
+    domObserver.observe(document.body, { childList: true, subtree: true });
 
     return () => {
       running = false;
       cancelAnimationFrame(frame);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onResizeHeight);
+      domObserver.disconnect();
+      if (resizeTimer) clearTimeout(resizeTimer);
     };
   }, [density]);
 
@@ -100,7 +178,7 @@ export function RainField({ density = "normal" }: { density?: "normal" | "low" }
       <div className="absolute inset-0 bg-lab-canvas" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(56,189,248,0.12),transparent_55%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(8,9,13,0.35))] dark:bg-[linear-gradient(to_bottom,transparent,rgba(8,9,13,0.55))]" />
-      <canvas ref={canvasRef} className="absolute inset-0" />
+      <canvas ref={canvasRef} className="absolute left-0 top-0 h-full w-full" />
     </div>
   );
 }
