@@ -13,7 +13,10 @@ export function LinkInBio() {
   const kook = socialLinks.find((s) => s.id === "kook");
 
   return (
-    <main className="mx-auto flex w-full max-w-[40rem] flex-1 flex-col gap-10 px-5 py-12 sm:px-6">
+    <main
+      id="main"
+      className="mx-auto flex w-full max-w-[40rem] flex-1 flex-col gap-10 px-5 py-12 sm:px-6"
+    >
       <ClickSpark>
         <SectionZone index="01" label="Identity">
           <ProfileIdentity />
@@ -21,9 +24,24 @@ export function LinkInBio() {
 
         <SectionZone index="02" label="Modules" className="mt-2">
           <div className="grid grid-cols-1 gap-3 [perspective:900px] sm:grid-cols-2">
-            {moduleLinks.map((module, index) => (
-              <ModuleTile key={module.id} id={module.id} delay={index * 0.06} />
-            ))}
+            {moduleLinks.map((module, index) => {
+              // 奇数个模块时，最后一块保持同样宽度但居中，避免孤零零挂在左半列
+              const isLonelyLast =
+                moduleLinks.length % 2 === 1 && index === moduleLinks.length - 1;
+
+              return (
+                <ModuleTile
+                  key={module.id}
+                  id={module.id}
+                  delay={index * 0.06}
+                  className={
+                    isLonelyLast
+                      ? "sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.375rem)]"
+                      : undefined
+                  }
+                />
+              );
+            })}
           </div>
         </SectionZone>
 

@@ -3,6 +3,7 @@
 import { WeaponPortrait } from "@/components/delta-gun/weapon-portrait";
 import { getGameModeTheme } from "@/lib/delta-gun/game-mode-theme";
 import { buildGunImportUrl } from "@/lib/delta-gun/weapon-utils";
+import { GlassRainSurface } from "@/components/atmosphere/glass-rain-surface";
 import { cn } from "@/lib/utils";
 import { Check, Copy, TrendingUp, Wallet } from "lucide-react";
 import Link from "next/link";
@@ -56,6 +57,9 @@ export function CommunityCodeCard({
     >
       <div className={cn("w-1 shrink-0", theme.stripe)} aria-hidden />
 
+      {/* 枪码本身要能被扫读，水珠压到最淡 */}
+      <GlassRainSurface intensity={0.32} />
+
       {rank !== undefined && rank <= 3 && (
         <div
           className={cn(
@@ -69,7 +73,7 @@ export function CommunityCodeCard({
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 gap-3 p-3.5 sm:gap-4 sm:p-4">
+      <div className="relative flex min-w-0 flex-1 gap-3 p-3.5 sm:gap-4 sm:p-4">
         <WeaponPortrait name={item.weapon} size="md" className="hidden sm:flex" />
 
         <div className="min-w-0 flex-1">
@@ -118,7 +122,9 @@ export function CommunityCodeCard({
               title={copied ? "已复制" : "复制枪码"}
               aria-label={copied ? "已复制" : "复制枪码"}
               className={cn(
-                "shrink-0 rounded-md p-1 transition-colors",
+                "relative shrink-0 rounded-md p-1 transition-colors",
+                // 图标只有 14px，用不占布局的伪元素把可点区域撑到 44px
+                "after:absolute after:left-1/2 after:top-1/2 after:size-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']",
                 theme.copyBtn
               )}
             >

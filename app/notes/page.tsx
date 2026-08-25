@@ -13,6 +13,7 @@ export default function NotesPage() {
           label="Brief"
           title="笔记"
           description="短想法、片段、随记。不系统，但真实。"
+          headingLevel="h1"
         />
 
         <SectionZone index="02" label="Stream" className="mt-12">

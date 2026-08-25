@@ -9,7 +9,7 @@ export function PageContainer({
   className?: string;
 }) {
   return (
-    <main className={cn("mx-auto max-w-6xl px-6 pb-24 pt-10 md:pt-14", className)}>
+    <main id="main" className={cn("mx-auto max-w-6xl px-6 pb-24 pt-10 md:pt-14", className)}>
       {children}
     </main>
   );

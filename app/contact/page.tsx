@@ -20,6 +20,7 @@ export default function ContactPage() {
           label="Brief"
           title="联系"
           description="Kook 最常用。邮件回复慢。"
+          headingLevel="h1"
         />
 
         <SectionZone index="02" label="Channels" className="mt-12">

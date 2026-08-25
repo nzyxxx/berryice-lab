@@ -1,5 +1,6 @@
 "use client";
 
+import { GlassRainSurface } from "@/components/atmosphere/glass-rain-surface";
 import SpotlightCard from "@/components/SpotlightCard";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { type ModuleId, moduleLinks } from "@/lib/site-config";
@@ -16,7 +17,15 @@ const ICONS: Record<ModuleId, LucideIcon> = {
   contact: MessageCircle,
 };
 
-export function ModuleTile({ id, delay = 0 }: { id: ModuleId; delay?: number }) {
+export function ModuleTile({
+  id,
+  delay = 0,
+  className,
+}: {
+  id: ModuleId;
+  delay?: number;
+  className?: string;
+}) {
   const module = moduleLinks.find((m) => m.id === id);
   if (!module) return null;
 
@@ -24,6 +33,7 @@ export function ModuleTile({ id, delay = 0 }: { id: ModuleId; delay?: number }) 
 
   return (
     <motion.div
+      className={cn("h-full", className)}
       initial={{ opacity: 0, y: 28, rotateX: 6 }}
       whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
       viewport={{ once: true, margin: "-48px" }}
@@ -48,6 +58,7 @@ export function ModuleTile({ id, delay = 0 }: { id: ModuleId; delay?: number }) 
             style={{ backgroundColor: module.accent }}
             aria-hidden
           />
+          <GlassRainSurface />
           <span
             className="relative flex size-10 items-center justify-center rounded-xl border border-white/15"
             style={{ backgroundColor: `${module.accent}18`, color: module.accent }}

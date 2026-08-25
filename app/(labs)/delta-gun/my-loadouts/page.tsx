@@ -19,6 +19,7 @@ export default function MyLoadoutsPage() {
         index="01"
         label="Archive"
         title="我的枪码"
+        headingLevel="h1"
         description="改枪台保存的配置出现在这里。社区方案去社区改枪码导入。"
       >
         <MotionReveal>

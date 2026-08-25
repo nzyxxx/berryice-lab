@@ -4,7 +4,7 @@ import { SiteShell } from "@/components/lab/site-shell";
 
 export default function HomePage() {
   return (
-    <SiteShell variant="hub">
+    <SiteShell>
       <SiteHeader minimal />
       <LinkInBio />
     </SiteShell>

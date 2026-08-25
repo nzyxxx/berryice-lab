@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Bookmark, Crosshair, LayoutGrid, Users } from "lucide-react";
+import { Bookmark, Crosshair, LayoutGrid, Mic2, Users } from "lucide-react";
 
 export interface DeltaNavItem {
   href: string;
@@ -26,6 +26,12 @@ export const DELTA_NAV: DeltaNavItem[] = [
     label: "社区改枪码",
     description: "热门方案 · 搜索 · 一键导入",
     icon: Users,
+  },
+  {
+    href: "/delta-gun/streamers",
+    label: "主播改枪",
+    description: "职业选手 · 抖音主播的实战配装",
+    icon: Mic2,
   },
   {
     href: "/delta-gun/my-loadouts",

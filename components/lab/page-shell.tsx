@@ -12,7 +12,7 @@ export function PageShell({
   backLabel?: string;
 }) {
   return (
-    <SiteShell variant="hub">
+    <SiteShell>
       <SiteHeader backHref={backHref} backLabel={backLabel} />
       {children}
     </SiteShell>

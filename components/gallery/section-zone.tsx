@@ -8,6 +8,7 @@ export function SectionZone({
   description,
   children,
   className,
+  headingLevel = "h2",
 }: {
   index: string;
   label: string;
@@ -15,16 +16,25 @@ export function SectionZone({
   description?: string;
   children?: ReactNode;
   className?: string;
+  /** 每页的首个区块传 h1，其余保持 h2，保证标题层级只有一个顶点 */
+  headingLevel?: "h1" | "h2";
 }) {
+  const Heading = headingLevel;
+
   return (
     <section className={cn("relative", className)}>
       <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-lab-primary">
         {index} / {label}
       </p>
       {title ? (
-        <h2 className="mt-2 text-xl font-semibold tracking-tight text-lab-ink md:text-2xl">
+        <Heading
+          className={cn(
+            "mt-2 font-semibold tracking-tight text-lab-ink",
+            headingLevel === "h1" ? "text-2xl md:text-3xl" : "text-xl md:text-2xl"
+          )}
+        >
           {title}
-        </h2>
+        </Heading>
       ) : null}
       {description ? (
         <p className="mt-1 max-w-xl text-sm leading-relaxed text-lab-ink-subtle">{description}</p>

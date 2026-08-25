@@ -5,6 +5,51 @@ import { arcs, articles } from "@/lib/content/articles";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight, Clock, TvMinimalPlay } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
+
+/**
+ * 正文没就绪的剧集不渲染成链接：悬停抬起和箭头都是「可点」的暗示，
+ * 点了却停在原地，比不给入口更伤。
+ */
+function ArticleSurface({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const base = cn(
+    "group relative block overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-md",
+    className
+  );
+
+  if (!href) return <div className={base}>{children}</div>;
+
+  return (
+    <Link
+      href={href}
+      className={cn(
+        base,
+        "transition-[border-color,background-color,transform] duration-200",
+        "hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function ArticleStatus({ href }: { href?: string }) {
+  if (href) return null;
+  return (
+    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-lab-ink-tertiary">
+      全文撰写中
+    </span>
+  );
+}
 
 export default function ArticlesPage() {
   const featured = articles.find((a) => a.featured);
@@ -22,6 +67,7 @@ export default function ArticlesPage() {
           label="Brief"
           title="希腊神话剧场"
           description="把荷马史诗拆成短剧集，像追剧一样读神话。"
+          headingLevel="h1"
         />
 
         <section className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -44,12 +90,9 @@ export default function ArticlesPage() {
 
         {featured && (
           <section className="mt-10">
-            <Link
+            <ArticleSurface
               href={featured.href}
-              className={cn(
-                "group relative block overflow-hidden rounded-2xl border border-lab-primary/25 bg-white/[0.03] p-6 backdrop-blur-md sm:p-8",
-                "transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-lab-primary/40 hover:bg-white/[0.06]"
-              )}
+              className="rounded-2xl border-lab-primary/25 p-6 sm:p-8"
             >
               <span className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-lab-primary/25 bg-lab-primary/10 px-2.5 py-1 text-[11px] text-lab-primary">
                 <TvMinimalPlay className="size-3" />
@@ -67,9 +110,12 @@ export default function ArticlesPage() {
                   <Clock className="size-3" />
                   {featured.readingTime}
                 </span>
+                <ArticleStatus href={featured.href} />
               </div>
-              <ArrowUpRight className="absolute right-5 top-5 size-5 text-lab-ink-tertiary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-lab-primary" />
-            </Link>
+              {featured.href ? (
+                <ArrowUpRight className="absolute right-5 top-5 size-5 text-lab-ink-tertiary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-lab-primary" />
+              ) : null}
+            </ArticleSurface>
           </section>
         )}
 
@@ -78,13 +124,10 @@ export default function ArticlesPage() {
             {rest.map((article) => {
               const arcMeta = arcs.find((a) => a.id === article.arcId);
               return (
-                <Link
+                <ArticleSurface
                   key={article.id}
                   href={article.href}
-                  className={cn(
-                    "group flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md",
-                    "transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06]"
-                  )}
+                  className="flex flex-col gap-2 rounded-2xl p-5"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span
@@ -93,7 +136,9 @@ export default function ArticlesPage() {
                     >
                       {article.arc} · {article.episode}/{article.totalEpisodes}
                     </span>
-                    <ArrowUpRight className="size-4 shrink-0 text-lab-ink-tertiary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-lab-primary" />
+                    {article.href ? (
+                      <ArrowUpRight className="size-4 shrink-0 text-lab-ink-tertiary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-lab-primary" />
+                    ) : null}
                   </div>
                   <h3 className="text-lg font-medium tracking-tight text-lab-ink">{article.title}</h3>
                   <p className="text-sm leading-relaxed text-lab-ink-subtle">{article.summary}</p>
@@ -103,8 +148,9 @@ export default function ArticlesPage() {
                       <Clock className="size-3" />
                       {article.readingTime}
                     </span>
+                    <ArticleStatus href={article.href} />
                   </div>
-                </Link>
+                </ArticleSurface>
               );
             })}
           </div>

@@ -9,7 +9,8 @@ export interface ArticleItem {
   publishedAt: string;
   tags: string[];
   readingTime: string;
-  href: string;
+  /** 正文就绪后再填。留空时卡片不渲染成链接，避免出现点了没反应的死链。 */
+  href?: string;
   featured?: boolean;
 }
 
@@ -33,7 +34,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["奥德赛", "荷马史诗", "雅典娜"],
     readingTime: "8 min",
-    href: "#",
     featured: true,
   },
   {
@@ -48,7 +48,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["奥德赛", "波吕斐摩斯", "智慧"],
     readingTime: "9 min",
-    href: "#",
   },
   {
     id: "odyssey-03",
@@ -62,7 +61,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["奥德赛", "塞壬", "诱惑"],
     readingTime: "10 min",
-    href: "#",
   },
   {
     id: "odyssey-04",
@@ -76,7 +74,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["奥德赛", "卡吕普索", "归乡"],
     readingTime: "8 min",
-    href: "#",
   },
   {
     id: "odyssey-05",
@@ -90,7 +87,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["奥德赛", "伊塔卡", "复仇"],
     readingTime: "11 min",
-    href: "#",
   },
   {
     id: "iliad-01",
@@ -104,7 +100,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["伊利亚特", "阿喀琉斯", "荣誉"],
     readingTime: "9 min",
-    href: "#",
   },
   {
     id: "iliad-02",
@@ -118,7 +113,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["伊利亚特", "赫克托耳", "命运"],
     readingTime: "9 min",
-    href: "#",
   },
   {
     id: "iliad-03",
@@ -132,7 +126,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["伊利亚特", "帕特罗克洛斯", "复仇"],
     readingTime: "10 min",
-    href: "#",
   },
   {
     id: "iliad-04",
@@ -146,7 +139,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["伊利亚特", "普里阿摩斯", "怜悯"],
     readingTime: "11 min",
-    href: "#",
   },
   {
     id: "olympus-01",
@@ -160,7 +152,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["宙斯", "泰坦", "权力"],
     readingTime: "8 min",
-    href: "#",
   },
   {
     id: "olympus-02",
@@ -174,7 +165,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["普罗米修斯", "盗火", "惩罚"],
     readingTime: "9 min",
-    href: "#",
   },
   {
     id: "olympus-03",
@@ -188,7 +178,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["冥界", "四季", "德墨忒尔"],
     readingTime: "8 min",
-    href: "#",
   },
   {
     id: "olympus-04",
@@ -202,7 +191,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["赫菲斯托斯", "锻造", "复仇"],
     readingTime: "9 min",
-    href: "#",
   },
   {
     id: "heroes-01",
@@ -216,7 +204,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["赫拉克勒斯", "十二试炼", "英雄"],
     readingTime: "10 min",
-    href: "#",
   },
   {
     id: "heroes-02",
@@ -230,7 +217,6 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["忒修斯", "米诺陶洛斯", "迷宫"],
     readingTime: "9 min",
-    href: "#",
   },
   {
     id: "heroes-03",
@@ -244,6 +230,5 @@ export const articles: ArticleItem[] = [
     publishedAt: "2026-08-25",
     tags: ["珀尔修斯", "美杜莎", "雅典娜"],
     readingTime: "9 min",
-    href: "#",
   },
 ];

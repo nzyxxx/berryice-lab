@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 
 export function DeltaGunChrome({ children }: { children: ReactNode }) {
   return (
-    <SiteShell variant="hub">
+    <SiteShell>
       <SiteHeader backHref="/" backLabel="首页" />
       <DeltaSubNav />
       {children}

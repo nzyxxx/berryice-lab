@@ -47,17 +47,27 @@ export function ProfileIdentity() {
           </span>
         </div>
 
-        <BlurText
-          text={displayName}
-          animateBy="letters"
-          delay={40}
-          stepDuration={0.22}
-          className="mt-6 justify-center text-[1.75rem] font-semibold tracking-[-0.02em] text-lab-ink md:text-[2rem]"
-        />
-        <p className="mt-1 text-sm">
-          <ShinyText text="@" color="var(--lab-primary)" shineColor="#f4f6fb" speed={2.4} />
-          <WeightHover text={handle} className="text-lab-primary" />
-        </p>
+        {/*
+          BlurText / WeightHover 会把文字拆成逐字 span，读屏会念成「B e r r y I c e」。
+          装饰版整体 aria-hidden，另给一份干净的无障碍文本；
+          包裹层用 display:contents，不生成盒子所以布局不受影响。
+         */}
+        <h1 className="sr-only">{displayName}</h1>
+        <p className="sr-only">@{handle}</p>
+
+        <div aria-hidden className="contents">
+          <BlurText
+            text={displayName}
+            animateBy="letters"
+            delay={40}
+            stepDuration={0.22}
+            className="mt-6 justify-center text-[1.75rem] font-semibold tracking-[-0.02em] text-lab-ink md:text-[2rem]"
+          />
+          <p className="mt-1 text-sm">
+            <ShinyText text="@" color="var(--lab-primary)" shineColor="#f4f6fb" speed={2.4} />
+            <WeightHover text={handle} className="text-lab-primary" />
+          </p>
+        </div>
 
         <ul className="mt-3 flex flex-wrap items-center justify-center gap-2">
           {tags.map((tag) => (

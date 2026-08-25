@@ -1,5 +1,6 @@
 "use client";
 
+import { MobileNav } from "@/components/lab/mobile-nav";
 import { ThemeToggle } from "@/components/lab/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { moduleLinks } from "@/lib/site-config";
@@ -34,7 +35,7 @@ export function SiteHeader({
               variant="ghost"
               size="sm"
               asChild
-              className="h-8 px-2 text-lab-ink-subtle hover:bg-lab-surface-1 hover:text-lab-ink"
+              className="h-11 px-2.5 text-lab-ink-subtle hover:bg-lab-surface-1 hover:text-lab-ink"
             >
               <Link href={resolvedBackHref}>
                 <ArrowLeft className="mr-1.5 size-4" />
@@ -95,6 +96,7 @@ export function SiteHeader({
             </nav>
           )}
           <ThemeToggle />
+          <MobileNav />
         </div>
       </div>
     </header>

@@ -16,6 +16,7 @@ export default function MusicPage() {
           label="Brief"
           title="音乐"
           description="正在听。"
+          headingLevel="h1"
         />
 
         <SectionZone index="02" label="Now" className="mt-12">

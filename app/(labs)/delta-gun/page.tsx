@@ -39,10 +39,10 @@ export default function DeltaGunLabPage() {
         index="02"
         label="Missions"
         title="任务"
-        description="三块玻璃瓦片，对应三条主路径。"
+        description="四块玻璃瓦片，对应四条主路径。"
         className="mt-16"
       >
-        <div className="grid grid-cols-1 gap-3 [perspective:900px] sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 [perspective:900px] sm:grid-cols-2 lg:grid-cols-4">
           {missions.map((item, index) => (
             <GlassTile
               key={item.href}
