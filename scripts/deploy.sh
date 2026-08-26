@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# 线上发布：拉代码 → 装依赖 → 构建 → 重启 Node。
-# 在服务器项目目录执行：bash scripts/deploy.sh
+# 线上发布，按 ≤4G 经济型 ECS 来配：不跑 tsc、单 worker、限制 Node 堆。
+# 在服务器执行：
+#   cd /www/wwwroot/berryice-lab && bash scripts/deploy.sh
+#   或：bash deploy.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -17,33 +19,58 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
+mem_total_mb=0
+mem_avail_mb=0
+if [[ -r /proc/meminfo ]]; then
+  mem_total_mb=$(($(awk '/MemTotal:/ {print $2}' /proc/meminfo) / 1024))
+  mem_avail_mb=$(($(awk '/MemAvailable:/ {print $2}' /proc/meminfo) / 1024))
+fi
+
+# 给 nginx / 数据库 / 正在跑的站点留余量，禁止 Node 把物理内存吃光
+if (( mem_total_mb > 0 && mem_total_mb <= 2500 )); then
+  heap_mb=1024
+elif (( mem_total_mb <= 4096 )); then
+  heap_mb=1536
+else
+  heap_mb=2048
+fi
+
+export SKIP_TYPECHECK=1
+export NEXT_TELEMETRY_DISABLED=1
+export NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=${heap_mb}"
+
 echo "==> 目录 $ROOT"
+echo "==> 内存 ${mem_avail_mb}MB 可用 / ${mem_total_mb}MB 总量，Node 堆上限 ${heap_mb}MB"
 echo "==> 发布前 $(git log -1 --oneline)"
 
-# 服务器上这两份 lockfile 经常被 yarn/npm 互相改脏，挡住 pull。
-# 只回滚 lockfile，不动 .env 和其他未跟踪文件。
+if (( mem_avail_mb > 0 && mem_avail_mb < 700 )); then
+  echo
+  echo "可用内存不足 700MB。构建会和正在跑的站点抢内存。"
+  echo "先去宝塔 → Node 项目 → 停止，再重新执行本脚本。"
+  exit 1
+fi
+
+# 只回滚 lockfile，不动 .env 和其他未跟踪文件
 git checkout -- yarn.lock package-lock.json 2>/dev/null || true
-
 git pull origin master
-
 echo "==> 发布目标 $(git log -1 --oneline)"
 
 if command -v yarn >/dev/null 2>&1; then
-  echo "==> yarn install"
-  yarn install
-  echo "==> yarn build（等到路由表打完再走）"
+  echo "==> yarn install --frozen-lockfile"
+  yarn install --frozen-lockfile
+  echo "==> yarn build（跳过 tsc、单 worker，等到路由表打完）"
   yarn build
 else
-  echo "==> npm install"
-  npm install
-  echo "==> npm run build（等到路由表打完再走）"
+  echo "==> npm ci"
+  npm ci
+  echo "==> npm run build（跳过 tsc、单 worker，等到路由表打完）"
   npm run build
 fi
 
 restarted=0
+name="$(basename "$ROOT")"
 
 if command -v pm2 >/dev/null 2>&1; then
-  name="$(basename "$ROOT")"
   if pm2 describe "$name" >/dev/null 2>&1; then
     echo "==> pm2 restart $name"
     pm2 restart "$name"
