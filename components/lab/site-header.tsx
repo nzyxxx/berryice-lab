@@ -26,8 +26,17 @@ export function SiteHeader({
   const resolvedBackHref = backHref || "/";
   const resolvedLabel = backHref ? backLabel : "门户";
 
+  // 吸顶条的 backdrop-filter 每一个滚动帧都要重算一次背后的内容，
+  // 是全站最贵的一处模糊。iOS 27 的导航条本来就是薄玻璃：
+  // 半径减半、saturate 补色、底缘一道暗边把它跟内容切开。
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-lab-canvas/45 backdrop-blur-2xl">
+    <header
+      className={cn(
+        "sticky top-0 z-50 border-b border-white/[0.08] bg-lab-canvas/55",
+        "backdrop-blur-lg backdrop-saturate-150",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.45)]"
+      )}
+    >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-4">
           {showBack ? (

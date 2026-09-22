@@ -36,15 +36,34 @@
 
 ## 壳层
 
+气候层挂在**根布局**，不在 SiteShell 里 —— 放进 SiteShell 的话每次换路由都要销毁重建，
+雨会从零重来，一场连续的天气被切成一段一段。
+
 ```
-SiteShell
-  RainField          气候（pointer-events: none）
-  ClickPulse         SOTG 点击脉冲
-  SiteHeader         字标 + 模块导航 + 夜雨状态 + 主题
-  DeltaSubNav        仅 /delta-gun/*
-  {page zones}
-  SiteFooter
+RootLayout (app/layout.tsx)
+  SiteAtmosphere         跨路由不卸载
+    RainField            雨（CSS 贴图平移；移动端只留静态湿雾）
+    LightningFlash       闪电（空闲时 display:none，不占合成层）
+    ClickPulse           点击脉冲
+    ScrollAffordances    阅读进度 + 回到顶部
+  Template               换页淡入（CSS，不是 motion）
+    SiteShell
+      SiteHeader         字标 + 模块导航 + 夜雨状态 + 主题
+      DeltaSubNav        仅 /delta-gun/*
+      {page zones}
+      SiteFooter
 ```
+
+## 已定但未实施
+
+这两条在 2026-09 已经拍板，代码还没动。开工前回来对一遍，不要另起炉灶：
+
+1. **模块收敛**：现在 5 个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系）把三角洲摊薄成了
+   五分之一，但它是唯一有完整主路径的模块。收敛为「三角洲主线 + 写作（文章与笔记合并）
+   + About/Now」，联系降级为 About 里的一段，音乐并入 Now。
+2. **假数据下线**：`lib/content/{music,articles,notes}.ts` 目前全是虚构示例，
+   16 篇文章的 `href` 全为空（点了没反应）。真实素材到位前，这些页面改成诚实的
+   「建设中」状态，不要摆着假列表。
 
 ## 设计原则
 
