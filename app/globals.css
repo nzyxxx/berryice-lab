@@ -306,6 +306,50 @@
   }
 }
 
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) rotateX(6deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rain-fall {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, var(--rain-shift), 0);
+  }
+}
+
+@keyframes rain-gust {
+  0%,
+  100% {
+    opacity: var(--rain-lo);
+  }
+  50% {
+    opacity: var(--rain-hi);
+  }
+}
+
+/* 从 0.4 起步而不是 0：opacity 归零的那几帧里内容是「没画出来」的，
+   FCP/LCP 只能等淡入爬上来，实测在降频手机上要多等 300–1200ms。
+   0.4 起步第一帧就可读，过渡感照样在。
+   只动 opacity —— transform / filter 会给后代的 position:fixed 造包含块，
+   一用上全站的雨幕、闪电、点击脉冲就会跟着页面滚动而不是钉在视口。 */
+@keyframes page-in {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes float-y {
   0%,
   100% {
@@ -379,6 +423,30 @@
 
 .animate-float-y {
   animation: float-y 5s ease-in-out infinite;
+}
+
+/* 不写 fill-mode: both —— 那会让元素在动画排队期间停在 opacity:0，
+   等于把刚去掉的白屏又请回来。默认 fill 下第一帧就已经在插值。 */
+.animate-page-in {
+  animation: page-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 瓦片入场。
+   这里必须是 CSS 而不是 motion 的 initial —— 后者会被序列化进 SSR 产物，
+   于是首屏 HTML 里躺着一排 opacity:0 的卡片，要等整棵树水合完才显形。
+   错开用 animation-delay，只有这一小段（最多 0.2s）内容不可见，
+   而且是 CSS 时钟在走，不挂在主线程忙不忙上。 */
+.animate-tile-in {
+  animation: tile-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 下落用 linear：雨匀速落，加了缓动就会在每个循环边界一顿一顿。
+   两条动画分别只碰 transform 和 opacity，都留在合成线程上。 */
+.animate-rain-layer {
+  animation:
+    rain-fall var(--rain-fall) linear infinite,
+    rain-gust var(--rain-gust) ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {

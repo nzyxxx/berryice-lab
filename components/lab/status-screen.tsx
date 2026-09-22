@@ -1,4 +1,3 @@
-import { GlassRainSurface } from "@/components/atmosphere/glass-rain-surface";
 import { SiteHeader } from "@/components/lab/site-header";
 import { SiteShell } from "@/components/lab/site-shell";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
@@ -25,8 +24,6 @@ export function StatusScreen({
         className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-5 py-20 sm:px-6"
       >
         <div className={cn(glassSurfaceClass(), "relative rounded-3xl p-8 sm:p-12")}>
-          <GlassRainSurface intensity={0.7} />
-
           <p className="relative text-[11px] font-medium uppercase tracking-[0.18em] text-lab-primary">
             {code}
           </p>

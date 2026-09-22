@@ -3,7 +3,6 @@
 import { WeaponPortrait } from "@/components/delta-gun/weapon-portrait";
 import { getGameModeTheme } from "@/lib/delta-gun/game-mode-theme";
 import { buildGunImportUrl } from "@/lib/delta-gun/weapon-utils";
-import { GlassRainSurface } from "@/components/atmosphere/glass-rain-surface";
 import { cn } from "@/lib/utils";
 import { Check, Copy, TrendingUp, Wallet } from "lucide-react";
 import Link from "next/link";
@@ -56,9 +55,6 @@ export function CommunityCodeCard({
       )}
     >
       <div className={cn("w-1 shrink-0", theme.stripe)} aria-hidden />
-
-      {/* 枪码本身要能被扫读，水珠压到最淡 */}
-      <GlassRainSurface intensity={0.32} />
 
       {rank !== undefined && rank <= 3 && (
         <div

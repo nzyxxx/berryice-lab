@@ -1,12 +1,10 @@
 "use client";
 
-import { GlassRainSurface } from "@/components/atmosphere/glass-rain-surface";
 import SpotlightCard from "@/components/SpotlightCard";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { type ModuleId, moduleLinks } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { BookText, Gamepad2, Headphones, MessageCircle, Pencil, type LucideIcon } from "lucide-react";
-import { motion } from "motion/react";
 import Link from "next/link";
 
 const ICONS: Record<ModuleId, LucideIcon> = {
@@ -32,12 +30,9 @@ export function ModuleTile({
   const Icon = ICONS[id];
 
   return (
-    <motion.div
-      className={cn("h-full", className)}
-      initial={{ opacity: 0, y: 28, rotateX: 6 }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-      viewport={{ once: true, margin: "-48px" }}
-      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+    <div
+      className={cn("h-full animate-tile-in", className)}
+      style={{ animationDelay: `${delay}s` }}
     >
       <SpotlightCard
         className="!h-full !rounded-2xl !border-0 !bg-transparent !p-0"
@@ -58,7 +53,6 @@ export function ModuleTile({
             style={{ backgroundColor: module.accent }}
             aria-hidden
           />
-          <GlassRainSurface />
           <span
             className="relative flex size-10 items-center justify-center rounded-xl border border-white/15"
             style={{ backgroundColor: `${module.accent}18`, color: module.accent }}
@@ -75,6 +69,6 @@ export function ModuleTile({
           </span>
         </Link>
       </SpotlightCard>
-    </motion.div>
+    </div>
   );
 }

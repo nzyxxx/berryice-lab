@@ -99,6 +99,15 @@ export function LightningFlash() {
       ctx.stroke();
     };
 
+    /**
+     * 两次落雷之间隔着好几秒，这块全屏画布却始终挂在合成器上占一层。
+     * display:none 只是把它移出合成，canvas 的像素缓冲还在，
+     * 重新显示不需要重建，也不需要重新 resize。
+     */
+    const setLive = (live: boolean) => {
+      canvas.style.display = live ? "block" : "none";
+    };
+
     const strike = () => {
       if (!running) return;
 
@@ -137,6 +146,7 @@ export function LightningFlash() {
 
       const start = performance.now();
       const duration = 520 + Math.random() * 260;
+      setLive(true);
 
       const animate = (now: number) => {
         if (!running) return;
@@ -145,6 +155,7 @@ export function LightningFlash() {
 
         if (t >= 1) {
           frame = 0;
+          setLive(false);
           return;
         }
 
@@ -182,5 +193,12 @@ export function LightningFlash() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0" aria-hidden />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none fixed inset-0 z-0"
+      style={{ display: "none" }}
+      aria-hidden
+    />
+  );
 }

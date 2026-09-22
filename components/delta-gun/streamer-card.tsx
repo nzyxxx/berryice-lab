@@ -1,4 +1,3 @@
-import { GlassRainSurface } from "@/components/atmosphere/glass-rain-surface";
 import { StreamerAvatar } from "@/components/delta-gun/streamer-avatar";
 import { StreamerRoleBadge } from "@/components/delta-gun/streamer-role-badge";
 import type { StoredStreamer } from "@/lib/types/streamer";
@@ -16,8 +15,6 @@ export function StreamerCard({ streamer }: { streamer: StoredStreamer }) {
         className="pointer-events-none absolute -top-10 -right-10 size-28 rounded-full opacity-15 blur-2xl transition-opacity group-hover:opacity-25"
         style={{ backgroundColor: streamer.accentColor }}
       />
-
-      <GlassRainSurface intensity={0.45} />
 
       <div className="relative flex items-start gap-3">
         <StreamerAvatar initial={streamer.avatarInitial} accentColor={streamer.accentColor} />
