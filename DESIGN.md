@@ -205,6 +205,7 @@ z-80   跳到主内容（焦点态）
 | 悬停抬起 | `hover:-translate-y-0.5` | `hover:scale-105` |
 | 页面骨架 | `SiteShell` + `PageContainer` | 每页自己写 min-h-screen |
 | 404 / 报错 | `StatusScreen` | 单独做一版 |
+| 列表为空 | `EmptyState` | 拿假数据占位 |
 
 动效优先级仍然是：React Bits → Aceternity UI → Uiverse.io → OriginKit → Aura.build。
 **但第 7 节的预算优先于这条**：上游组件如果常驻 rAF 或以 `opacity:0` 出厂，改造后再用。
@@ -236,8 +237,10 @@ z-80   跳到主内容（焦点态）
 动了气候层、入场动画或玻璃材质，合并前跑这三条：
 
 ```bash
-# 1. 首屏 HTML 里不该有成片的隐身元素（只允许 BlurText 那 8 个 + SpotlightCard 的遮罩）
-curl -s http://localhost:3000/ | grep -o 'opacity:0' | wc -l   # 应 ≤ 13
+# 1. 首屏 HTML 里不该有成片的隐身元素。
+#    当前合法来源只有两处：BlurText 的 8 个字母 span + 每块 ModuleTile 一个聚光遮罩。
+#    数字涨了就去看是谁又把 motion 的 initial 写进了 SSR。
+curl -s http://localhost:3000/ | grep -o 'opacity:0' | wc -l   # 8 + 门户瓦片数
 
 # 2. 构建通过
 yarn build

@@ -40,6 +40,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  /**
+   * 2026-09 模块收敛留下的旧路由。
+   * 用 308 而不是 307：这四个地址不会再回来了，让浏览器和搜索引擎把它记死，
+   * 省得每次访问都先打一次旧地址。
+   */
+  async redirects() {
+    return [
+      { source: "/articles", destination: "/writing", permanent: true },
+      { source: "/notes", destination: "/writing", permanent: true },
+      { source: "/music", destination: "/about", permanent: true },
+      { source: "/contact", destination: "/about", permanent: true },
+    ];
+  },
   // 允许局域网设备访问开发服务器（去掉 HMR 跨域警告）
   allowedDevOrigins: [
     "localhost",

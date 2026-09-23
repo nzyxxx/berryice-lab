@@ -24,49 +24,49 @@ export const profileConfig = {
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
 
-export type ModuleId = "delta" | "music" | "articles" | "notes" | "contact";
+export type ModuleId = "delta" | "writing" | "about";
 
+/**
+ * 门户只有三个去处。
+ *
+ * 之前是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系），
+ * 结果唯一有完整主路径的三角洲被摊薄成五分之一，跟三个占位页平起平坐。
+ * 文章和笔记本来就是同一件事的长短两种形态，合成「写作」；
+ * 音乐和联系都是「关于我」的下属信息，降级成 /about 里的两段。
+ */
 export const moduleLinks: {
   id: ModuleId;
   href: string;
   title: string;
+  /** 导航条放不下完整标题时用的短名，缺省就用 title */
+  navLabel?: string;
   description: string;
   accent: string;
+  /** 门户里占满整行的主模块 */
+  featured?: boolean;
 }[] = [
   {
     id: "delta",
     href: "/delta-gun",
-    title: "三角洲",
-    description: "查枪械、抄枪码、保存配置。",
+    title: "三角洲改枪实验室",
+    navLabel: "三角洲",
+    description: "查枪械、抄社区枪码、看主播配装、保存自己的方案。",
     accent: "#f97316",
+    featured: true,
   },
   {
-    id: "music",
-    href: "/music",
-    title: "音乐",
-    description: "正在听的歌单。",
-    accent: "#a78bfa",
-  },
-  {
-    id: "articles",
-    href: "/articles",
-    title: "文章",
-    description: "希腊神话与荷马史诗。",
+    id: "writing",
+    href: "/writing",
+    title: "写作",
+    description: "长文与随记。",
     accent: "#38bdf8",
   },
   {
-    id: "notes",
-    href: "/notes",
-    title: "笔记",
-    description: "短想法与片段。",
-    accent: "#34d399",
-  },
-  {
-    id: "contact",
-    href: "/contact",
-    title: "联系",
-    description: "Kook 聊天室与邮箱。",
-    accent: "#fb7185",
+    id: "about",
+    href: "/about",
+    title: "关于",
+    description: "我在做什么，以及怎么找到我。",
+    accent: "#a78bfa",
   },
 ];
 

@@ -21,25 +21,20 @@ export function LinkInBio() {
       </SectionZone>
 
       <SectionZone index="02" label="Modules" className="mt-2">
+        {/*
+          三角洲占满整行，另外两块并排。
+          五个等大瓦片的时候，唯一有完整主路径的模块跟占位页一样大，
+          进站的人看不出该先点哪个。
+        */}
         <div className="grid grid-cols-1 gap-3 [perspective:900px] sm:grid-cols-2">
-          {moduleLinks.map((module, index) => {
-            // 奇数个模块时，最后一块保持同样宽度但居中，避免孤零零挂在左半列
-            const isLonelyLast =
-              moduleLinks.length % 2 === 1 && index === moduleLinks.length - 1;
-
-            return (
-              <ModuleTile
-                key={module.id}
-                id={module.id}
-                delay={index * 0.06}
-                className={
-                  isLonelyLast
-                    ? "sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.375rem)]"
-                    : undefined
-                }
-              />
-            );
-          })}
+          {moduleLinks.map((module, index) => (
+            <ModuleTile
+              key={module.id}
+              id={module.id}
+              delay={index * 0.06}
+              className={module.featured ? "sm:col-span-2" : undefined}
+            />
+          ))}
         </div>
       </SectionZone>
 

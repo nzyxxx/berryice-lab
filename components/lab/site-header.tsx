@@ -19,8 +19,6 @@ export function SiteHeader({
   minimal?: boolean;
 }) {
   const pathname = usePathname();
-  const inDelta = pathname.startsWith("/delta-gun");
-  const inModule = moduleLinks.some((m) => m.href !== "/delta-gun" && pathname.startsWith(m.href));
   const isHome = pathname === "/";
   const showBack = backHref || (!isHome && !minimal);
   const resolvedBackHref = backHref || "/";
@@ -79,29 +77,18 @@ export function SiteHeader({
               >
                 门户
               </Link>
-              <Link
-                href="/delta-gun"
-                className={cn(
-                  "transition-colors hover:text-lab-ink",
-                  (inDelta || pathname === "/delta-gun") && "text-lab-primary"
-                )}
-              >
-                三角洲
-              </Link>
-              {moduleLinks
-                .filter((m) => m.id !== "delta")
-                .map((m) => (
-                  <Link
-                    key={m.id}
-                    href={m.href}
-                    className={cn(
-                      "transition-colors hover:text-lab-ink",
-                      pathname.startsWith(m.href) && "text-lab-primary"
-                    )}
-                  >
-                    {m.title}
-                  </Link>
-                ))}
+              {moduleLinks.map((m) => (
+                <Link
+                  key={m.id}
+                  href={m.href}
+                  className={cn(
+                    "transition-colors hover:text-lab-ink",
+                    pathname.startsWith(m.href) && "text-lab-primary"
+                  )}
+                >
+                  {m.navLabel ?? m.title}
+                </Link>
+              ))}
             </nav>
           )}
           <ThemeToggle />

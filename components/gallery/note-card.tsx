@@ -1,21 +1,15 @@
-"use client";
-
+import type { Note } from "@/lib/content/writing";
 import { cn } from "@/lib/utils";
 import { Quote } from "lucide-react";
-import { motion } from "motion/react";
-import type { NoteItem } from "@/lib/content/notes";
 
-export function NoteCard({ note, index }: { note: NoteItem; index: number }) {
+export function NoteCard({ note, index = 0 }: { note: Note; index?: number }) {
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-48px" }}
-      transition={{ duration: 0.5, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+    <article
       className={cn(
-        "relative rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md",
+        "animate-tile-in relative rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md",
         "transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06]"
       )}
+      style={{ animationDelay: `${index * 0.06}s` }}
     >
       <Quote className="absolute right-4 top-4 size-5 text-lab-ink-tertiary/50" />
       <p className="pr-6 text-sm leading-relaxed text-lab-ink-subtle">{note.content}</p>
@@ -33,6 +27,6 @@ export function NoteCard({ note, index }: { note: NoteItem; index: number }) {
           </span>
         ))}
       </div>
-    </motion.article>
+    </article>
   );
 }

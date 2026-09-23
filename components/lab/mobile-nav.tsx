@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { href: "/", title: "门户", description: "回到入口" },
   ...moduleLinks.map((m) => ({
     href: m.href,
-    title: m.title,
+    title: m.navLabel ?? m.title,
     description: m.description,
   })),
 ];
