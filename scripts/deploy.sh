@@ -21,9 +21,11 @@ fi
 
 mem_total_mb=0
 mem_avail_mb=0
+swap_free_mb=0
 if [[ -r /proc/meminfo ]]; then
   mem_total_mb=$(($(awk '/MemTotal:/ {print $2}' /proc/meminfo) / 1024))
   mem_avail_mb=$(($(awk '/MemAvailable:/ {print $2}' /proc/meminfo) / 1024))
+  swap_free_mb=$(($(awk '/SwapFree:/ {print $2}' /proc/meminfo) / 1024))
 fi
 
 # 给 nginx / 数据库 / 正在跑的站点留余量，禁止 Node 把物理内存吃光
@@ -44,10 +46,18 @@ echo "==> 内存 ${mem_avail_mb}MB 可用 / ${mem_total_mb}MB 总量，Node 堆�
 echo "==> 发布前 $(git log -1 --oneline)"
 
 if (( mem_avail_mb > 0 && mem_avail_mb < 700 )); then
-  echo
-  echo "可用内存不足 700MB。构建会和正在跑的站点抢内存。"
-  echo "先去宝塔 → Node 项目 → 停止，再重新执行本脚本。"
-  exit 1
+  # 1.6GB 的机器开着站点时，可用内存到不了 700MB。
+  # 有足够 Swap 就继续：构建会变慢，但不会再因为内存直接退出。
+  # 没有 Swap 时继续跑，内核会把 next build 直接 OOM 杀掉。
+  if (( swap_free_mb < 1500 )); then
+    echo
+    echo "可用内存 ${mem_avail_mb}MB，Swap 空闲 ${swap_free_mb}MB，不够构建。"
+    echo "先加一块 2GB Swap，再重新执行本脚本："
+    echo "  fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile"
+    echo "  grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab"
+    exit 1
+  fi
+  echo "==> 可用内存只有 ${mem_avail_mb}MB，使用 ${swap_free_mb}MB Swap 继续。构建会比本机慢。"
 fi
 
 # 只回滚 lockfile，不动 .env 和其他未跟踪文件

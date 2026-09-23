@@ -2,18 +2,29 @@ import { SiteAtmosphere } from "@/components/atmosphere/site-atmosphere";
 import { ThemeProvider } from "@/components/lab/theme-provider";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 
-const geistSans = Geist({
-  subsets: ["latin"],
+/**
+ * 字体文件放在仓库里，不走 next/font/google。
+ *
+ * google 那个加载器在 `next build` 时向 fonts.gstatic.com 拉文件。
+ * 国内 ECS 连不上 Google，连接会停在 D 状态，构建卡在
+ * “Creating an optimized production build”十几分钟，Ctrl+C 也杀不掉。
+ * 这里的写法对齐 geist 包自己的加载方式：可变字体，字重 100–900。
+ */
+const geistSans = localFont({
+  src: "./fonts/Geist-Variable.woff2",
   variable: "--font-geist-sans",
+  weight: "100 900",
 });
 
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
+const geistMono = localFont({
+  src: "./fonts/GeistMono-Variable.woff2",
   variable: "--font-geist-mono",
+  adjustFontFallback: false,
+  weight: "100 900",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://berryice.cn";

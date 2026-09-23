@@ -72,12 +72,6 @@ RootLayout (app/layout.tsx)
       SiteFooter
 ```
 
-## 待办
-
-- **字体本地化**：`app/layout.tsx` 用 `next/font/google` 拉 Geist，构建时要连
-  `fonts.gstatic.com`。站部署在国内 ECS，这会让线上构建随机失败。
-  仓库里已经有 `assets/NotoSansSC-*.ttf`，把 Geist 也换成本地托管。
-
 ## 设计原则
 
 - 暗色主画布 `#08090D`，雨作为统一气候
