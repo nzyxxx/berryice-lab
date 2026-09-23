@@ -4,8 +4,9 @@ const lowMemDeploy = process.env.SKIP_TYPECHECK === "1";
 
 const nextConfig: NextConfig = {
   // 只在发布脚本里生效。本机 yarn build 仍做类型检查、仍用默认并行。
-  // 线上 ≤4G 经济型 ECS：tsc + 默认 4 个静态生成 worker 会把内存顶满，
-  // 机器打进 Swap 后表现为「Running TypeScript」挂十几分钟。
+  // 线上是 2 vCPU / 2 GiB。tsc 再加默认 4 个静态生成 worker 会把内存顶满，
+  // 两颗核都去换页，表现为构建挂住十几分钟。这里跳过 tsc，并且只用 1 个 worker，
+  // 留一颗核给系统和正在跑的站点。
   typescript: {
     ignoreBuildErrors: lowMemDeploy,
   },

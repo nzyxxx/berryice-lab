@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# 线上发布，按 ≤4G 经济型 ECS 来配：不跑 tsc、单 worker、限制 Node 堆。
+# 线上发布，按 2 vCPU / 2 GiB 来配（系统里 MemTotal 大约 1.6 GiB）。
+# 不跑 tsc、单 worker、Node 堆 768MB。堆给到 1024 会把整机挤进 Swap。
 # 在服务器执行：
 #   cd /www/wwwroot/berryice-lab && bash scripts/deploy.sh
 #   或：bash deploy.sh
@@ -28,9 +29,11 @@ if [[ -r /proc/meminfo ]]; then
   swap_free_mb=$(($(awk '/SwapFree:/ {print $2}' /proc/meminfo) / 1024))
 fi
 
-# 给 nginx / 数据库 / 正在跑的站点留余量，禁止 Node 把物理内存吃光
-if (( mem_total_mb > 0 && mem_total_mb <= 2500 )); then
-  heap_mb=1024
+# 2 GiB 规格在系统里通常只看到约 1.6 GiB。堆给 1024 时，
+# Node 一家就占掉三分之二物理内存，nginx 和正在服务的站点只能走 Swap，
+# 两颗核都花在换页上，构建和访问一起变慢。768 让峰值落到 Swap，底座还在内存里。
+if (( mem_total_mb > 0 && mem_total_mb <= 2200 )); then
+  heap_mb=768
 elif (( mem_total_mb <= 4096 )); then
   heap_mb=1536
 else

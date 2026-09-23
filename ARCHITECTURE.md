@@ -2,6 +2,14 @@
 
 一句话：BerryIce 是「三角洲 + 创作」的个人站，雨是统一气候，模块之间各自有分区，不互相串门。
 
+## 运行环境
+
+线上是 **2 vCPU / 2 GiB**。`free` 里 MemTotal 大约 1.6 GiB，因为内核要留一块。这是性能的上限，不是参考值。
+
+- 构建：`scripts/deploy.sh`。跳过 tsc、1 个 worker、Node 堆 768MB。堆不要调回 1024，否则整机会进 Swap。
+- 内存不够时靠一块 2GB Swap 接住峰值，不靠把堆开大。
+- 运行时不另起常驻进程。雨和入场动画的预算见 `DESIGN.md` 第 7 节。
+
 ## 模块
 
 门户只有**三个**去处。模块清单的唯一事实来源是 `lib/site-config.ts` 的 `moduleLinks`，
