@@ -1,9 +1,18 @@
-/** 抓取类端点的统一口令校验：header 或 query 二选一。未配置 CRON_SECRET 时放行，便于本地调试。 */
+import { createHash, timingSafeEqual } from "node:crypto";
+
+/**
+ * 抓取 / cron 写接口的口令校验。
+ * 只认请求头 `x-cron-secret`。查询参数会进访问日志，不再接受。
+ * 未配置 CRON_SECRET 时拒绝，避免线上忘了配密钥就放行。
+ */
 export function isCronAuthorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true;
+  if (!secret) return false;
 
-  if (request.headers.get("x-cron-secret") === secret) return true;
+  const provided = request.headers.get("x-cron-secret");
+  if (!provided) return false;
 
-  return new URL(request.url).searchParams.get("secret") === secret;
+  const providedDigest = createHash("sha256").update(provided).digest();
+  const secretDigest = createHash("sha256").update(secret).digest();
+  return timingSafeEqual(providedDigest, secretDigest);
 }

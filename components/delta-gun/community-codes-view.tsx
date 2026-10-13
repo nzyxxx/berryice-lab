@@ -7,7 +7,6 @@ import {
 } from "@/components/delta-gun/community-code-card";
 import { MotionReveal } from "@/components/lab/motion-reveal";
 import { Panel } from "@/components/lab/module-card";
-import { Button } from "@/components/ui/button";
 import { GameModeTabs } from "@/components/delta-gun/game-mode-tabs";
 import { GAME_MODES, type GameMode } from "@/lib/delta-gun/game-modes";
 import {
@@ -19,7 +18,7 @@ import type { GunType } from "@/lib/types/gun";
 import { cn } from "@/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { AnimatePresence, motion } from "motion/react";
-import { Flame, RefreshCw, Search, Sparkles, TrendingUp } from "lucide-react";
+import { Flame, Search, Sparkles, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -53,7 +52,6 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
   const searchParams = useSearchParams();
   const [communityCodes, setCommunityCodes] = useState<CommunityCodeItem[]>([]);
   const [loadingCodes, setLoadingCodes] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [activeGame, setActiveGame] = useState<GameTab>(() =>
@@ -86,24 +84,6 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
       setLoadingCodes(false);
     }
   }, []);
-
-  const triggerRefresh = async () => {
-    setRefreshing(true);
-    setError("");
-    try {
-      const response = await fetch("/api/gun-codes/refresh", { method: "POST" });
-      const json = await response.json();
-      if (!response.ok || !json.ok) {
-        throw new Error(json.message ?? "刷新失败");
-      }
-      showToast(`已同步 ${json.parsed} 条社区方案`);
-      await loadCodes(activeGame);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "刷新失败");
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   const copyCode = async (code: string) => {
     try {
@@ -198,21 +178,11 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
 
       {showHero && (
         <MotionReveal className="mb-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="text-display-section text-lab-ink">社区改枪码</h1>
-              <p className="mt-2 max-w-xl text-base text-lab-ink-subtle">
-                同步社区热门改枪码，按武器类型筛选，支持搜索与一键导入改枪页。
-              </p>
-            </div>
-            <Button
-              onClick={() => void triggerRefresh()}
-              disabled={refreshing}
-              className="rounded-md bg-lab-primary text-lab-canvas hover:bg-lab-primary-hover"
-            >
-              <RefreshCw className={cn("mr-2 size-4", refreshing && "animate-spin")} />
-              {refreshing ? "同步中…" : "同步最新"}
-            </Button>
+          <div>
+            <h1 className="text-display-section text-lab-ink">社区改枪码</h1>
+            <p className="mt-2 max-w-xl text-base text-lab-ink-subtle">
+              社区热门改枪码由服务端定时同步。可按武器类型筛选，支持搜索与一键导入改枪页。
+            </p>
           </div>
         </MotionReveal>
       )}
@@ -328,13 +298,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
       ) : filteredCodes.length === 0 ? (
         <Panel className="py-16 text-center">
           <p className="text-lg font-medium text-lab-ink">暂无匹配方案</p>
-          <p className="mt-2 text-sm text-lab-ink-subtle">调整筛选或点击同步拉取最新数据</p>
-          <Button
-            className="mt-6 bg-lab-primary hover:bg-lab-primary-hover"
-            onClick={() => void triggerRefresh()}
-          >
-            立即同步
-          </Button>
+          <p className="mt-2 text-sm text-lab-ink-subtle">调整筛选条件。社区枪码由服务端定时同步。</p>
         </Panel>
       ) : (
         <div
