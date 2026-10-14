@@ -64,21 +64,19 @@ if (( mem_avail_mb > 0 && mem_avail_mb < 700 )); then
 fi
 
 # 只回滚 lockfile，不动 .env 和其他未跟踪文件
-git checkout -- yarn.lock package-lock.json 2>/dev/null || true
+git checkout -- yarn.lock 2>/dev/null || true
 git pull origin master
 echo "==> 发布目标 $(git log -1 --oneline)"
 
-if command -v yarn >/dev/null 2>&1; then
-  echo "==> yarn install --frozen-lockfile"
-  yarn install --frozen-lockfile
-  echo "==> yarn build（跳过 tsc、单 worker，等到路由表打完）"
-  yarn build
-else
-  echo "==> npm ci"
-  npm ci
-  echo "==> npm run build（跳过 tsc、单 worker，等到路由表打完）"
-  npm run build
+if ! command -v yarn >/dev/null 2>&1; then
+  echo "发布只使用 yarn（见 package.json 的 packageManager）。当前环境没有 yarn，已中止。"
+  exit 1
 fi
+
+echo "==> yarn install --frozen-lockfile"
+yarn install --frozen-lockfile
+echo "==> yarn build（跳过 tsc、单 worker，等到路由表打完）"
+yarn build
 
 restarted=0
 name="$(basename "$ROOT")"

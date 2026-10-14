@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 
+import { isCronAuthorized } from "@/lib/api/cron-auth";
 import { cleanupGunCodes } from "@/lib/services/gunCodesCleanup";
 import { scrapeGunCodes } from "@/lib/services/gunCodesScraper";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 手动刷新接口：无需鉴权（个人网站直接开放，cron 接口单独保护）
-export async function POST() {
+export async function POST(request: Request) {
+  if (!isCronAuthorized(request)) {
+    return NextResponse.json({ ok: false, message: "未授权" }, { status: 401 });
+  }
+
   try {
     const result = await scrapeGunCodes();
     const deleted = await cleanupGunCodes(30);

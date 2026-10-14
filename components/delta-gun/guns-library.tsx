@@ -1,11 +1,10 @@
 "use client";
 
 import { WeaponPortrait } from "@/components/delta-gun/weapon-portrait";
-import { Button } from "@/components/ui/button";
 import { weaponTypeLabel } from "@/lib/delta-gun/weapon-utils";
 import type { Gun, GunType } from "@/lib/types/gun";
 import { cn } from "@/lib/utils";
-import { RefreshCw, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -24,7 +23,6 @@ const TYPE_FILTERS: { key: "all" | GunType; label: string }[] = [
 export function GunsLibrary({ guns }: { guns: Gun[] }) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | GunType>("all");
-  const [refreshing, setRefreshing] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -48,41 +46,17 @@ export function GunsLibrary({ guns }: { guns: Gun[] }) {
     return map;
   }, [guns]);
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    try {
-      const res = await fetch("/api/weapons/refresh", { method: "POST" });
-      const json = await res.json();
-      if (json.ok) window.location.reload();
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   return (
     <div className="mt-8 space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative min-w-0 flex-1 sm:max-w-md">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-lab-ink-tertiary" />
-          <input
-            type="search"
-            placeholder="搜索枪械名称…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="h-10 w-full rounded-md border border-lab-hairline bg-lab-surface-1 pr-3 pl-10 text-sm outline-none focus:border-lab-primary/50 focus:ring-2 focus:ring-lab-primary/20"
-          />
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={refreshing}
-          className="shrink-0 border-lab-hairline"
-          onClick={() => void handleRefresh()}
-        >
-          <RefreshCw className={cn("mr-2 size-4", refreshing && "animate-spin")} />
-          {refreshing ? "同步中…" : "同步枪械数据"}
-        </Button>
+      <div className="relative min-w-0 max-w-md">
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-lab-ink-tertiary" />
+        <input
+          type="search"
+          placeholder="搜索枪械名称…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="h-10 w-full rounded-md border border-lab-hairline bg-lab-surface-1 pr-3 pl-10 text-sm outline-none focus:border-lab-primary/50 focus:ring-2 focus:ring-lab-primary/20"
+        />
       </div>
 
       <div className="flex flex-wrap gap-2">

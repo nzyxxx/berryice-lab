@@ -113,7 +113,7 @@ export default async function GunDetailPage({ params }: PageProps) {
             <WeaponStatsPanel stats={gun.stats} />
           ) : (
             <p className="text-sm text-lab-ink-tertiary">
-              暂无该武器的详细数值，可点击「同步枪械数据」后重试。
+              暂无该武器的详细数值。枪械数据由服务端同步。
             </p>
           )}
         </div>

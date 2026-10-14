@@ -58,7 +58,7 @@ export function StreamersView({ streamers }: { streamers: StoredStreamer[] }) {
       <Panel className="py-16 text-center">
         <p className="text-lg font-medium text-lab-ink">还没有主播数据</p>
         <p className="mt-2 text-sm text-lab-ink-subtle">
-          等待每日定时任务同步，或在服务端手动触发 <code className="font-mono">/api/streamers/refresh</code>
+          等待每日定时任务同步。
         </p>
       </Panel>
     );

@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 
+import { isCronAuthorized } from "@/lib/api/cron-auth";
 import { scrapeAndSaveWeapons } from "@/lib/services/weaponsScraper";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-export async function POST() {
+export async function POST(request: Request) {
+  if (!isCronAuthorized(request)) {
+    return NextResponse.json({ ok: false, message: "未授权" }, { status: 401 });
+  }
+
   try {
     const result = await scrapeAndSaveWeapons();
     return NextResponse.json({

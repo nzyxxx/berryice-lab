@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BerryIce Lab
 
-## Getting Started
+个人站（三角洲改枪、写作、关于）。包管理器是 **Yarn 1.22.22**（`package.json` 的 `packageManager`）。不要再提交 `package-lock.json`。
 
-First, run the development server:
+## 本地
 
 ```bash
-npm run dev
-# or
+yarn install --frozen-lockfile
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000)。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+枪械数据不经过 HTTP，在仓库里直接跑：
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+yarn sync:weapons
+```
 
-## Learn More
+## 发布
 
-To learn more about Next.js, take a look at the following resources:
+线上是 2 vCPU / 2 GiB，用 nginx + pm2，按 `scripts/deploy.sh` 发布，不是 Vercel。脚本只认 yarn：`yarn install --frozen-lockfile` 然后 `yarn build`。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 定时刷新
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+下面这些写接口必须带口令，未配置 `CRON_SECRET` 时一律 401：
 
-## Deploy on Vercel
+- `POST /api/weapons/refresh`
+- `POST /api/gun-codes/refresh`
+- `POST /api/streamers/refresh`
+- `GET /api/cron/gun-codes`
+- `GET /api/cron/streamers`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+在服务器的项目 `.env` 或 pm2 环境里设置 `CRON_SECRET`（长随机串），改完重启进程。只接受请求头 `x-cron-secret`，不要再把密钥放在 `?secret=` 里（会进访问日志）。页面上的「同步」按钮已去掉，浏览器不能带这个口令。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+curl -fsS -H "x-cron-secret: $CRON_SECRET" https://berryice.cn/api/cron/gun-codes
+curl -fsS -X POST -H "x-cron-secret: $CRON_SECRET" https://berryice.cn/api/weapons/refresh
+```
