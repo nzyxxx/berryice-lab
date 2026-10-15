@@ -6,42 +6,25 @@ import { weaponTypeShortLabel } from "@/lib/delta-gun/weapon-utils";
 import type { Gun } from "@/lib/types/gun";
 import { useState } from "react";
 
+const LOCAL_ART = new Set(["ak-12", "akm", "m4a1", "awm", "sr-25", "vector", "mp5", "bizon", "m249", "ci-19"]);
+
 const STAT_LABELS: { key: keyof NonNullable<Gun["stats"]>; label: string }[] = [
-  { key: "meatHarm", label: "肉体伤害" },
-  { key: "armorHarm", label: "护甲伤害" },
+  { key: "meatHarm", label: "伤害" },
   { key: "shootDistance", label: "射程" },
   { key: "control", label: "操控" },
-  { key: "stable", label: "稳定" },
-  { key: "recoil", label: "后坐" },
 ];
 
 function toCards(guns: Gun[]): RingCard[] {
-  return guns.slice(0, 14).map((gun) => ({
+  return guns.map((gun) => ({
     id: gun.id,
     kicker: weaponTypeShortLabel(gun.type),
     title: gun.name,
-    line: gun.description?.slice(0, 28) || "点开看属性",
-    back: (
-      <span className="flex h-full flex-col justify-between text-left">
-        <span>
-          <span className="block text-lg font-semibold text-lab-ink">{gun.name}</span>
-          <span className="mt-3 block space-y-1.5">
-            {STAT_LABELS.map(({ key, label }) => {
-              const value = gun.stats?.[key];
-              return (
-                <span key={key} className="flex justify-between text-xs text-lab-ink-subtle">
-                  <span>{label}</span>
-                  <span className="text-lab-ink">{value ?? "—"}</span>
-                </span>
-              );
-            })}
-          </span>
-        </span>
-        <a href={`/delta-gun/guns/${gun.id}`} className="text-sm text-lab-primary">
-          打开枪械页
-        </a>
-      </span>
-    ),
+    imageUrl: LOCAL_ART.has(gun.id) ? `/arsenal/${gun.id}.webp` : gun.imageUrl,
+    href: `/delta-gun/guns/${gun.id}`,
+    stats: STAT_LABELS.flatMap(({ key, label }) => {
+      const value = gun.stats?.[key];
+      return value == null ? [] : [{ label, value: String(value) }];
+    }),
   }));
 }
 
@@ -49,7 +32,7 @@ export function GunRing({ guns }: { guns: Gun[] }) {
   const [list, setList] = useState(false);
   return (
     <div className="mt-8">
-      <GlassRing cards={toCards(guns)} label={`环上 ${Math.min(14, guns.length)} 把，列表里是全部`} />
+      <GlassRing cards={toCards(guns)} label="拖动、滚轮或方向键换枪。前面那张才是正文。" />
       <button
         type="button"
         onClick={() => setList((value) => !value)}

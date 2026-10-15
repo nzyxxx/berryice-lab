@@ -158,23 +158,13 @@ export function StreamerLoadouts({ loadouts }: { loadouts: StoredStreamerLoadout
               id: String(item.id),
               kicker: item.game,
               title: item.weapon,
-              line: item.season || "本季",
-              back: (
-                <span className="flex h-full flex-col justify-between text-left">
-                  <span>
-                    <span className="block text-base font-semibold text-lab-ink">{item.weapon}</span>
-                    <span className="mt-2 block font-mono text-[11px] leading-relaxed break-all text-lab-ink-subtle">{item.fullCode}</span>
-                    <span className="mt-2 block text-xs text-lab-ink-subtle">{(item.focusTags ?? []).join(" · ") || "方向未标"}</span>
-                    <span className="mt-1 block text-xs text-lab-ink">
-                      {"★".repeat(item.recommendation ?? 0)}
-                      {item.rankPosition ? ` · #${item.rankPosition}` : " · 未入榜"}
-                    </span>
-                  </span>
-                  <button type="button" className="h-11 text-left text-sm text-lab-primary" onClick={() => void copyCode(item.fullCode)}>
-                    复制枪码
-                  </button>
-                </span>
-              ),
+              actionLabel: "复制枪码",
+              onAction: () => void copyCode(item.fullCode),
+              stats: [
+                { label: "方向", value: (item.focusTags ?? []).slice(0, 2).join(" · ") || "未标" },
+                { label: "推荐", value: item.recommendation ? "★".repeat(Math.min(5, item.recommendation)) : "—" },
+                { label: "排行", value: item.rankPosition ? `#${item.rankPosition}` : "未入榜" },
+              ],
             };
           })}
         />

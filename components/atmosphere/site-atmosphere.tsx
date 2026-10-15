@@ -12,19 +12,20 @@ import { usePathname } from "next/navigation";
  * 雨丝精灵重新光栅化、几百条雨丝重新播种、闪电的待触发定时器被清掉。
  * 点击起来发涩，雨也从零重来 —— 一场连续的天气被切成一段一段。
  *
- * 雨势由这层自己读路由决定，而不是让每个页面传参：
- * 页面配置气候就得把 props 一路传下去，且换页必然重挂。
+ * 雨和闪电只留在首页。别的页面不再挂这层，底边的雨溅也不会跟过去。
  */
 export function SiteAtmosphere() {
   const pathname = usePathname();
-
-  // 三角洲那几页信息密度高，雨压小一点免得跟内容抢注意力
-  const density = pathname.startsWith("/delta-gun") ? "low" : "normal";
+  const home = pathname === "/";
 
   return (
     <>
-      <RainField density={density} />
-      <LightningFlash />
+      {home ? (
+        <>
+          <RainField />
+          <LightningFlash />
+        </>
+      ) : null}
       <ScrollAffordances />
     </>
   );
