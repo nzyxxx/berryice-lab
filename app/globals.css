@@ -645,6 +645,17 @@ html.home-motion [data-reveal].is-shown {
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 
+.dash-aurora {
+  position: absolute;
+  inset: -45%;
+  animation: dash-aurora 18s ease-in-out infinite alternate;
+}
+
+@keyframes dash-aurora {
+  from { transform: translate3d(-8%, -6%, 0) scale(1.12); }
+  to { transform: translate3d(8%, 6%, 0) scale(1.28); }
+}
+
 @keyframes home-rise {
   from {
     opacity: 0.4;
