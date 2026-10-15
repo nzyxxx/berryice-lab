@@ -1,6 +1,22 @@
 /** 当前赛季。线上用 NEXT_PUBLIC_DELTA_SEASON 覆盖，例如 S7。 */
 export const CURRENT_SEASON = process.env.NEXT_PUBLIC_DELTA_SEASON || "当季";
 
+/** 从「S11」或「S11 群星」里取出赛季号。对不上就返回空字符串。 */
+export function seasonToken(value: string | null | undefined): string {
+  const match = String(value ?? "").toUpperCase().match(/S\d+/);
+  return match?.[0] ?? "";
+}
+
+/** 赛季号相同即视为同一季。没有赛季号时才退回整段文字相等。 */
+export function sameSeason(rowSeason: string | null | undefined, current: string | null | undefined): boolean {
+  const row = String(rowSeason ?? "").trim();
+  const wanted = String(current ?? "").trim();
+  const rowToken = seasonToken(row);
+  const wantedToken = seasonToken(wanted);
+  if (rowToken && wantedToken) return rowToken === wantedToken;
+  return row !== "" && row === wanted;
+}
+
 /** 没有赛季标记时，超过这个天数视为过季。 */
 export const SEASON_FRESH_DAYS = 45;
 
@@ -45,8 +61,11 @@ export function isStaleCode(input: { season?: string | null; postedAt?: string |
   const current = CURRENT_SEASON.trim();
   // 「当季」是还没写具体赛季号时的占位。这时相信枪码自己标的赛季，避免 S11 被一律打成过季。
   const currentIsPlaceholder = current === "" || current === "当季";
-  if (season && !currentIsPlaceholder && season !== current) return true;
-  if (season && (currentIsPlaceholder || season === current)) return false;
+  const rowToken = seasonToken(season);
+  const currentToken = seasonToken(current);
+  if (rowToken && currentToken) return rowToken !== currentToken;
+  if (season && !currentIsPlaceholder && !sameSeason(season, current)) return true;
+  if (season && (currentIsPlaceholder || sameSeason(season, current))) return false;
   if (!input.postedAt) return true;
   const posted = new Date(input.postedAt).getTime();
   if (Number.isNaN(posted)) return true;

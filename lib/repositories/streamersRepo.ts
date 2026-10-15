@@ -72,7 +72,8 @@ const LOADOUT_COLUMNS =
   "id, remote_id, streamer_slug, title, weapon, game, full_code, value_text, copy_count, source, collected_at, focus_tags, recommendation, season, posted_at, source_url, archived";
 
 function visibleLoadoutCountSql(slugColumn: string): string {
-  return `(SELECT COUNT(*) FROM streamer_loadouts l WHERE l.streamer_slug = ${slugColumn} AND l.archived = 0 AND l.season = '${VERIFIED_STREAMER_SEASON}')`;
+  const token = VERIFIED_STREAMER_SEASON.replace(/[^A-Za-z0-9]/g, "");
+  return `(SELECT COUNT(*) FROM streamer_loadouts l WHERE l.streamer_slug = ${slugColumn} AND l.archived = 0 AND l.season LIKE '${token}%')`;
 }
 
 export async function ensureStreamerTables(): Promise<void> {
@@ -427,13 +428,16 @@ export async function archiveStreamerLoadoutsExcept(
   const safeIds = [...new Set(keepRemoteIds.filter((id) => Number.isInteger(id) && id > 0))];
   if (safeIds.length === 0) return 0;
 
+  const prefix = `${season.replace(/[^A-Za-z0-9]/g, "")}%`;
+  if (!prefix || prefix === "%") return 0;
+
   if (getDialect() === "postgres") {
     const result = await getPgPool().query(
       `UPDATE streamer_loadouts
        SET archived = 1
        WHERE archived = 0
-         AND NOT (season = $1 AND remote_id = ANY($2::bigint[]))`,
-      [season, safeIds]
+         AND NOT (season LIKE $1 AND remote_id = ANY($2::bigint[]))`,
+      [prefix, safeIds]
     );
     return result.rowCount ?? 0;
   }
@@ -443,8 +447,8 @@ export async function archiveStreamerLoadoutsExcept(
     `UPDATE streamer_loadouts
      SET archived = 1
      WHERE archived = 0
-       AND NOT (season = ? AND remote_id IN (${placeholders}))`,
-    [season, ...safeIds]
+       AND NOT (season LIKE ? AND remote_id IN (${placeholders}))`,
+    [prefix, ...safeIds]
   );
   return result.affectedRows;
 }
@@ -465,9 +469,9 @@ export async function pruneStreamerLoadouts(
       `UPDATE streamer_loadouts
        SET archived = 1
        WHERE streamer_slug = $1
-         AND season <> $2
+         AND season NOT LIKE $2
          AND remote_id <> ALL($3::bigint[])`,
-      [streamerSlug, VERIFIED_STREAMER_SEASON, safeIds]
+      [streamerSlug, `${VERIFIED_STREAMER_SEASON}%`, safeIds]
     );
     return result.rowCount ?? 0;
   }
@@ -477,9 +481,9 @@ export async function pruneStreamerLoadouts(
     `UPDATE streamer_loadouts
      SET archived = 1
      WHERE streamer_slug = ?
-       AND season <> ?
+       AND season NOT LIKE ?
        AND remote_id NOT IN (${placeholders})`,
-    [streamerSlug, VERIFIED_STREAMER_SEASON, ...safeIds]
+    [streamerSlug, `${VERIFIED_STREAMER_SEASON}%`, ...safeIds]
   );
   return result.affectedRows;
 }
@@ -535,18 +539,18 @@ export async function listStreamerLoadouts(slug: string): Promise<StoredStreamer
   if (getDialect() === "postgres") {
     const result = await getPgPool().query(
       `SELECT ${LOADOUT_COLUMNS} FROM streamer_loadouts
-       WHERE streamer_slug = $1 AND archived = 0 AND season = $2
+       WHERE streamer_slug = $1 AND archived = 0 AND season LIKE $2
        ORDER BY posted_at DESC NULLS LAST, id ASC`,
-      [slug, VERIFIED_STREAMER_SEASON]
+      [slug, `${VERIFIED_STREAMER_SEASON}%`]
     );
     return result.rows.map((row) => mapLoadout(row));
   }
 
   const [rows] = await getMySqlPool().query<mysql.RowDataPacket[]>(
     `SELECT ${LOADOUT_COLUMNS} FROM streamer_loadouts
-     WHERE streamer_slug = ? AND archived = 0 AND season = ?
+     WHERE streamer_slug = ? AND archived = 0 AND season LIKE ?
      ORDER BY posted_at DESC, id ASC`,
-    [slug, VERIFIED_STREAMER_SEASON]
+    [slug, `${VERIFIED_STREAMER_SEASON}%`]
   );
   return rows.map((row) => mapLoadout(row as unknown as Record<string, unknown>));
 }

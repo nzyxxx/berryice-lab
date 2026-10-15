@@ -46,3 +46,17 @@ export function getMySqlPool(): mysql.Pool {
   }
   return mySqlPool;
 }
+
+/** 脚本跑完必须关掉连接池，否则进程会一直挂着。 */
+export async function closeDbPools(): Promise<void> {
+  const closing: Promise<unknown>[] = [];
+  if (pgPool) {
+    closing.push(pgPool.end());
+    pgPool = null;
+  }
+  if (mySqlPool) {
+    closing.push(mySqlPool.end());
+    mySqlPool = null;
+  }
+  await Promise.all(closing);
+}

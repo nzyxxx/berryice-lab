@@ -5,8 +5,8 @@
  *   npx tsx scripts/import-streamer-codes.ts data/streamer-codes-s11.json
  *
  * 需要 DATABASE_URL。同一条「主播 + 枪码」重复导入会更新，不会再插一行。
- * 不在这份名单里的旧方案，以及赛季不是 S11 的方案，只标 archived=1，不删除。
- * 主播改枪页只读 archived=0 且 season=S11 的行。
+ * 这份 JSON 里出现最多的赛季号（例如 S11）就是本季。「S11 群星」和「S11」算同一季。
+ * 不在这份名单里、或赛季号对不上的旧方案，只标 archived=1，不删除。
  *
  * 每条至少要有 streamer、weapon、code。其余字段：
  * mode / game、source_url、posted_at、note、focus / focus_tags、rating、season。
@@ -15,8 +15,9 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { closeDbPools } from "../lib/db";
 import { normalizeGameMode } from "../lib/delta-gun/game-modes";
-import { clampRecommendation, parseFocusTags } from "../lib/delta-gun/season";
+import { clampRecommendation, parseFocusTags, sameSeason, seasonToken } from "../lib/delta-gun/season";
 import {
   archiveStreamerLoadoutsExcept,
   ensureStreamerTables,
@@ -173,9 +174,24 @@ async function main(): Promise<void> {
   const rows = normalizeStreamerCodes(raw);
   if (rows.length === 0) throw new Error(`${file} 里没有可导入的枪码，已停止，避免把现有方案全部归档`);
 
+  const seasonCounts = new Map<string, number>();
+  for (const row of rows) {
+    const token = seasonToken(row.season);
+    if (!token) continue;
+    seasonCounts.set(token, (seasonCounts.get(token) ?? 0) + 1);
+  }
+  let currentToken = VERIFIED_STREAMER_SEASON;
+  let currentCount = 0;
+  for (const [token, count] of seasonCounts) {
+    if (count > currentCount) {
+      currentToken = token;
+      currentCount = count;
+    }
+  }
+
   const loadoutsByRemote = new Map<number, StreamerLoadoutRecord>();
   for (const row of rows) {
-    const visible = row.season === VERIFIED_STREAMER_SEASON;
+    const visible = sameSeason(row.season, currentToken);
     const id = remoteId(row.streamer, row.code);
     const previous = loadoutsByRemote.get(id);
     if (previous && !previous.archived && !visible) continue;
@@ -207,7 +223,7 @@ async function main(): Promise<void> {
       name: row.streamer,
       roles: ["主播"],
       signatureWeapon: prev?.signatureWeapon || row.weapon,
-      bio: `${VERIFIED_STREAMER_SEASON} 核对方案`,
+      bio: `${currentToken} 核对方案`,
       platform: row.platform,
       accentColor: "#9aa4b2",
       avatarInitial: row.streamer.slice(0, 1),
@@ -224,17 +240,30 @@ async function main(): Promise<void> {
   const streamerCount = await upsertStreamers([...streamers.values()]);
   const loadoutCount = await upsertVerifiedStreamerLoadouts(loadouts);
   const visibleIds = loadouts.filter((item) => !item.archived).map((item) => item.remoteId);
-  const archived = await archiveStreamerLoadoutsExcept(VERIFIED_STREAMER_SEASON, visibleIds);
+  const archived = await archiveStreamerLoadoutsExcept(currentToken, visibleIds);
   const hiddenInFile = loadouts.length - visibleIds.length;
   console.log(
-    `导入 ${loadouts.length} 条（页面展示 ${visibleIds.length}，文件内非 ${VERIFIED_STREAMER_SEASON} ${hiddenInFile}），主播 ${streamerCount}，方案写入 ${loadoutCount}，另外归档 ${archived} 条旧方案`
+    `导入 ${loadouts.length} 条（本季 ${currentToken}，页面展示 ${visibleIds.length}，文件内其他赛季 ${hiddenInFile}），主播 ${streamerCount}，方案写入 ${loadoutCount}，另外归档 ${archived} 条旧方案`
   );
 }
 
 const isDirectRun = process.argv[1]?.includes("import-streamer-codes");
 if (isDirectRun) {
-  main().catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : error);
-    process.exit(1);
-  });
+  main()
+    .then(() => {
+      process.exitCode = 0;
+    })
+    .catch((error: unknown) => {
+      console.error(error instanceof Error ? error.message : error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      try {
+        await closeDbPools();
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : error);
+        process.exitCode = 1;
+      }
+      process.exit(process.exitCode ?? 0);
+    });
 }
