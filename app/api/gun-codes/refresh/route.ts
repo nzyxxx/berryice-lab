@@ -20,6 +20,7 @@ export async function POST(request: Request) {
       parsed: result.parsed,
       inserted: result.summary.inserted,
       updated: result.summary.updated,
+      skipped: result.summary.skipped,
       deleted,
     });
   } catch (error) {
