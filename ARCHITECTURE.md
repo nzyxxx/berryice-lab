@@ -42,6 +42,8 @@ ICP / 版权在页脚。首页不放 GitHub 账号，也不放本站源码。禁
 
 比较用的三套方向在 `/preview/a`（便当格）、`/preview/b`（编辑）、`/preview/c`（画廊）。它们只读 `homeModules`，不替换 `/`。
 
+`/preview/ocean` 是流冰入海的滚动预览，`/preview/arsenal` 是枪械环。两页都不进首页，滚动监听只活在自己的客户端组件里。
+
 ## 子页结构
 
 三角洲总览（`/delta-gun`）保留：Brief / Missions / Feed。
