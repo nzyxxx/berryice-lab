@@ -15,7 +15,7 @@ type Dot = {
   crown: number;
 };
 
-const FLATTEN = 0.8;
+const FLATTEN = 0.74;
 
 function mix(a: readonly number[], b: readonly number[], t: number) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -51,23 +51,34 @@ const DOTS: Dot[] = (() => {
   const golden = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < count; i += 1) {
     const ySphere = 1 - (i / (count - 1)) * 2;
+    if (ySphere < -0.62) continue;
     const ring = Math.sqrt(Math.max(0, 1 - ySphere * ySphere));
     const theta = golden * i;
     let y = ySphere * FLATTEN;
-    if (ySphere < -0.76) {
-      const dent = Math.min(1, (-0.76 - ySphere) / 0.24);
-      y += (-0.5 - y) * dent * 0.72;
+    if (ySphere < -0.4) {
+      const dent = Math.min(1, (-0.4 - ySphere) / 0.22);
+      y += (-0.16 - y) * dent;
     }
     dots.push(dot(Math.cos(theta) * ring, y, Math.sin(theta) * ring, 0));
   }
 
-  const samples = 50;
-  for (let i = 0; i < samples; i += 1) {
-    const theta = (i / samples) * Math.PI * 2 - Math.PI / 2;
-    const lobe = 0.5 + 0.5 * Math.cos(5 * theta);
-    const radius = 0.06 + lobe * 0.2;
-    const y = -0.7 - lobe * 0.16;
-    dots.push(dot(Math.cos(theta) * radius, y, Math.sin(theta) * radius, 1));
+  const tips = 5;
+  const verts = Array.from({ length: tips * 2 }, (_, i) => {
+    const ang = -Math.PI / 2 + (i * Math.PI) / tips;
+    const radius = i % 2 === 0 ? 0.46 : 0.16;
+    return { x: Math.cos(ang) * radius, z: Math.sin(ang) * radius, tip: i % 2 === 0 };
+  });
+  for (let i = 0; i < verts.length; i += 1) {
+    const a = verts[i]!;
+    const b = verts[(i + 1) % verts.length]!;
+    const steps = 6;
+    for (let s = 0; s < steps; s += 1) {
+      const t = s / steps;
+      const x = a.x + (b.x - a.x) * t;
+      const z = a.z + (b.z - a.z) * t;
+      const proud = a.tip ? 1 - t : t;
+      dots.push(dot(x, -0.36 - proud * 0.14, z, 1));
+    }
   }
   return dots;
 })();
@@ -109,7 +120,7 @@ export function HalftoneMark({ className }: { className?: string }) {
       const w = cssW;
       const h = cssH;
       const cx = w * 0.5;
-      const cy = h * 0.52;
+      const cy = h * 0.5;
       const radius = Math.min(w, h) * 0.42;
       const breath = 0.5 + 0.5 * Math.sin(angle * 0.55);
       ctx.clearRect(0, 0, w, h);
@@ -160,8 +171,8 @@ export function HalftoneMark({ className }: { className?: string }) {
         const light = Math.max(0, x * 0.32 + y * -0.22 + z * 0.9);
         const lit = light * light;
         const shade = Math.min(15, (lit * 15) | 0);
-        const alpha = (item.crown ? 0.55 + lit * 0.45 : 0.14 + lit * 0.86) * (0.55 + depth * 0.28);
-        const size = (item.crown ? 0.95 + lit * 1.35 : 0.7 + lit * 1.45) * depth * (0.92 + breath * 0.08);
+        const alpha = (item.crown ? 0.78 + lit * 0.22 : 0.32 + lit * 0.68) * (0.62 + depth * 0.22);
+        const size = (item.crown ? 1.15 + lit * 1.2 : 0.85 + lit * 1.35) * depth * (0.92 + breath * 0.08);
         ctx.globalAlpha = Math.min(1, alpha);
         ctx.fillStyle = item.crown ? CROWN_COLORS[shade]! : BODY_COLORS[shade]!;
         ctx.beginPath();
