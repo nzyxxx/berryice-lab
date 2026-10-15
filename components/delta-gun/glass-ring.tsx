@@ -48,7 +48,7 @@ type Metrics = {
 const DESKTOP: Metrics = {
   window: 3,
   width: 200,
-  height: 318,
+  height: 372,
   slots: [0, 196, 360, 496],
   scales: [1, 0.82, 0.68, 0.56],
 };
@@ -56,7 +56,7 @@ const DESKTOP: Metrics = {
 const MOBILE: Metrics = {
   window: 1,
   width: 200,
-  height: 300,
+  height: 352,
   slots: [0, 200],
   scales: [1, 0.88],
 };
@@ -243,7 +243,7 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label: string }
 
   return (
     <div className="mb-8">
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-lab-ink-subtle">{label}</p>
         <div className="flex rounded-full border border-white/10 p-1">
           {(["cover", "list"] as const).map((key) => (
@@ -320,9 +320,9 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label: string }
                   className="flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c1018]/75 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-lg"
                 >
                   <CardArt src={card.imageUrl} />
-                  <div className="flex min-h-0 flex-1 flex-col px-3.5 pb-3.5">
+                  <div className="flex min-h-0 flex-1 flex-col px-3.5 pt-2 pb-3">
                     <p className="truncate text-[11px] tracking-[0.14em] text-lab-ink-subtle">{card.kicker}</p>
-                    <p className={cn("mt-1 font-semibold tracking-tight text-lab-ink", card.imageUrl ? "truncate text-base" : "line-clamp-2 text-xl")}>
+                    <p className="mt-1 line-clamp-2 shrink-0 text-base font-semibold leading-snug tracking-tight text-lab-ink">
                       {card.title}
                     </p>
                     {quiet ? null : (
@@ -358,13 +358,15 @@ function CardArt({ src }: { src?: string }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) return null;
   return (
-    <img
-      src={src}
-      alt=""
-      draggable={false}
-      className="h-[52%] w-full object-contain px-3 pt-3"
-      onError={() => setFailed(true)}
-    />
+    <div className="flex h-44 shrink-0 items-center justify-center px-3 pt-4">
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        className="max-h-full max-w-full object-contain"
+        onError={() => setFailed(true)}
+      />
+    </div>
   );
 }
 
