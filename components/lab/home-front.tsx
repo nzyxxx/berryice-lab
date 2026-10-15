@@ -6,7 +6,7 @@ import { profileConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight, Crosshair } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, type PointerEvent } from "react";
+import { useEffect, type PointerEvent } from "react";
 
 const cardClass =
   "home-card group relative flex h-full flex-col rounded-3xl border border-lab-hairline bg-lab-surface-1/80 px-7 py-8 backdrop-blur-md dark:bg-lab-surface-2/70";
@@ -158,8 +158,6 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
 
 export function HomeFront() {
   const { displayName, latinName } = profileConfig;
-  const ringRef = useRef<HTMLDivElement>(null);
-  const dotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 768px) and (pointer: fine)").matches;
@@ -170,10 +168,8 @@ export function HomeFront() {
     root.classList.add("home-motion");
     let dead = false;
     let lenisRaf = 0;
-    let cursorRaf = 0;
     let lenis: { raf: (time: number) => void; destroy: () => void; velocity: number; on: (event: "scroll", cb: () => void) => void } | null = null;
     let calm = 0;
-    const cursor = { x: 0, y: 0, rx: 0, ry: 0, tx: 0, ty: 0 };
 
     const nodes = [...document.querySelectorAll<HTMLElement>("[data-reveal]")];
     const seen = new IntersectionObserver(
@@ -204,31 +200,6 @@ export function HomeFront() {
       if (!lenisRaf) lenisRaf = requestAnimationFrame(pumpLenis);
     };
 
-    const pumpCursor = () => {
-      cursor.x += (cursor.tx - cursor.x) * 0.55;
-      cursor.y += (cursor.ty - cursor.y) * 0.55;
-      cursor.rx += (cursor.tx - cursor.rx) * 0.16;
-      cursor.ry += (cursor.ty - cursor.ry) * 0.16;
-      const dot = dotRef.current;
-      const ring = ringRef.current;
-      if (dot) dot.style.transform = `translate3d(${cursor.x}px, ${cursor.y}px, 0)`;
-      if (ring) ring.style.transform = `translate3d(${cursor.rx}px, ${cursor.ry}px, 0)`;
-      const left = Math.hypot(cursor.tx - cursor.x, cursor.ty - cursor.y) + Math.hypot(cursor.tx - cursor.rx, cursor.ty - cursor.ry);
-      cursorRaf = left > 0.5 ? requestAnimationFrame(pumpCursor) : 0;
-    };
-    const onPointer = (event: globalThis.PointerEvent) => {
-      cursor.tx = event.clientX;
-      cursor.ty = event.clientY;
-      const target = event.target instanceof Element ? event.target : null;
-      const hot = Boolean(target?.closest("a, button"));
-      dotRef.current?.classList.add("is-on");
-      ringRef.current?.classList.add("is-on");
-      dotRef.current?.classList.toggle("is-hot", hot);
-      ringRef.current?.classList.toggle("is-hot", hot);
-      if (!cursorRaf) cursorRaf = requestAnimationFrame(pumpCursor);
-    };
-
-    window.addEventListener("pointermove", onPointer, { passive: true });
     window.addEventListener("wheel", kickLenis, { passive: true });
 
     void import("lenis").then(({ default: Lenis }) => {
@@ -242,8 +213,6 @@ export function HomeFront() {
       root.classList.remove("home-motion");
       seen.disconnect();
       cancelAnimationFrame(lenisRaf);
-      cancelAnimationFrame(cursorRaf);
-      window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("wheel", kickLenis);
       lenis?.destroy();
     };
@@ -251,8 +220,6 @@ export function HomeFront() {
 
   return (
     <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-6">
-      <div ref={dotRef} className="home-cursor home-cursor-dot" aria-hidden />
-      <div ref={ringRef} className="home-cursor home-cursor-ring" aria-hidden />
       <header className="flex min-h-[72vh] flex-col justify-end pb-10 pt-16">
         <div className="flex items-center gap-6 sm:gap-10">
           <HalftoneMark />

@@ -3,6 +3,7 @@
 import { ClickPulse } from "@/components/atmosphere/click-pulse";
 import { LightningFlash } from "@/components/atmosphere/lightning-flash";
 import { RainField } from "@/components/atmosphere/rain-field";
+import { WaterRipple } from "@/components/atmosphere/water-ripple";
 import { ScrollAffordances } from "@/components/lab/scroll-affordances";
 import { usePathname } from "next/navigation";
 
@@ -25,6 +26,7 @@ export function SiteAtmosphere() {
   return (
     <>
       <RainField density={density} />
+      <WaterRipple enabled={pathname === "/"} />
       <LightningFlash />
       <ClickPulse />
       <ScrollAffordances />

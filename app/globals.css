@@ -580,42 +580,17 @@ html.bolt .animate-rain-layer {
   filter: drop-shadow(0 0 18px color-mix(in oklab, currentColor 80%, transparent));
 }
 
-html.home-motion:has(.home-cursor.is-on),
-html.home-motion:has(.home-cursor.is-on) * {
-  cursor: none;
-}
-
-.home-cursor {
+.water-ripple {
   position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 90;
-  border-radius: 999px;
+  inset: 0;
+  z-index: 1;
   pointer-events: none;
-  opacity: 0;
+  mix-blend-mode: screen;
 }
-html.home-motion .home-cursor.is-on {
-  opacity: 1;
-}
-.home-cursor-dot {
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
-  background: var(--lab-primary);
-  box-shadow: 0 0 12px color-mix(in oklab, var(--lab-primary) 70%, transparent);
-}
-.home-cursor-ring {
-  width: 36px;
-  height: 36px;
-  margin: -18px 0 0 -18px;
-  border: 1px solid var(--lab-primary);
-  box-shadow: 0 0 18px color-mix(in oklab, var(--lab-primary) 45%, transparent);
-}
-.home-cursor-ring.is-hot {
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px;
-  background: color-mix(in oklab, var(--lab-primary) 18%, transparent);
+.water-ripple canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .home-bento {
