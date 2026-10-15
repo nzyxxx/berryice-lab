@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Bookmark, Crosshair, LayoutGrid, Mic2, Users } from "lucide-react";
+import { Bookmark, Crosshair, LayoutGrid, ListOrdered, Mic2, Users } from "lucide-react";
 
 export interface DeltaNavItem {
   href: string;
@@ -22,6 +22,12 @@ export const DELTA_NAV: DeltaNavItem[] = [
     icon: Crosshair,
   },
   {
+    href: "/delta-gun/ranks",
+    label: "版本排行",
+    description: "本季武器名次",
+    icon: ListOrdered,
+  },
+  {
     href: "/delta-gun/community",
     label: "社区改枪码",
     description: "热门方案 · 搜索 · 一键导入",
@@ -36,7 +42,7 @@ export const DELTA_NAV: DeltaNavItem[] = [
   {
     href: "/delta-gun/my-loadouts",
     label: "我的枪码",
-    description: "本地保存的改枪配置",
+    description: "站长收藏的改枪码",
     icon: Bookmark,
   },
 ];

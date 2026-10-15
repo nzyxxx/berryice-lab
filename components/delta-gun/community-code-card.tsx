@@ -1,6 +1,8 @@
 "use client";
 
+import { CodeMetaRow } from "@/components/delta-gun/code-meta-row";
 import { WeaponPortrait } from "@/components/delta-gun/weapon-portrait";
+import { isStaleCode } from "@/lib/delta-gun/season";
 import { getGameModeTheme } from "@/lib/delta-gun/game-mode-theme";
 import { buildGunImportUrl } from "@/lib/delta-gun/weapon-utils";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,11 @@ export interface CommunityCodeItem {
   author?: string;
   source?: string;
   sourceUrl?: string;
+  focusTags?: string[];
+  recommendation?: number | null;
+  rankPosition?: number | null;
+  season?: string;
+  postedAt?: string;
 }
 
 function sourceCredit(item: CommunityCodeItem): { href: string; label: string } | null {
@@ -105,6 +112,19 @@ export function CommunityCodeCard({
           {item.description ? (
             <p className="mt-1 line-clamp-2 text-sm text-lab-ink-subtle">{item.description}</p>
           ) : null}
+
+          <CodeMetaRow
+            description={item.description}
+            focusTags={item.focusTags}
+            recommendation={item.recommendation}
+            copyCount={item.copyCount}
+            rank={item.rankPosition}
+            mode={item.game}
+            season={item.season}
+            postedAt={item.postedAt || item.collectedAt}
+            stale={isStaleCode({ season: item.season, postedAt: item.postedAt || item.collectedAt })}
+            code={item.fullCode}
+          />
 
           <div
             className={cn(

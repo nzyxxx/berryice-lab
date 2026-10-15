@@ -43,6 +43,14 @@ function mapRow(row: Record<string, unknown>): StoredGunCode {
     source: String(row.source ?? "g.aitags.cn"),
     author: String(row.author ?? ""),
     sourceUrl: String(row.source_url ?? ""),
+    focusTags: String(row.focus_tags ?? "")
+      .split(/[,，]/)
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+    recommendation: row.recommendation == null || row.recommendation === "" ? null : Number(row.recommendation),
+    rankPosition: row.rank_position == null || row.rank_position === "" ? null : Number(row.rank_position),
+    season: String(row.season ?? ""),
+    postedAt: String(row.posted_at ?? row.collected_at ?? ""),
     collectedAt: String(row.collected_at ?? ""),
   };
 }
@@ -56,6 +64,11 @@ async function ensureGunCodeColumns(): Promise<void> {
     await getPgPool().query(`
       ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS source_url TEXT DEFAULT ''
     `);
+    await getPgPool().query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS focus_tags TEXT DEFAULT ''`);
+    await getPgPool().query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS recommendation INTEGER`);
+    await getPgPool().query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS rank_position INTEGER`);
+    await getPgPool().query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS season TEXT DEFAULT ''`);
+    await getPgPool().query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS posted_at TIMESTAMPTZ`);
     return;
   }
 
@@ -68,6 +81,11 @@ async function ensureGunCodeColumns(): Promise<void> {
     ALTER TABLE gun_codes
     ADD COLUMN IF NOT EXISTS source_url VARCHAR(512) NOT NULL DEFAULT ''
   `).catch(() => undefined);
+  await pool.query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS focus_tags VARCHAR(120) NOT NULL DEFAULT ''`).catch(() => undefined);
+  await pool.query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS recommendation TINYINT NULL`).catch(() => undefined);
+  await pool.query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS rank_position INT NULL`).catch(() => undefined);
+  await pool.query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS season VARCHAR(32) NOT NULL DEFAULT ''`).catch(() => undefined);
+  await pool.query(`ALTER TABLE gun_codes ADD COLUMN IF NOT EXISTS posted_at DATETIME NULL`).catch(() => undefined);
 }
 
 export async function ensureGunCodesTable(): Promise<void> {
@@ -85,6 +103,11 @@ export async function ensureGunCodesTable(): Promise<void> {
         source TEXT DEFAULT 'g.aitags.cn',
         author TEXT DEFAULT '',
         source_url TEXT DEFAULT '',
+        focus_tags TEXT DEFAULT '',
+        recommendation INTEGER,
+        rank_position INTEGER,
+        season TEXT DEFAULT '',
+        posted_at TIMESTAMPTZ,
         collected_at TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE (weapon, full_code)
       )
@@ -106,6 +129,11 @@ export async function ensureGunCodesTable(): Promise<void> {
       source VARCHAR(100) DEFAULT 'g.aitags.cn',
       author VARCHAR(120) NOT NULL DEFAULT '',
       source_url VARCHAR(512) NOT NULL DEFAULT '',
+      focus_tags VARCHAR(120) NOT NULL DEFAULT '',
+      recommendation TINYINT NULL,
+      rank_position INT NULL,
+      season VARCHAR(32) NOT NULL DEFAULT '',
+      posted_at DATETIME NULL,
       collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uniq_weapon_code (weapon(100), full_code(200))
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -131,8 +159,8 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
     if (dialect === "postgres") {
       const result = await getPgPool().query(
         `
-          INSERT INTO gun_codes (game, weapon, full_code, description, value_text, copy_count, source, author, source_url, collected_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+          INSERT INTO gun_codes (game, weapon, full_code, description, value_text, copy_count, source, author, source_url, focus_tags, recommendation, rank_position, season, posted_at, collected_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())
           ON CONFLICT (weapon, full_code) DO UPDATE
           SET game = EXCLUDED.game,
               description = EXCLUDED.description,
@@ -141,6 +169,11 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
               source = EXCLUDED.source,
               author = EXCLUDED.author,
               source_url = EXCLUDED.source_url,
+              focus_tags = EXCLUDED.focus_tags,
+              recommendation = EXCLUDED.recommendation,
+              rank_position = EXCLUDED.rank_position,
+              season = EXCLUDED.season,
+              posted_at = EXCLUDED.posted_at,
               collected_at = NOW()
           RETURNING (xmax = 0) AS inserted
         `,
@@ -154,6 +187,11 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
           item.source,
           item.author,
           item.sourceUrl,
+          item.focusTags.join(","),
+          item.recommendation,
+          item.rankPosition,
+          item.season,
+          item.postedAt || null,
         ]
       );
       return result.rows[0]?.inserted ? "inserted" : "updated";
@@ -166,8 +204,8 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
     );
     await pool.query(
       `
-        INSERT INTO gun_codes (game, weapon, full_code, description, value_text, copy_count, source, author, source_url, collected_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO gun_codes (game, weapon, full_code, description, value_text, copy_count, source, author, source_url, focus_tags, recommendation, rank_position, season, posted_at, collected_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON DUPLICATE KEY UPDATE
           game = VALUES(game),
           description = VALUES(description),
@@ -176,6 +214,11 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
           source = VALUES(source),
           author = VALUES(author),
           source_url = VALUES(source_url),
+          focus_tags = VALUES(focus_tags),
+          recommendation = VALUES(recommendation),
+          rank_position = VALUES(rank_position),
+          season = VALUES(season),
+          posted_at = VALUES(posted_at),
           collected_at = CURRENT_TIMESTAMP
       `,
       [
@@ -188,6 +231,11 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
         item.source,
         item.author,
         item.sourceUrl,
+        item.focusTags.join(","),
+        item.recommendation,
+        item.rankPosition,
+        item.season,
+        item.postedAt || null,
       ]
     );
     return (existing as mysql.RowDataPacket[]).length > 0 ? "updated" : "inserted";
@@ -220,12 +268,12 @@ export async function listGunCodes(limit = 200, game?: string): Promise<StoredGu
   if (dialect === "postgres") {
     const result = dbGames
       ? await getPgPool().query(
-          `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, author, source_url, collected_at
+          `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, author, source_url, focus_tags, recommendation, rank_position, season, posted_at, collected_at
            FROM gun_codes WHERE game = ANY($1) ORDER BY copy_count DESC, collected_at DESC LIMIT $2`,
           [dbGames, limit]
         )
       : await getPgPool().query(
-          `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, author, source_url, collected_at
+          `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, author, source_url, focus_tags, recommendation, rank_position, season, posted_at, collected_at
            FROM gun_codes ORDER BY copy_count DESC, collected_at DESC LIMIT $1`,
           [limit]
         );
@@ -235,12 +283,12 @@ export async function listGunCodes(limit = 200, game?: string): Promise<StoredGu
   const pool = getMySqlPool();
   const [rows] = dbGames
     ? await pool.query<mysql.RowDataPacket[]>(
-        `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, author, source_url, collected_at
+        `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, author, source_url, focus_tags, recommendation, rank_position, season, posted_at, collected_at
          FROM gun_codes WHERE game IN (?, ?) ORDER BY copy_count DESC, collected_at DESC LIMIT ?`,
         [...dbGames, limit]
       )
     : await pool.query<mysql.RowDataPacket[]>(
-        `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, author, source_url, collected_at
+        `SELECT id, game, weapon, full_code, description, value_text, copy_count, source, author, source_url, focus_tags, recommendation, rank_position, season, posted_at, collected_at
          FROM gun_codes ORDER BY copy_count DESC, collected_at DESC LIMIT ?`,
         [limit]
       );

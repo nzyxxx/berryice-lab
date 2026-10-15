@@ -1,6 +1,8 @@
 "use client";
 
+import { CodeMetaRow } from "@/components/delta-gun/code-meta-row";
 import { GAME_MODES, type GameMode } from "@/lib/delta-gun/game-modes";
+import { CURRENT_SEASON, FOCUS_TAGS, isStaleCode } from "@/lib/delta-gun/season";
 import type { OwnerLoadout } from "@/lib/types/ownerLoadout";
 import { Check, Copy, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -20,8 +22,25 @@ function emptyForm(weaponId: string): {
   code: string;
   notes: string;
   tags: string;
+  focusTags: string[];
+  recommendation: number;
+  rankPosition: string;
+  season: string;
+  postedAt: string;
 } {
-  return { title: "", weaponId, game: "烽火", code: "", notes: "", tags: "" };
+  return {
+    title: "",
+    weaponId,
+    game: "烽火",
+    code: "",
+    notes: "",
+    tags: "",
+    focusTags: ["稳定"],
+    recommendation: 3,
+    rankPosition: "",
+    season: CURRENT_SEASON,
+    postedAt: new Date().toISOString().slice(0, 10),
+  };
 }
 
 export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
@@ -54,13 +73,15 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
     });
   }, []);
 
+  const [showStale, setShowStale] = useState(false);
   const visible = useMemo(() => {
     return items.filter((item) => {
       if (mode !== "all" && item.game !== mode) return false;
       if (weaponFilter !== "all" && item.weaponId !== weaponFilter) return false;
+      if (!showStale && isStaleCode(item)) return false;
       return true;
     });
-  }, [items, mode, weaponFilter]);
+  }, [items, mode, weaponFilter, showStale]);
 
   const unlock = async () => {
     setError("");
@@ -94,6 +115,11 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
       code: form.code,
       notes: form.notes,
       tags: form.tags,
+      focusTags: form.focusTags,
+      recommendation: form.recommendation,
+      rankPosition: form.rankPosition,
+      season: form.season,
+      postedAt: form.postedAt,
     };
     const response = await fetch(editingId ? `/api/owner-loadouts/${editingId}` : "/api/owner-loadouts", {
       method: editingId ? "PATCH" : "POST",
@@ -189,6 +215,45 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
             ))}
           </select>
           <input className={fieldClass} placeholder="标签，用逗号分开" value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} />
+          <fieldset className="md:col-span-2">
+            <legend className="mb-2 text-xs text-lab-ink-subtle">方向</legend>
+            <div className="flex flex-wrap gap-2">
+              {FOCUS_TAGS.map((tag) => {
+                const on = form.focusTags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        focusTags: on ? form.focusTags.filter((item) => item !== tag) : [...form.focusTags, tag],
+                      })
+                    }
+                    className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${on ? "border-lab-primary/40 bg-lab-primary/15" : "border-lab-hairline"}`}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+          <label className="text-xs text-lab-ink-subtle">
+            推荐 1–5
+            <input className={fieldClass} type="number" min={1} max={5} value={form.recommendation} onChange={(event) => setForm({ ...form, recommendation: Number(event.target.value) })} />
+          </label>
+          <label className="text-xs text-lab-ink-subtle">
+            版本排行，可空
+            <input className={fieldClass} inputMode="numeric" value={form.rankPosition} onChange={(event) => setForm({ ...form, rankPosition: event.target.value })} />
+          </label>
+          <label className="text-xs text-lab-ink-subtle">
+            赛季
+            <input className={fieldClass} value={form.season} onChange={(event) => setForm({ ...form, season: event.target.value })} />
+          </label>
+          <label className="text-xs text-lab-ink-subtle">
+            发布日期
+            <input className={fieldClass} type="date" value={form.postedAt} onChange={(event) => setForm({ ...form, postedAt: event.target.value })} />
+          </label>
           <textarea className={`${fieldClass} h-24 md:col-span-2`} placeholder="枪码" value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value })} required />
           <textarea className={`${fieldClass} h-20 md:col-span-2`} placeholder="备注" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
           <div className="flex gap-3 md:col-span-2">
@@ -215,6 +280,9 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
             {game === "all" ? "全部模式" : game}
           </button>
         ))}
+        <button type="button" onClick={() => setShowStale((value) => !value)} className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle">
+          {showStale ? "隐藏过季" : "显示过季"}
+        </button>
         <select value={weaponFilter} onChange={(event) => setWeaponFilter(event.target.value)} className="h-11 rounded-md border border-lab-hairline bg-lab-canvas px-3 text-sm">
           <option value="all">全部武器</option>
           {weapons.map((weapon) => (
@@ -239,6 +307,16 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
                 </button>
               </div>
               <p className="mt-4 break-all font-mono text-xs leading-relaxed text-lab-ink">{item.code}</p>
+              <CodeMetaRow
+                focusTags={item.focusTags}
+                recommendation={item.recommendation}
+                rank={item.rankPosition}
+                mode={item.game}
+                season={item.season}
+                postedAt={item.postedAt}
+                stale={isStaleCode(item)}
+                code={item.code}
+              />
               {item.notes ? <p className="mt-3 text-sm leading-relaxed text-lab-ink-subtle">{item.notes}</p> : null}
               {item.tags.length > 0 ? (
                 <p className="mt-3 text-xs tracking-wide text-lab-ink-tertiary">{item.tags.join(" / ")}</p>
@@ -257,6 +335,11 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
                         code: item.code,
                         notes: item.notes,
                         tags: item.tags.join(", "),
+                        focusTags: item.focusTags,
+                        recommendation: item.recommendation,
+                        rankPosition: item.rankPosition ? String(item.rankPosition) : "",
+                        season: item.season,
+                        postedAt: item.postedAt.slice(0, 10),
                       });
                     }}
                   >

@@ -9,6 +9,7 @@ import { MotionReveal } from "@/components/lab/motion-reveal";
 import { Panel } from "@/components/lab/module-card";
 import { GameModeTabs } from "@/components/delta-gun/game-mode-tabs";
 import { GAME_MODES, type GameMode } from "@/lib/delta-gun/game-modes";
+import { isStaleCode } from "@/lib/delta-gun/season";
 import {
   inferWeaponType,
   parseValueScore,
@@ -59,6 +60,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
   );
   const [activeCategory, setActiveCategory] = useState<CategoryTab>("all");
   const [weaponFilter, setWeaponFilter] = useState("all");
+  const [showStale, setShowStale] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("hot");
   const parentRef = useRef<HTMLDivElement>(null);
@@ -120,6 +122,11 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
     if (weaponFilter !== "all") {
       list = list.filter((item) => item.weapon === weaponFilter);
     }
+    if (!showStale) {
+      list = list.filter(
+        (item) => !isStaleCode({ season: item.season, postedAt: item.postedAt || item.collectedAt })
+      );
+    }
 
     if (q) {
       list = list.filter(
@@ -136,7 +143,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
     });
 
     return list;
-  }, [communityCodes, searchQuery, sortBy, activeCategory, weaponFilter]);
+  }, [communityCodes, searchQuery, sortBy, activeCategory, weaponFilter, showStale]);
 
   const hotRankMap = useMemo(() => {
     const sorted = [...communityCodes].sort((a, b) => b.copyCount - a.copyCount);
@@ -305,6 +312,9 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
             显示 {filteredCodes.length} / {communityCodes.length} 条
             {activeCategory !== "all" && ` · ${weaponTypeLabel(activeCategory)}`}
             {weaponFilter !== "all" && ` · ${weaponFilter}`}
+            <button type="button" className="ml-3 underline" onClick={() => setShowStale((value) => !value)}>
+              {showStale ? "隐藏过季" : "显示过季"}
+            </button>
           </p>
         )}
       </Panel>

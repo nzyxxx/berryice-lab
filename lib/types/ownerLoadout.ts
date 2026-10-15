@@ -5,6 +5,11 @@ export interface OwnerLoadoutInput {
   notes: string;
   tags: string[];
   game: string;
+  focusTags: string[];
+  recommendation: number;
+  rankPosition: number | null;
+  season: string;
+  postedAt: string;
 }
 
 export interface OwnerLoadout {
@@ -16,5 +21,10 @@ export interface OwnerLoadout {
   notes: string;
   tags: string[];
   game: string;
+  focusTags: string[];
+  recommendation: number;
+  rankPosition: number | null;
+  season: string;
+  postedAt: string;
   updatedAt: string;
 }

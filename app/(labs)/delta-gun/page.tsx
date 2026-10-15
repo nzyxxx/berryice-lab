@@ -1,75 +1,59 @@
 import { CommunityCodesPreview } from "@/components/delta-gun/community-codes-preview";
-import { GlassTile } from "@/components/gallery/glass-tile";
-import { SectionZone } from "@/components/gallery/section-zone";
-import { MotionReveal } from "@/components/lab/motion-reveal";
-import { PageContainer } from "@/components/lab/page-container";
 import { DELTA_NAV } from "@/lib/delta-gun/navigation";
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { CURRENT_SEASON } from "@/lib/delta-gun/season";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+
+const SPANS = [
+  "md:col-span-7 md:row-span-2 min-h-64",
+  "md:col-span-5",
+  "md:col-span-5",
+  "md:col-span-4",
+  "md:col-span-4",
+  "md:col-span-4",
+];
 
 export default function DeltaGunLabPage() {
   const missions = DELTA_NAV.filter((item) => item.href !== "/delta-gun");
 
   return (
-    <PageContainer>
-      <SectionZone index="01" label="Brief">
-        <MotionReveal>
-          <h1 className="text-display-hero mt-2 max-w-3xl text-lab-ink">
-            改枪<span className="text-gradient-hero">实验室</span>
-          </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-lab-ink-subtle">
-            夜雨下的工作台：挑枪、配配件、抄社区枪码、保存自己的方案。
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button
-              asChild
-              className="rounded-md bg-lab-primary text-lab-canvas hover:bg-lab-primary-hover btn-glow"
-            >
-              <Link href="/delta-gun/community">
-                进入社区改枪码
-                <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
-          </div>
-        </MotionReveal>
-      </SectionZone>
+    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+      <header className="mb-8">
+        <p className="font-mono text-[11px] tracking-[0.28em] text-lab-ink-subtle">DELTA · {CURRENT_SEASON}</p>
+        <h1 className="mt-3 text-5xl font-semibold tracking-tight text-lab-ink sm:text-6xl">改枪实验室</h1>
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-lab-ink-subtle">
+          本季的枪、码和排行。过季方案默认不出现。
+        </p>
+      </header>
 
-      <SectionZone
-        index="02"
-        label="Missions"
-        title="任务"
-        description="四块玻璃瓦片，对应四条主路径。"
-        className="mt-16"
-      >
-        <div className="grid grid-cols-1 gap-3 [perspective:900px] sm:grid-cols-2 lg:grid-cols-4">
-          {missions.map((item, index) => (
-            <GlassTile
-              key={item.href}
-              href={item.href}
-              title={item.label}
-              description={item.description}
-              icon={<item.icon className="size-5" />}
-              delay={index * 0.08}
-            />
-          ))}
-        </div>
-      </SectionZone>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+        {missions.map((item, index) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`group flex min-h-36 flex-col justify-between rounded-3xl border border-lab-hairline bg-lab-surface-1/75 p-6 transition duration-200 hover:-translate-y-0.5 hover:border-lab-primary/35 hover:bg-lab-surface-2 ${SPANS[index] ?? ""}`}
+          >
+            <span className="flex items-center justify-between text-lab-ink-subtle">
+              <item.icon className="size-5" />
+              <ArrowUpRight className="size-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </span>
+            <span>
+              <span className="block text-2xl font-medium tracking-tight text-lab-ink">{item.label}</span>
+              <span className="mt-1 block text-sm text-lab-ink-subtle">{item.description}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
 
-      <SectionZone
-        index="03"
-        label="Feed"
-        title="热门改枪码"
-        description="大战场 / 烽火地带分区，完整列表在社区页。"
-        className="mt-16"
-      >
-        <div className="mb-4 flex justify-end">
-          <Link href="/delta-gun/community" className="text-sm text-lab-primary hover:underline">
-            查看全部 →
+      <section className="mt-14">
+        <div className="mb-4 flex items-end justify-between">
+          <h2 className="text-2xl font-medium tracking-tight text-lab-ink">本季热门</h2>
+          <Link href="/delta-gun/community" className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle">
+            全部枪码
           </Link>
         </div>
-        <CommunityCodesPreview limit={6} />
-      </SectionZone>
-    </PageContainer>
+        <CommunityCodesPreview limit={4} />
+      </section>
+    </main>
   );
 }

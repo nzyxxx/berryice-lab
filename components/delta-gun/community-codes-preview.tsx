@@ -9,6 +9,7 @@ import { MotionStagger, MotionStaggerItem } from "@/components/lab/motion-reveal
 import { Button } from "@/components/ui/button";
 import { GameModeTabs } from "@/components/delta-gun/game-mode-tabs";
 import type { GameMode } from "@/lib/delta-gun/game-modes";
+import { isStaleCode } from "@/lib/delta-gun/season";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -28,7 +29,10 @@ export function CommunityCodesPreview({ limit = 6 }: { limit?: number }) {
           { cache: "no-store" }
         );
         const json = await res.json();
-        if (json.ok) setItems(json.data ?? []);
+        if (json.ok) {
+          const rows = (json.data ?? []) as CommunityCodeItem[];
+          setItems(rows.filter((item) => !isStaleCode({ season: item.season, postedAt: item.postedAt || item.collectedAt })));
+        }
         else setItems([]);
       } finally {
         setLoading(false);
