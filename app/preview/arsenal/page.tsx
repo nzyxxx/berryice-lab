@@ -1,7 +1,8 @@
+import { SiteShell } from "@/components/lab/site-shell";
 import { ArsenalShow, type ArsenalGun } from "@/components/preview/arsenal-show";
 import { getGuns } from "@/lib/data/guns";
 import { TYPE_SHORT_LABELS } from "@/lib/delta-gun/weapon-utils";
-import type { Gun, GunType } from "@/lib/types/gun";
+import type { Gun } from "@/lib/types/gun";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,7 +10,18 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const ORDER: GunType[] = ["assault", "smg", "sniper", "marksman", "lmg", "shotgun", "pistol", "special"];
+const SHOWCASE: { id: string; chapter?: string }[] = [
+  { id: "ci-19", chapter: "步枪" },
+  { id: "ak-12" },
+  { id: "akm", chapter: "改枪码" },
+  { id: "bizon" },
+  { id: "mp5", chapter: "冲锋枪" },
+  { id: "m700", chapter: "狙击" },
+  { id: "m14" },
+  { id: "m249" },
+  { id: "desert-eagle" },
+  { id: "725-double-barrel-shotgun" },
+];
 
 const STATS: { key: "meatHarm" | "shootDistance" | "control" | "fireSpeed"; label: string; max: number }[] = [
   { key: "meatHarm", label: "伤害", max: 120 },
@@ -23,7 +35,7 @@ function toCard(gun: Gun): ArsenalGun {
     id: gun.id,
     name: gun.name,
     typeLabel: TYPE_SHORT_LABELS[gun.type],
-    imageUrl: gun.imageUrl ?? gun.thumbUrl ?? "",
+    imageUrl: `/preview/arsenal/${gun.id}.png`,
     meta: gun.description ?? "",
     pageHref: `/delta-gun/guns/${gun.id}`,
     loadoutHref: `/delta-gun/guns/${gun.id}/loadout`,
@@ -35,15 +47,17 @@ function toCard(gun: Gun): ArsenalGun {
 }
 
 function pickGuns(guns: Gun[]): ArsenalGun[] {
-  const picked: ArsenalGun[] = [];
-  for (const type of ORDER) {
-    const gun = guns.find((item) => item.type === type && item.imageUrl && item.stats);
-    if (gun) picked.push(toCard(gun));
-  }
-  return picked.slice(0, 7);
+  return SHOWCASE.flatMap((slot) => {
+    const gun = guns.find((item) => item.id === slot.id);
+    return gun ? [{ ...toCard(gun), chapter: slot.chapter }] : [];
+  });
 }
 
 export default async function ArsenalPreviewPage() {
   const guns = await getGuns();
-  return <ArsenalShow guns={pickGuns(guns)} />;
+  return (
+    <SiteShell hideFooter>
+      <ArsenalShow guns={pickGuns(guns)} />
+    </SiteShell>
+  );
 }

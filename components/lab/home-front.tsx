@@ -6,7 +6,7 @@ import { ArrowUpRight, Crosshair } from "lucide-react";
 import Link from "next/link";
 
 const cardClass =
-  "flex flex-col rounded-3xl border border-lab-hairline bg-lab-surface-1 px-6 py-7 dark:bg-lab-surface-2";
+  "flex flex-col rounded-3xl border border-lab-hairline bg-lab-surface-1/75 px-6 py-7 backdrop-blur-md dark:bg-lab-surface-2/55";
 
 function Badge({ children }: { children: string }) {
   return (
@@ -96,22 +96,22 @@ export function HomeFront() {
   const { displayName, latinName } = profileConfig;
 
   return (
-    <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-5 py-16 sm:px-6 md:py-24">
-      <header>
+    <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-5 sm:px-6">
+      <header className="flex min-h-[78vh] flex-col justify-end pb-8 pt-16">
         <div className="flex items-center gap-4 sm:gap-6">
           <HalftoneMark />
           <div className="min-w-0">
-            <h1 className="text-[2rem] font-semibold leading-none tracking-tight text-lab-ink sm:text-5xl">
+            <h1 className="text-[2.6rem] font-semibold leading-none tracking-tight text-lab-ink sm:text-6xl">
               {displayName}
             </h1>
-            <p className="mt-2 font-mono text-sm tracking-[0.08em] text-lab-ink-subtle">{latinName}</p>
+            <p className="mt-3 font-mono text-sm tracking-[0.14em] text-lab-ink-subtle">{latinName}</p>
           </div>
         </div>
         <p className="mt-8 max-w-md text-[15px] leading-relaxed text-lab-ink-muted">{homeIntro}</p>
       </header>
 
-      <section aria-label="栏目" className="mt-16 md:mt-24">
-        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-lab-ink-subtle">Index</p>
+      <section aria-label="栏目" className="pb-24">
+        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-lab-ink-subtle">栏目</p>
         <ul className="mt-5 grid grid-cols-1 items-start gap-4 sm:grid-cols-2 sm:gap-5">
           {homeModules.map((module) => (
             <ModuleCard key={module.id} module={module} />

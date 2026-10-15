@@ -528,3 +528,13 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@keyframes arsenal-haze {
+  from { transform: translate3d(-4%, 0, 0) scale(1); }
+  to { transform: translate3d(6%, -4%, 0) scale(1.08); }
+}
+
+.arsenal-haze {
+  filter: blur(48px);
+  animation: arsenal-haze 16s ease-in-out infinite alternate;
+}
