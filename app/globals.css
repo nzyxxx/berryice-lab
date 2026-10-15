@@ -431,6 +431,20 @@
   animation: page-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* 预览页入场只动位移。不要从 opacity:0 起，否则首屏会先空一拍。 */
+@keyframes preview-rise {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.animate-preview-rise {
+  animation: preview-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
 /* 瓦片入场。
    这里必须是 CSS 而不是 motion 的 initial —— 后者会被序列化进 SSR 产物，
    于是首屏 HTML 里躺着一排 opacity:0 的卡片，要等整棵树水合完才显形。

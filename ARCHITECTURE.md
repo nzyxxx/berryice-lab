@@ -40,6 +40,8 @@
 
 ICP / 版权在页脚。首页不放 GitHub 账号，也不放本站源码。禁止再把三角洲画成整行主区块。
 
+比较用的三套方向在 `/preview/a`（便当格）、`/preview/b`（编辑）、`/preview/c`（画廊）。它们只读 `homeModules`，不替换 `/`。
+
 ## 子页结构
 
 三角洲总览（`/delta-gun`）保留：Brief / Missions / Feed。
