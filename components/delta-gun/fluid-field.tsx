@@ -2,23 +2,58 @@
 
 import { useEffect, useRef } from "react";
 
+/**
+ * 噪声流动改自 metaory/gradient-gl 的 common.glsl + c1（MIT）。
+ * 颜色收成夜蓝，鼠标只推一下，停住后不再跑帧。
+ *
+ * Copyright (c) 2025 metaory
+ * https://github.com/metaory/gradient-gl
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ */
 const VERT = `attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}`;
 const FRAG = `
 precision mediump float;
 uniform vec2 uRes;
 uniform vec2 uMouse;
 uniform float uTime;
+vec2 hash2(vec2 p){
+  p=vec2(dot(p,vec2(2127.1,81.17)),dot(p,vec2(1269.5,283.37)));
+  return fract(sin(p)*43758.5453);
+}
+float noise(vec2 p){
+  vec2 i=floor(p);
+  vec2 f=fract(p);
+  vec2 u=f*f*(3.0-2.0*f);
+  float n=mix(mix(dot(-1.0+2.0*hash2(i),f),
+                  dot(-1.0+2.0*hash2(i+vec2(1.0,0.0)),f-vec2(1.0,0.0)),u.x),
+              mix(dot(-1.0+2.0*hash2(i+vec2(0.0,1.0)),f-vec2(0.0,1.0)),
+                  dot(-1.0+2.0*hash2(i+vec2(1.0,1.0)),f-vec2(1.0,1.0)),u.x),u.y);
+  return 0.5+0.5*n;
+}
 void main(){
   vec2 uv=gl_FragCoord.xy/uRes;
+  float t=uTime*0.35;
   float pull=exp(-length(uv-uMouse)*2.4);
-  vec2 q=uv+(uMouse-0.5)*0.12*pull;
-  float a=0.5+0.5*sin(q.x*3.1+uTime*0.16);
-  float b=0.5+0.5*sin(q.y*2.6-uTime*0.11+1.3);
-  float c=0.5+0.5*sin((q.x+q.y)*1.8+uTime*0.08);
-  vec3 col=vec3(0.025,0.035,0.05);
-  col+=vec3(0.04,0.22,0.34)*smoothstep(0.25,0.95,a)*0.62;
-  col+=vec3(0.02,0.10,0.20)*b*0.38;
-  col+=vec3(0.05,0.14,0.24)*c*0.28;
+  vec2 p=uv+(uMouse-0.5)*0.14*pull;
+  float n1=noise(p*2.5+t*0.4);
+  float n2=noise(p*1.8+vec2(5.0,3.0)-t*0.35);
+  vec2 flow=p+vec2(n1-0.5,n2-0.5)*0.3;
+  float blend=smoothstep(0.2,0.8,flow.x+sin(flow.y*2.5+t*0.6)*0.25+0.2);
+  vec3 deep=vec3(0.018,0.028,0.045);
+  vec3 ink=vec3(0.03,0.09,0.16);
+  vec3 tide=vec3(0.05,0.2,0.32);
+  vec3 col=mix(deep,ink,n2);
+  col=mix(col,tide,blend*0.7);
+  col+=tide*pull*0.28;
   gl_FragColor=vec4(col,1.0);
 }`;
 

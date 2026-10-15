@@ -1,11 +1,12 @@
 "use client";
 
 import { MobileNav } from "@/components/lab/mobile-nav";
+import { SupportButton } from "@/components/lab/support-button";
 import { ThemeToggle } from "@/components/lab/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { moduleLinks } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -62,10 +63,7 @@ export function SiteHeader({
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] tracking-[0.12em] text-lab-ink-subtle uppercase sm:inline-flex">
-            <Sparkles className="size-3 text-lab-primary" />
-            宙斯之雨
-          </span>
+          <SupportButton />
           {!minimal && (
             <nav className="hidden items-center gap-5 text-sm text-lab-ink-subtle md:flex">
               <Link

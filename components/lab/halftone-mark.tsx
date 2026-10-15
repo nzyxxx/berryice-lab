@@ -11,32 +11,69 @@ type Dot = {
   oy: number;
   vx: number;
   vy: number;
+  /** 1 = 顶部萼片，比果肉更亮 */
+  crown: number;
 };
 
-/** 斐波那契球面，约 200 点，画在一张 canvas 上。 */
+const FLATTEN = 0.8;
+
+function mix(a: readonly number[], b: readonly number[], t: number) {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+}
+
+function rgb(c: readonly number[]) {
+  return `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`;
+}
+
+const INK = [24, 12, 62] as const;
+const VIOLET = [68, 44, 148] as const;
+const BLOOM = [198, 186, 218] as const;
+const CROWN = [244, 238, 255] as const;
+
+const BODY_COLORS = Array.from({ length: 16 }, (_, i) => {
+  const t = i / 15;
+  return rgb(t < 0.45 ? mix(INK, VIOLET, t / 0.45) : mix(VIOLET, BLOOM, (t - 0.45) / 0.55));
+});
+
+const CROWN_COLORS = Array.from({ length: 16 }, (_, i) => {
+  const t = i / 15;
+  return rgb(mix(VIOLET, CROWN, 0.5 + t * 0.5));
+});
+
+function dot(x: number, y: number, z: number, crown: number): Dot {
+  return { x, y, z, ox: 0, oy: 0, vx: 0, vy: 0, crown };
+}
+
+/** 略扁的蓝莓：果肉是压过的斐波那契球，顶部一圈五角萼片。 */
 const DOTS: Dot[] = (() => {
-  const count = 210;
   const dots: Dot[] = [];
+  const count = 200;
   const golden = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < count; i += 1) {
-    const y = 1 - (i / (count - 1)) * 2;
-    const ring = Math.sqrt(Math.max(0, 1 - y * y));
+    const ySphere = 1 - (i / (count - 1)) * 2;
+    const ring = Math.sqrt(Math.max(0, 1 - ySphere * ySphere));
     const theta = golden * i;
-    dots.push({
-      x: Math.cos(theta) * ring,
-      y,
-      z: Math.sin(theta) * ring,
-      ox: 0,
-      oy: 0,
-      vx: 0,
-      vy: 0,
-    });
+    let y = ySphere * FLATTEN;
+    if (ySphere < -0.76) {
+      const dent = Math.min(1, (-0.76 - ySphere) / 0.24);
+      y += (-0.5 - y) * dent * 0.72;
+    }
+    dots.push(dot(Math.cos(theta) * ring, y, Math.sin(theta) * ring, 0));
+  }
+
+  const samples = 50;
+  for (let i = 0; i < samples; i += 1) {
+    const theta = (i / samples) * Math.PI * 2 - Math.PI / 2;
+    const lobe = 0.5 + 0.5 * Math.cos(5 * theta);
+    const radius = 0.06 + lobe * 0.2;
+    const y = -0.7 - lobe * 0.16;
+    dots.push(dot(Math.cos(theta) * radius, y, Math.sin(theta) * radius, 1));
   }
   return dots;
 })();
 
 /**
- * 慢转的网点球。只在进入视口时用 rAF，点的位置算在 canvas 里，不改 DOM。
+ * 慢转的蓝莓网点。只在进入视口时用 rAF，点的位置算在 canvas 里，不改 DOM。
  */
 export function HalftoneMark({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -48,7 +85,6 @@ export function HalftoneMark({ className }: { className?: string }) {
     if (!ctx) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const color = getComputedStyle(canvas).color || "#38bdf8";
     let cssW = 0;
     let cssH = 0;
     let visible = false;
@@ -73,19 +109,20 @@ export function HalftoneMark({ className }: { className?: string }) {
       const w = cssW;
       const h = cssH;
       const cx = w * 0.5;
-      const cy = h * 0.5;
+      const cy = h * 0.52;
       const radius = Math.min(w, h) * 0.42;
       const breath = 0.5 + 0.5 * Math.sin(angle * 0.55);
       ctx.clearRect(0, 0, w, h);
 
-      const glow = ctx.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius * 1.25);
-      glow.addColorStop(0, color);
+      const glow = ctx.createRadialGradient(cx, cy - radius * 0.08, radius * 0.12, cx, cy, radius * 1.28);
+      glow.addColorStop(0, "rgb(92, 70, 160)");
+      glow.addColorStop(0.45, "rgb(42, 24, 96)");
       glow.addColorStop(1, "transparent");
       ctx.save();
-      ctx.globalAlpha = 0.08 + breath * 0.07;
+      ctx.globalAlpha = 0.1 + breath * 0.08;
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(cx, cy, radius * 1.25, 0, Math.PI * 2);
+      ctx.arc(cx, cy, radius * 1.28, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
@@ -93,10 +130,10 @@ export function HalftoneMark({ className }: { className?: string }) {
       const sin = Math.sin(angle);
       const reach = radius * 0.72;
 
-      for (const dot of DOTS) {
-        const x = dot.x * cos + dot.z * sin;
-        const z = -dot.x * sin + dot.z * cos;
-        const y = dot.y;
+      for (const item of DOTS) {
+        const x = item.x * cos + item.z * sin;
+        const z = -item.x * sin + item.z * cos;
+        const y = item.y;
         const depth = 2.6 / (2.6 - z);
         let px = cx + x * depth * radius;
         let py = cy + y * depth * radius;
@@ -113,19 +150,20 @@ export function HalftoneMark({ className }: { className?: string }) {
             targetY = (dy / dist) * push;
           }
         }
-        dot.vx = (dot.vx + (targetX - dot.ox) * 0.12) * 0.72;
-        dot.vy = (dot.vy + (targetY - dot.oy) * 0.12) * 0.72;
-        dot.ox += dot.vx;
-        dot.oy += dot.vy;
-        px += dot.ox;
-        py += dot.oy;
+        item.vx = (item.vx + (targetX - item.ox) * 0.12) * 0.72;
+        item.vy = (item.vy + (targetY - item.oy) * 0.12) * 0.72;
+        item.ox += item.vx;
+        item.oy += item.vy;
+        px += item.ox;
+        py += item.oy;
 
-        const light = Math.max(0, x * 0.35 + y * -0.15 + z * 0.92);
+        const light = Math.max(0, x * 0.32 + y * -0.22 + z * 0.9);
         const lit = light * light;
-        const alpha = (0.12 + lit * 0.88) * (0.55 + depth * 0.28);
-        const size = (0.7 + lit * 1.55) * depth * (0.92 + breath * 0.08);
+        const shade = Math.min(15, (lit * 15) | 0);
+        const alpha = (item.crown ? 0.55 + lit * 0.45 : 0.14 + lit * 0.86) * (0.55 + depth * 0.28);
+        const size = (item.crown ? 0.95 + lit * 1.35 : 0.7 + lit * 1.45) * depth * (0.92 + breath * 0.08);
         ctx.globalAlpha = Math.min(1, alpha);
-        ctx.fillStyle = color;
+        ctx.fillStyle = item.crown ? CROWN_COLORS[shade]! : BODY_COLORS[shade]!;
         ctx.beginPath();
         ctx.arc(px, py, size, 0, Math.PI * 2);
         ctx.fill();
@@ -195,11 +233,5 @@ export function HalftoneMark({ className }: { className?: string }) {
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      className={cn("size-24 shrink-0 text-lab-primary sm:size-40", className)}
-    />
-  );
+  return <canvas ref={canvasRef} aria-hidden className={cn("size-24 shrink-0 sm:size-40", className)} />;
 }

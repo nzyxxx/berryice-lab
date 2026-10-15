@@ -80,12 +80,29 @@ const LAYERS: LayerSpec[] = [
   },
 ];
 
-const SPLASHES = [
-  { left: "18%", delay: "0s", duration: "0.9s", width: 18 },
-  { left: "42%", delay: "0.3s", duration: "1s", width: 22 },
-  { left: "67%", delay: "0.15s", duration: "0.85s", width: 16 },
-  { left: "86%", delay: "0.45s", duration: "0.95s", width: 20 },
-];
+type Splash = {
+  id: number;
+  left: string;
+  width: number;
+  height: number;
+  duration: string;
+  delay: string;
+};
+
+let splashSeq = 1;
+
+/** 每一滴单独抽位置、尺寸和寿命，播完就换一滴，避免固定节拍。 */
+function makeSplash(stagger: boolean): Splash {
+  splashSeq += 1;
+  return {
+    id: splashSeq,
+    left: `${(1.5 + Math.random() * 97).toFixed(2)}%`,
+    width: 8 + Math.random() * 24,
+    height: 3 + Math.random() * 7,
+    duration: `${(0.42 + Math.random() * 1.35).toFixed(2)}s`,
+    delay: `${(Math.random() * (stagger ? 1.8 : 0.45)).toFixed(2)}s`,
+  };
+}
 
 function drawStreak(
   ctx: CanvasRenderingContext2D,
@@ -183,6 +200,7 @@ function getRainTiles(): string[] {
  */
 export function RainField({ density = "normal" }: { density?: Density }) {
   const [tiles, setTiles] = useState<string[] | null>(null);
+  const [splashes, setSplashes] = useState<Splash[]>([]);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
@@ -193,7 +211,13 @@ export function RainField({ density = "normal" }: { density?: Density }) {
     const sync = () => {
       // 手机和「减少动态效果」都只留静态湿雾：
       // 三层超出视口的合成层在移动端 GPU 上要吃掉可观的显存
-      setTiles(media.matches ? null : getRainTiles());
+      if (media.matches) {
+        setTiles(null);
+        setSplashes([]);
+        return;
+      }
+      setTiles(getRainTiles());
+      setSplashes((current) => (current.length > 0 ? current : Array.from({ length: 11 }, () => makeSplash(true))));
     };
     const onVisibility = () => setPaused(document.hidden);
 
@@ -256,16 +280,22 @@ export function RainField({ density = "normal" }: { density?: Density }) {
     </div>
     {tiles ? (
       <div className={paused ? "rain-paused pointer-events-none fixed inset-x-0 bottom-0 z-30 h-8" : "pointer-events-none fixed inset-x-0 bottom-0 z-30 h-8"} aria-hidden>
-        {SPLASHES.map((splash) => (
+        {splashes.map((splash) => (
           <span
-            key={splash.left}
+            key={splash.id}
             className="rain-splash"
-            style={{
-              left: splash.left,
-              width: splash.width,
-              animationDelay: splash.delay,
-              animationDuration: splash.duration,
+            onAnimationEnd={() => {
+              setSplashes((list) => list.map((item) => (item.id === splash.id ? makeSplash(false) : item)));
             }}
+            style={
+              {
+                left: splash.left,
+                width: splash.width,
+                "--splash-h": `${splash.height}px`,
+                "--splash-dur": splash.duration,
+                "--splash-delay": splash.delay,
+              } as React.CSSProperties
+            }
           />
         ))}
       </div>

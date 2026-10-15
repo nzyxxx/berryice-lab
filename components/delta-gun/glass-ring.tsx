@@ -1,7 +1,26 @@
 "use client";
 
+import { ParticleVeil } from "@/components/delta-gun/particle-card";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+
+/**
+ * 松手后的摩擦和吸附，改自 Yousuf Soomro 的 liquid-glass-carousel（MIT）。
+ * 环本身仍是 CSS 3D，没有搬 three.js 镜头。
+ *
+ * Copyright (c) 2026 Yousuf Soomro
+ * https://github.com/Yousuf-developer/liquid-glass-carousel
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ */
 
 export type RingCard = {
   id: string;
@@ -19,7 +38,14 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label: string }
   const [zoom, setZoom] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
   const spinRef = useRef(0);
+  const coastRef = useRef(0);
   const stageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (coastRef.current) cancelAnimationFrame(coastRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const fine = window.matchMedia("(pointer: fine) and (min-width: 768px)").matches;
@@ -38,24 +64,28 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label: string }
     return () => node.removeEventListener("wheel", onWheel);
   }, [layout]);
 
-  useEffect(() => {
-    spinRef.current = spin;
-  }, [spin]);
-
   const count = Math.max(cards.length, 1);
   const step = 360 / count;
   const radius = Math.max(240, count * 26);
 
+  const stopCoast = () => {
+    if (coastRef.current) cancelAnimationFrame(coastRef.current);
+    coastRef.current = 0;
+  };
+
   const face = (index: number) => {
+    stopCoast();
     const current = spinRef.current;
     const target = -index * step;
     const delta = ((target - current + 540) % 360) - 180;
-    setSpin(current + delta);
+    spinRef.current = current + delta;
+    setSpin(spinRef.current);
     setOpenId(cards[index]?.id ?? null);
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (layout !== "ring" || event.pointerType === "touch") return;
+    stopCoast();
     const startX = event.clientX;
     let lastX = startX;
     let velocity = 0;
@@ -68,22 +98,39 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label: string }
       lastX = ev.clientX;
       if (Math.abs(ev.clientX - startX) > 6) moved = true;
       velocity = dx * 0.28;
-      setSpin((value) => value + velocity);
+      spinRef.current += velocity;
+      setSpin(spinRef.current);
     };
     const up = () => {
       target.removeEventListener("pointermove", move);
       target.removeEventListener("pointerup", up);
       if (!moved) return;
       let v = velocity;
-      let frame = 0;
-      const coast = () => {
-        v *= 0.94;
-        if (Math.abs(v) < 0.04) return;
-        setSpin((value) => value + v);
-        frame = requestAnimationFrame(coast);
+      const settle = () => {
+        const nearest = Math.round(spinRef.current / step) * step;
+        const delta = nearest - spinRef.current;
+        if (Math.abs(delta) < 0.2) {
+          spinRef.current = nearest;
+          setSpin(nearest);
+          coastRef.current = 0;
+          return;
+        }
+        spinRef.current += delta * 0.12;
+        setSpin(spinRef.current);
+        coastRef.current = requestAnimationFrame(settle);
       };
-      frame = requestAnimationFrame(coast);
-      target.addEventListener("pointercancel", () => cancelAnimationFrame(frame), { once: true });
+      const coast = () => {
+        v *= 0.865;
+        if (Math.abs(v) < 0.05) {
+          coastRef.current = requestAnimationFrame(settle);
+          return;
+        }
+        spinRef.current += v;
+        setSpin(spinRef.current);
+        coastRef.current = requestAnimationFrame(coast);
+      };
+      coastRef.current = requestAnimationFrame(coast);
+      target.addEventListener("pointercancel", stopCoast, { once: true });
     };
     target.addEventListener("pointermove", move);
     target.addEventListener("pointerup", up);
@@ -212,16 +259,17 @@ function CardFace({
   return (
     <span
       className={cn(
-        "absolute inset-0 flex flex-col justify-between rounded-3xl border border-white/15 bg-white/[0.06] p-4 backdrop-blur-lg [backface-visibility:hidden]",
+        "absolute inset-0 flex flex-col justify-between overflow-hidden rounded-3xl border border-white/15 bg-white/[0.06] p-4 backdrop-blur-lg [backface-visibility:hidden]",
         flipped && "[transform:rotateY(180deg)]"
       )}
     >
+      {face === "front" ? <ParticleVeil title={card.title} kicker={card.kicker} /> : null}
       {flipped || open ? (
         card.back
       ) : (
         <>
-          <span className="text-[11px] tracking-[0.16em] text-white/45">{card.kicker}</span>
-          <span>
+          <span className="relative text-[11px] tracking-[0.16em] text-white/45">{card.kicker}</span>
+          <span className="relative">
             <span className="block text-xl font-semibold tracking-tight text-white">{card.title}</span>
             <span className="mt-1 block text-sm text-white/45">{card.line}</span>
           </span>

@@ -504,10 +504,16 @@
 .rain-splash {
   position: absolute;
   bottom: 4px;
-  height: 6px;
+  height: var(--splash-h, 6px);
   border: 1px solid rgba(226, 240, 255, 0.7);
   border-radius: 999px;
-  animation: rain-splash 0.9s linear infinite;
+  opacity: 0;
+  animation-name: rain-splash;
+  animation-duration: var(--splash-dur, 0.9s);
+  animation-timing-function: linear;
+  animation-delay: var(--splash-delay, 0s);
+  animation-iteration-count: 1;
+  animation-fill-mode: none;
 }
 
 @keyframes rain-splash {
