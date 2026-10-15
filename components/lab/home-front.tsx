@@ -103,7 +103,7 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
                 <Crosshair className="mt-1 size-4 shrink-0 text-lab-ink-muted transition-colors duration-300 group-hover/entry:text-lab-primary" aria-hidden />
                 <span className="shrink-0 text-lg font-medium group-hover/entry:underline">{entry.title}</span>
                 {entry.description ? (
-                  <span className="min-w-0 flex-1 text-base font-normal leading-snug text-lab-ink-muted group-hover/entry:text-lab-ink">
+                  <span className="min-w-0 flex-1 text-base font-normal leading-snug text-lab-ink">
                     {entry.description}
                   </span>
                 ) : null}

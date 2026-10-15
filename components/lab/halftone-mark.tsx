@@ -50,8 +50,7 @@ export function HalftoneMark({ className }: { className?: string }) {
     let raf = 0;
     const step = () => {
       const aim = pointer.current;
-      let moving = aim.active;
-      const now = performance.now();
+      let moving = false;
       for (const dot of dots.current) {
         let fx = (dot.homeX - dot.x) * 0.16;
         let fy = (dot.homeY - dot.y) * 0.16;
@@ -63,7 +62,7 @@ export function HalftoneMark({ className }: { className?: string }) {
           if (dist < reach) {
             const falloff = 1 - dist / reach;
             const push = falloff ** 2 * 4.4;
-            const wave = Math.sin(dist * 0.7 - now * 0.012) * 0.85 * falloff;
+            const wave = Math.sin(dist * 0.9) * 0.7 * falloff;
             fx += (dx / dist) * (push + wave);
             fy += (dy / dist) * (push + wave);
           }
@@ -72,7 +71,7 @@ export function HalftoneMark({ className }: { className?: string }) {
         dot.vy = (dot.vy + fy) * 0.68;
         dot.x += dot.vx;
         dot.y += dot.vy;
-        if (Math.hypot(dot.x - dot.homeX, dot.y - dot.homeY) > 0.05) moving = true;
+        if (Math.hypot(dot.vx, dot.vy) > 0.04) moving = true;
       }
       circles.current.forEach((circle, index) => {
         const dot = dots.current[index];
