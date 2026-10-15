@@ -2,14 +2,17 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export const alt = "BerryIce Lab · 三角洲改枪实验室与学习记录";
+export const alt = "小莓流冰（BerryIce）的个人站点。学无止境：写作、随记、关于，以及一个三角洲专栏。";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 /**
  * next/og 自带字体没有中文字形，缺字时会去 Google Fonts 现拉，
- * 拉不到就整片渲染成豆腐块。这里改成读仓库里的子集字体（只含本图用到的汉字，
- * 每个字重约 7KB，SIL OFL 协议可内嵌分发），构建与运行都不再依赖网络。
+ * 拉不到就整片渲染成豆腐块。这里改成读仓库里的子集字体（只含本图用到的字形，
+ * SIL OFL，可内嵌分发），构建与运行都不再依赖网络。
+ *
+ * 改这张图的汉字之前，先确认 assets/NotoSansSC-*-subset.ttf 里有这些字：
+ * 个人站点小莓流冰学无止境写作随记关于以及一个三角洲工具专栏枪械库社区改枪码主播配装现在
  */
 async function loadFonts() {
   const [regular, bold] = await Promise.all([
@@ -34,62 +37,91 @@ export default async function OpengraphImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
-          padding: "80px",
+          padding: "72px 80px",
           background: "#08090d",
           backgroundImage:
-            "radial-gradient(900px 460px at 50% -12%, rgba(56,189,248,0.20), transparent 60%)",
-          color: "#e8ecf3",
+            "radial-gradient(720px 420px at 0% 0%, rgba(56,189,248,0.16), transparent 62%)",
+          color: "#f4f6fb",
           fontFamily: "Noto Sans SC, sans-serif",
         }}
       >
         <div
           style={{
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: 16,
             fontSize: 22,
-            letterSpacing: 6,
+            letterSpacing: 4,
             textTransform: "uppercase",
             color: "#38bdf8",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 44,
-              height: 44,
-              borderRadius: 999,
-              border: "1px solid rgba(56,189,248,0.4)",
-              background: "rgba(56,189,248,0.14)",
-              fontSize: 22,
-              fontWeight: 700,
-            }}
-          >
-            B
+          <div style={{ display: "flex" }}>个人站点</div>
+          <div style={{ display: "flex", letterSpacing: 0, textTransform: "none", color: "#8b93a7" }}>
+            berryice.cn
           </div>
-          BerryIce Lab
-        </div>
-
-        <div style={{ display: "flex", marginTop: 40, fontSize: 76, fontWeight: 700, letterSpacing: -2 }}>
-          三角洲改枪实验室
-        </div>
-
-        <div style={{ display: "flex", marginTop: 24, fontSize: 30, color: "#9aa4b2" }}>
-          枪械库 · 主播枪码 · 社区配装 · 希腊神话剧场
         </div>
 
         <div
           style={{
             display: "flex",
-            marginTop: "auto",
-            fontSize: 22,
-            color: "#5b6472",
+            marginTop: 36,
+            fontSize: 92,
+            fontWeight: 700,
+            letterSpacing: -3,
+            lineHeight: 1,
           }}
         >
-          berryice.cn
+          小莓流冰
+        </div>
+
+        <div style={{ display: "flex", marginTop: 18, fontSize: 30, color: "#38bdf8" }}>
+          BerryIce · nzyxxx
+        </div>
+
+        <div style={{ display: "flex", marginTop: 28, fontSize: 36, color: "#c8d0e0" }}>
+          学无止境
+        </div>
+
+        <div style={{ display: "flex", flexGrow: 1 }} />
+
+        <div
+          style={{
+            display: "flex",
+            height: 1,
+            background: "rgba(255,255,255,0.14)",
+          }}
+        />
+
+        <div style={{ display: "flex", marginTop: 28, gap: 28 }}>
+          {[
+            { index: "01", title: "写作", detail: "随记" },
+            { index: "02", title: "关于", detail: "现在" },
+            { index: "03", title: "三角洲专栏", detail: "枪械库 · 社区改枪码 · 主播配装" },
+          ].map((item) => (
+            <div
+              key={item.index}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                width: 320,
+                padding: "18px 20px",
+                borderRadius: 18,
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.03)",
+              }}
+            >
+              <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: "#8b93a7" }}>
+                {item.index}
+              </div>
+              <div style={{ display: "flex", marginTop: 10, fontSize: 28, fontWeight: 700 }}>
+                {item.title}
+              </div>
+              <div style={{ display: "flex", marginTop: 8, fontSize: 18, color: "#8b93a7" }}>
+                {item.detail}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     ),

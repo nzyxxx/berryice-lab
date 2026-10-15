@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 export function PageShell({
   children,
   backHref = "/",
-  backLabel = "门户",
+  backLabel = "首页",
 }: {
   children: ReactNode;
   backHref?: string;

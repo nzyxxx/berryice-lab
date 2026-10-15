@@ -35,11 +35,11 @@ export default function WritingPage() {
           <div className="mt-12">
             <EmptyState
               title="还没有公开的文章"
-              description="在写，但没写完的东西不往这儿摆。真正在跑的东西在三角洲那边。"
+              description="在写，但没写完的东西不往这儿摆。"
               action={
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <Link
-                    href="/delta-gun"
+                    href="/about"
                     className={cn(
                       "inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-medium",
                       "border border-lab-primary/35 bg-lab-primary/12 text-lab-primary",
@@ -47,7 +47,7 @@ export default function WritingPage() {
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
                     )}
                   >
-                    去三角洲实验室
+                    关于我
                     <ArrowUpRight className="size-4" />
                   </Link>
                   {github && (

@@ -1,6 +1,6 @@
 # BerryIce Lab
 
-个人站（三角洲改枪、写作、关于）。包管理器是 **Yarn 1.22.22**（`package.json` 的 `packageManager`）。不要再提交 `package-lock.json`。
+小莓流冰（BerryIce）的个人站：写作、关于，以及一个三角洲工具专栏。包管理器是 **Yarn 1.22.22**（`package.json` 的 `packageManager`）。不要再提交 `package-lock.json`。
 
 ## 本地
 

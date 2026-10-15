@@ -11,10 +11,10 @@ export default function NotFound() {
     <StatusScreen
       code="404 / Lost"
       title="这条路通向雨里"
-      description="你要找的页面不存在，或者已经被移走了。回到门户挑一个模块继续吧。"
+      description="你要找的页面不存在，或者已经被移走了。回到首页就好。"
     >
       <StatusAction href="/" variant="primary">
-        回到门户
+        回到首页
       </StatusAction>
       <StatusAction href="/delta-gun">去三角洲</StatusAction>
     </StatusScreen>
