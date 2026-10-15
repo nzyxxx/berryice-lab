@@ -1,8 +1,14 @@
 import { CommunityCodesPreview } from "@/components/delta-gun/community-codes-preview";
+import { DeltaStatRow } from "@/components/delta-gun/delta-stat-row";
 import { DELTA_NAV } from "@/lib/delta-gun/navigation";
+import { getGuns } from "@/lib/data/guns";
 import { CURRENT_SEASON } from "@/lib/delta-gun/season";
+import { countGunCodes } from "@/lib/repositories/gunCodesRepo";
+import { listStreamers } from "@/lib/repositories/streamersRepo";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 
 const SPANS = [
   "md:col-span-7 md:row-span-2 min-h-64",
@@ -13,7 +19,17 @@ const SPANS = [
   "md:col-span-4",
 ];
 
-export default function DeltaGunLabPage() {
+export default async function DeltaGunLabPage() {
+  const guns = await getGuns();
+  let codes = 0;
+  let streamers = 0;
+  try {
+    codes = await countGunCodes();
+    const people = await listStreamers();
+    streamers = people.filter((person) => person.loadoutCount > 0).length;
+  } catch (error) {
+    console.error("三角洲统计读取失败:", error);
+  }
   const missions = DELTA_NAV.filter((item) => item.href !== "/delta-gun");
 
   return (
@@ -25,6 +41,7 @@ export default function DeltaGunLabPage() {
           本季的枪、码和排行。过季方案默认不出现。
         </p>
       </header>
+      <DeltaStatRow weapons={guns.length} codes={codes} streamers={streamers} season={CURRENT_SEASON} />
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
         {missions.map((item, index) => (

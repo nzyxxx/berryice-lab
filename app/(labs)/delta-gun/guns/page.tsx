@@ -1,4 +1,4 @@
-import { GunsLibrary } from "@/components/delta-gun/guns-library";
+import { GunRing } from "@/components/delta-gun/gun-ring";
 import { SectionZone } from "@/components/gallery/section-zone";
 import { PageContainer } from "@/components/lab/page-container";
 import { getGuns } from "@/lib/data/guns";
@@ -15,7 +15,7 @@ export default async function GunsPage() {
         headingLevel="h1"
         description={`收录三角洲行动 ${guns.length} 把武器。点卡片看属性，进改枪台配配件。`}
       >
-        <GunsLibrary guns={guns} />
+        <GunRing guns={guns} />
       </SectionZone>
     </PageContainer>
   );

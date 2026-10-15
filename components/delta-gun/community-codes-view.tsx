@@ -5,6 +5,7 @@ import {
   CommunityCodeCardSkeleton,
   type CommunityCodeItem,
 } from "@/components/delta-gun/community-code-card";
+import { GlassRing, type RingCard } from "@/components/delta-gun/glass-ring";
 import { MotionReveal } from "@/components/lab/motion-reveal";
 import { Panel } from "@/components/lab/module-card";
 import { GameModeTabs } from "@/components/delta-gun/game-mode-tabs";
@@ -63,6 +64,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
   const [showStale, setShowStale] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("hot");
+  const [ring, setRing] = useState(true);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const showToast = (msg: string) => {
@@ -315,6 +317,9 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
             <button type="button" className="ml-3 underline" onClick={() => setShowStale((value) => !value)}>
               {showStale ? "隐藏过季" : "显示过季"}
             </button>
+            <button type="button" className="ml-3 underline" onClick={() => setRing((value) => !value)}>
+              {ring ? "改看列表" : "改看环"}
+            </button>
           </p>
         )}
       </Panel>
@@ -336,6 +341,8 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
           <p className="text-lg font-medium text-lab-ink">暂无匹配方案</p>
           <p className="mt-2 text-sm text-lab-ink-subtle">调整筛选条件。社区枪码由服务端定时同步。</p>
         </Panel>
+      ) : ring ? (
+        <CodeRing items={filteredCodes.slice(0, 12)} onCopy={(code) => void copyCode(code)} />
       ) : (
         <div
           ref={parentRef}
@@ -390,4 +397,38 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
       )}
     </>
   );
+}
+
+function CodeRing({
+  items,
+  onCopy,
+}: {
+  items: CommunityCodeItem[];
+  onCopy: (code: string) => void;
+}) {
+  const cards: RingCard[] = items.map((item) => ({
+    id: String(item.id),
+    kicker: item.game,
+    title: item.weapon,
+    line: item.season || "本季",
+    back: (
+      <span className="flex h-full flex-col justify-between text-left">
+        <span>
+          <span className="block text-base font-semibold text-lab-ink">{item.weapon}</span>
+          <span className="mt-2 block font-mono text-[11px] leading-relaxed break-all text-lab-ink-subtle">{item.fullCode}</span>
+          <span className="mt-2 block text-xs text-lab-ink-subtle">
+            {(item.focusTags ?? []).join(" · ") || "方向未标"}
+          </span>
+          <span className="mt-1 block text-xs text-lab-ink">
+            {"★".repeat(item.recommendation ?? 0)}
+            {item.rankPosition ? ` · 排行 #${item.rankPosition}` : " · 未入榜"}
+          </span>
+        </span>
+        <button type="button" onClick={() => onCopy(item.fullCode)} className="h-11 text-left text-sm text-lab-primary">
+          复制枪码
+        </button>
+      </span>
+    ),
+  }));
+  return <GlassRing cards={cards} label="社区枪码环" />;
 }

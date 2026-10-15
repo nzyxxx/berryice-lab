@@ -312,3 +312,13 @@ export async function cleanupOldGunCodes(days = 30): Promise<number> {
   );
   return result.affectedRows;
 }
+
+export async function countGunCodes(): Promise<number> {
+  await ensureGunCodesTable();
+  if (getDialect() === "postgres") {
+    const result = await getPgPool().query("SELECT COUNT(*)::int AS n FROM gun_codes");
+    return Number(result.rows[0]?.n ?? 0);
+  }
+  const [rows] = await getMySqlPool().query<mysql.RowDataPacket[]>("SELECT COUNT(*) AS n FROM gun_codes");
+  return Number(rows[0]?.n ?? 0);
+}

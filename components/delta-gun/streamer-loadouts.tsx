@@ -4,6 +4,7 @@ import {
   CommunityCodeCard,
   type CommunityCodeItem,
 } from "@/components/delta-gun/community-code-card";
+import { GlassRing, type RingCard } from "@/components/delta-gun/glass-ring";
 import { Panel } from "@/components/lab/module-card";
 import { inferWeaponType, weaponTypeLabel } from "@/lib/delta-gun/weapon-utils";
 import type { StoredStreamerLoadout } from "@/lib/types/streamer";
@@ -37,6 +38,7 @@ function toCardItem(loadout: StoredStreamerLoadout): CommunityCodeItem {
 
 export function StreamerLoadouts({ loadouts }: { loadouts: StoredStreamerLoadout[] }) {
   const [query, setQuery] = useState("");
+  const [ring, setRing] = useState(true);
   const [category, setCategory] = useState<CategoryTab>("all");
   const [toast, setToast] = useState("");
 
@@ -138,10 +140,44 @@ export function StreamerLoadouts({ loadouts }: { loadouts: StoredStreamerLoadout
         </Panel>
       )}
 
+      {visible.length > 0 ? (
+        <button type="button" className="mb-3 text-sm text-lab-ink-subtle underline" onClick={() => setRing((value) => !value)}>
+          {ring ? "改看列表" : "改看环"}
+        </button>
+      ) : null}
       {visible.length === 0 ? (
         <Panel className="py-12 text-center">
           <p className="text-sm text-lab-ink-subtle">没有匹配的方案</p>
         </Panel>
+      ) : ring ? (
+        <GlassRing
+          label="主播方案环"
+          cards={visible.slice(0, 12).map((loadout): RingCard => {
+            const item = toCardItem(loadout);
+            return {
+              id: String(item.id),
+              kicker: item.game,
+              title: item.weapon,
+              line: item.season || "本季",
+              back: (
+                <span className="flex h-full flex-col justify-between text-left">
+                  <span>
+                    <span className="block text-base font-semibold text-lab-ink">{item.weapon}</span>
+                    <span className="mt-2 block font-mono text-[11px] leading-relaxed break-all text-lab-ink-subtle">{item.fullCode}</span>
+                    <span className="mt-2 block text-xs text-lab-ink-subtle">{(item.focusTags ?? []).join(" · ") || "方向未标"}</span>
+                    <span className="mt-1 block text-xs text-lab-ink">
+                      {"★".repeat(item.recommendation ?? 0)}
+                      {item.rankPosition ? ` · #${item.rankPosition}` : " · 未入榜"}
+                    </span>
+                  </span>
+                  <button type="button" className="h-11 text-left text-sm text-lab-primary" onClick={() => void copyCode(item.fullCode)}>
+                    复制枪码
+                  </button>
+                </span>
+              ),
+            };
+          })}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {visible.map((loadout, index) => (
