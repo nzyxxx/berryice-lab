@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 const cardClass =
-  "home-card group relative flex h-full flex-col rounded-3xl border border-lab-hairline bg-lab-surface-1/80 px-7 py-8 backdrop-blur-md dark:bg-lab-surface-2/70";
+  "home-card group relative flex h-full flex-col overflow-hidden rounded-3xl px-7 py-8";
 
 const spanClass: Record<string, string> = {
   lab: "sm:col-span-4 sm:row-span-2",
@@ -48,6 +48,8 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
 
   const body = (
     <>
+      <span className="home-sheen" aria-hidden />
+      <div className="relative z-[3] flex flex-1 flex-col">
       <span className="flex items-start justify-between gap-4">
         <h2
           className={cn(
@@ -103,6 +105,7 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
           })}
         </ul>
       ) : null}
+      </div>
     </>
   );
 
