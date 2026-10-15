@@ -101,7 +101,7 @@ iOS 26 那版玻璃是厚磨砂，27 改了三件事，本站照抄：
 ## 5. 布局与节奏
 
 - 首页阅读列 `max-w-3xl`（48rem）；实验室 `72rem`
-- 区块间距：Person 紧 → Work（`mt-14` / `md:mt-16`）→ Column 再疏一档 → Elsewhere 同 Work
+- 首页人名和栏目之间留一大段空白（`mt-16` / `md:mt-24`）。栏目用同一套平卡片，不再编号、不再聚光
 - 卡片圆角统一 `rounded-2xl`；大面板 `rounded-3xl`；小控件 `rounded-full`
 - 触控目标 ≥ 44px，无例外
 - 每个分区走 `SectionZone`：序号 + 大写 eyebrow + 标题。**禁止无分区的直列**
@@ -238,10 +238,9 @@ z-80   跳到主内容（焦点态）
 
 ```bash
 # 1. 首屏 HTML 里不该有成片的隐身元素。
-#    首页合法来源：每块 ModuleTile 一个聚光遮罩（写作、关于各一，共 2）。
-#    人名是 LCP，禁止再用 BlurText 把它拆成 opacity:0 的字母。
+#    首页不再放聚光遮罩，也不再用 BlurText 把人名拆成 opacity:0 的字母。
 #    数字涨了就去看是谁又把 motion 的 initial 写进了 SSR。
-curl -s http://localhost:3000/ | grep -o 'opacity:0' | wc -l   # 2
+curl -s http://localhost:3000/ | grep -o 'opacity:0' | wc -l   # 0
 
 # 2. 构建通过
 yarn build

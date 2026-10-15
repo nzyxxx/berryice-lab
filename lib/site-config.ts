@@ -4,7 +4,7 @@
 export const siteTitle = "小莓流冰 | BerryIce";
 
 export const siteDescription =
-  "小莓流冰（BerryIce）的个人站点。学无止境：写作、随记、关于，以及一个三角洲工具专栏。";
+  "小莓流冰（BerryIce）的个人站点。项目、文章、实验室、关于与生活。";
 
 export const siteConfig = {
   name: process.env.NEXT_PUBLIC_SITE_NAME ?? "BerryIce Lab",
@@ -86,11 +86,6 @@ const SOCIAL_LINK_CANDIDATES: {
     id: "github",
     label: "GitHub",
     href: process.env.NEXT_PUBLIC_SOCIAL_GITHUB ?? "https://github.com/nzyxxx",
-  },
-  {
-    id: "repo",
-    label: "本站源码",
-    href: process.env.NEXT_PUBLIC_SOCIAL_REPO ?? "https://github.com/nzyxxx/berryice-lab",
   },
   {
     id: "kook",
