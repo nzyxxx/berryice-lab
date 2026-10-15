@@ -1,8 +1,35 @@
 import type mysql from "mysql2/promise";
+import { clampCopyCount } from "@/lib/delta-gun/parse-copy-count";
 import { gameModeDbValues, normalizeGameMode } from "@/lib/delta-gun/game-modes";
 import type { GameMode } from "@/lib/delta-gun/game-modes";
 import { getDialect, getMySqlPool, getPgPool } from "@/lib/db";
 import type { GunCodeRecord, StoredGunCode, UpsertSummary } from "@/lib/types/gunCode";
+
+const EMPTY_SUMMARY: UpsertSummary = { inserted: 0, updated: 0, skipped: 0 };
+
+/** 单行脏数据。连接中断、语法错误不在这里，那些要让整次同步失败。 */
+const MYSQL_ROW_ERRNO = new Set([1264, 1265, 1366, 1406]);
+const MYSQL_ROW_CODE = new Set([
+  "ER_WARN_DATA_OUT_OF_RANGE",
+  "WARN_DATA_TRUNCATED",
+  "ER_TRUNCATED_WRONG_VALUE",
+  "ER_TRUNCATED_WRONG_VALUE_FOR_FIELD",
+  "ER_DATA_TOO_LONG",
+]);
+const PG_ROW_CODE = new Set(["22003", "22001", "22P02"]);
+
+function isRowDataError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { errno?: unknown; code?: unknown };
+  if (typeof candidate.errno === "number" && MYSQL_ROW_ERRNO.has(candidate.errno)) return true;
+  if (typeof candidate.code !== "string") return false;
+  return MYSQL_ROW_CODE.has(candidate.code) || PG_ROW_CODE.has(candidate.code);
+}
+
+function logSkipped(item: GunCodeRecord, error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`跳过改枪码 ${item.weapon} / ${item.fullCode}: ${message}`);
+}
 
 function mapRow(row: Record<string, unknown>): StoredGunCode {
   return {
@@ -61,16 +88,17 @@ export async function ensureGunCodesTable(): Promise<void> {
 }
 
 export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSummary> {
-  if (records.length === 0) return { inserted: 0, updated: 0 };
+  if (records.length === 0) return EMPTY_SUMMARY;
 
   const dialect = getDialect();
   let inserted = 0;
   let updated = 0;
+  let skipped = 0;
 
-  if (dialect === "postgres") {
-    const pool = getPgPool();
-    for (const item of records) {
-      const result = await pool.query(
+  const writeOne = async (item: GunCodeRecord): Promise<"inserted" | "updated"> => {
+    const copyCount = clampCopyCount(item.copyCount);
+    if (dialect === "postgres") {
+      const result = await getPgPool().query(
         `
           INSERT INTO gun_codes (game, weapon, full_code, description, value_text, copy_count, source, collected_at)
           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
@@ -83,23 +111,16 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
               collected_at = NOW()
           RETURNING (xmax = 0) AS inserted
         `,
-        [item.game, item.weapon, item.fullCode, item.description, item.valueText, item.copyCount, item.source]
+        [item.game, item.weapon, item.fullCode, item.description, item.valueText, copyCount, item.source]
       );
-      if (result.rows[0]?.inserted) inserted += 1;
-      else updated += 1;
+      return result.rows[0]?.inserted ? "inserted" : "updated";
     }
-    return { inserted, updated };
-  }
 
-  const pool = getMySqlPool();
-  for (const item of records) {
+    const pool = getMySqlPool();
     const [existing] = await pool.query<mysql.RowDataPacket[]>(
       "SELECT id FROM gun_codes WHERE weapon = ? AND full_code = ? LIMIT 1",
       [item.weapon, item.fullCode]
     );
-    if ((existing as mysql.RowDataPacket[]).length > 0) updated += 1;
-    else inserted += 1;
-
     await pool.query(
       `
         INSERT INTO gun_codes (game, weapon, full_code, description, value_text, copy_count, source, collected_at)
@@ -112,10 +133,28 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
           source = VALUES(source),
           collected_at = CURRENT_TIMESTAMP
       `,
-      [item.game, item.weapon, item.fullCode, item.description, item.valueText, item.copyCount, item.source]
+      [item.game, item.weapon, item.fullCode, item.description, item.valueText, copyCount, item.source]
     );
+    return (existing as mysql.RowDataPacket[]).length > 0 ? "updated" : "inserted";
+  };
+
+  for (const item of records) {
+    try {
+      const outcome = await writeOne(item);
+      if (outcome === "inserted") inserted += 1;
+      else updated += 1;
+    } catch (error) {
+      if (!isRowDataError(error)) throw error;
+      skipped += 1;
+      logSkipped(item, error);
+    }
   }
-  return { inserted, updated };
+
+  if (inserted + updated === 0 && skipped > 0) {
+    throw new Error(`改枪码全部写入失败（跳过 ${skipped} 条），详见日志`);
+  }
+
+  return { inserted, updated, skipped };
 }
 
 export async function listGunCodes(limit = 200, game?: string): Promise<StoredGunCode[]> {

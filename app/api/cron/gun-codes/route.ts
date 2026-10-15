@@ -22,6 +22,7 @@ export async function GET(request: Request) {
       parsed: result.parsed,
       inserted: result.summary.inserted,
       updated: result.summary.updated,
+      skipped: result.summary.skipped,
       deleted,
     });
   } catch (error) {

@@ -16,4 +16,5 @@ export interface StoredGunCode extends GunCodeRecord {
 export interface UpsertSummary {
   inserted: number;
   updated: number;
+  skipped: number;
 }

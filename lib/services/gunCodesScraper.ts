@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
 
+import { parseCopyCount } from "@/lib/delta-gun/parse-copy-count";
 import { ensureGunCodesTable, upsertGunCodes } from "@/lib/repositories/gunCodesRepo";
 import type { GunCodeRecord, UpsertSummary } from "@/lib/types/gunCode";
 
@@ -25,9 +26,17 @@ function detectGame(fullCode: string, weapon: string): string {
   return "大战场";
 }
 
-function parseCopyCount(raw: string): number {
-  const numbers = raw.replace(/[^\d]/g, "");
-  return numbers ? Number(numbers) : 0;
+function copyCountFromRow(
+  $row: cheerio.Cheerio<Element>,
+  headers: string[],
+  fallbackIndex: number
+): number {
+  const explicit = $row.find(".copy-count").first().text().trim();
+  if (explicit) return parseCopyCount(explicit);
+
+  const labeled = headers.findIndex((header) => header.includes("复制"));
+  const index = labeled >= 0 ? labeled : fallbackIndex;
+  return parseCopyCount($row.find("td").eq(index).text());
 }
 
 function extractCodeFromCell($cell: cheerio.Cheerio<Element>): string {
@@ -58,7 +67,16 @@ function recordKey(record: GunCodeRecord): string {
 function dedupeRecords(records: GunCodeRecord[]): GunCodeRecord[] {
   const map = new Map<string, GunCodeRecord>();
   for (const record of records) {
-    map.set(recordKey(record), record);
+    const key = recordKey(record);
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, record);
+      continue;
+    }
+    map.set(key, {
+      ...record,
+      copyCount: Math.max(prev.copyCount, record.copyCount),
+    });
   }
   return [...map.values()];
 }
@@ -96,7 +114,7 @@ function parseFeaturedTable($: cheerio.CheerioAPI, records: GunCodeRecord[]): vo
           fullCode: extractCodeFromCell($(tds[1])),
           description: $(tds[2]).text().trim(),
           valueText: $(tds[3]).text().trim(),
-          copyCount: parseCopyCount($(tds[4]).text().trim()),
+          copyCount: copyCountFromRow($(row), headers, 4),
           source: "g.aitags.cn",
         });
       });
@@ -150,14 +168,14 @@ function parseWeaponDetailTables($: cheerio.CheerioAPI, records: GunCodeRecord[]
           fullCode: parsed.fullCode,
           description: $(tds[1]).text().trim(),
           valueText: $(tds[2]).text().trim(),
-          copyCount: parseCopyCount($(tds[3]).text().trim()),
+          copyCount: copyCountFromRow($(row), headers, 3),
           source: "g.aitags.cn",
         });
       });
   });
 }
 
-function parseGunCodesFromHtml(html: string, mode: "home" | "weapon"): GunCodeRecord[] {
+export function parseGunCodesFromHtml(html: string, mode: "home" | "weapon"): GunCodeRecord[] {
   const $ = cheerio.load(html);
   const records: GunCodeRecord[] = [];
 
