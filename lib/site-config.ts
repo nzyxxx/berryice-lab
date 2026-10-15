@@ -1,5 +1,11 @@
 /** 站点公开配置（备案号等通过环境变量注入，勿写入密钥） */
 
+/** 首页 `<title>` 与分享卡标题。个人站，不把改枪实验室写进封面。 */
+export const siteTitle = "小莓流冰 | BerryIce";
+
+export const siteDescription =
+  "小莓流冰（BerryIce）的个人站点。学无止境：写作、随记、关于，以及一个三角洲工具专栏。";
+
 export const siteConfig = {
   name: process.env.NEXT_PUBLIC_SITE_NAME ?? "BerryIce Lab",
   tagline: process.env.NEXT_PUBLIC_SITE_TAGLINE ?? "程序员 · 游戏玩家 · 创作者",
@@ -14,12 +20,12 @@ export const siteConfig = {
 } as const;
 
 export const profileConfig = {
-  displayName: process.env.NEXT_PUBLIC_DISPLAY_NAME ?? "BerryIce",
-  handle: process.env.NEXT_PUBLIC_HANDLE ?? "berryice",
+  displayName: process.env.NEXT_PUBLIC_DISPLAY_NAME ?? "小莓流冰",
+  /** 拉丁写法，和中文名一起出现，不单独当站名 */
+  latinName: process.env.NEXT_PUBLIC_LATIN_NAME ?? "BerryIce",
+  handle: process.env.NEXT_PUBLIC_HANDLE ?? "nzyxxx",
   tags: ["程序员", "游戏玩家", "创作者"],
-  bio:
-    process.env.NEXT_PUBLIC_BIO ??
-    "写代码、改枪、听音乐。三角洲是我的主项目。",
+  bio: process.env.NEXT_PUBLIC_BIO ?? "学无止境",
   avatarSrc: process.env.NEXT_PUBLIC_AVATAR_URL ?? "",
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
@@ -27,12 +33,13 @@ export const profileConfig = {
 export type ModuleId = "delta" | "writing" | "about";
 
 /**
- * 门户只有三个去处。
+ * 导航只有三个去处。首页介绍人，这三个是接下来能去的地方，
+ * 谁也不许再被画成整行主瓦片。
  *
- * 之前是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系），
- * 结果唯一有完整主路径的三角洲被摊薄成五分之一，跟三个占位页平起平坐。
- * 文章和笔记本来就是同一件事的长短两种形态，合成「写作」；
- * 音乐和联系都是「关于我」的下属信息，降级成 /about 里的两段。
+ * 之前是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系）。
+ * 文章和笔记是同一件事的长短两种形态，合成「写作」；
+ * 音乐和联系是「关于我」的下属信息，放在 /about。
+ * 三角洲是工具专栏，不是这个站的封面。
  */
 export const moduleLinks: {
   id: ModuleId;
@@ -42,23 +49,21 @@ export const moduleLinks: {
   navLabel?: string;
   description: string;
   accent: string;
-  /** 门户里占满整行的主模块 */
-  featured?: boolean;
 }[] = [
   {
     id: "delta",
     href: "/delta-gun",
-    title: "三角洲改枪实验室",
+    title: "三角洲工具",
     navLabel: "三角洲",
-    description: "查枪械、抄社区枪码、看主播配装、保存自己的方案。",
+    description: "枪械库、社区改枪码、主播配装。",
     accent: "#f97316",
-    featured: true,
   },
   {
     id: "writing",
     href: "/writing",
-    title: "写作",
-    description: "长文与随记。",
+    title: "写作与随记",
+    navLabel: "写作",
+    description: "长文和短记。写完才会放上来。",
     accent: "#38bdf8",
   },
   {

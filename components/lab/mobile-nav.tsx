@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 const NAV_ITEMS = [
-  { href: "/", title: "门户", description: "回到入口" },
+  { href: "/", title: "首页", description: "回到个人站点" },
   ...moduleLinks.map((m) => ({
     href: m.href,
     title: m.navLabel ?? m.title,

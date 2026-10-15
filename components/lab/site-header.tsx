@@ -22,7 +22,7 @@ export function SiteHeader({
   const isHome = pathname === "/";
   const showBack = backHref || (!isHome && !minimal);
   const resolvedBackHref = backHref || "/";
-  const resolvedLabel = backHref ? backLabel : "门户";
+  const resolvedLabel = backHref ? backLabel : "首页";
 
   // 吸顶条的 backdrop-filter 每一个滚动帧都要重算一次背后的内容，
   // 是全站最贵的一处模糊。iOS 27 的导航条本来就是薄玻璃：
@@ -75,7 +75,7 @@ export function SiteHeader({
                   pathname === "/" && "text-lab-primary"
                 )}
               >
-                门户
+                首页
               </Link>
               {moduleLinks.map((m) => (
                 <Link

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
-  const { displayName, handle, tags, bio } = profileConfig;
+  const { displayName, latinName, handle, tags, bio } = profileConfig;
   const kook = socialLinks.find((s) => s.id === "kook");
   const email = socialLinks.find((s) => s.id === "mail");
   const elsewhere = socialLinks.filter((s) => s.id !== "kook" && s.id !== "mail");
@@ -31,7 +31,7 @@ export default function AboutPage() {
         <SectionZone index="01" label="Brief" title="关于" headingLevel="h1">
           <p className="max-w-xl text-lg leading-relaxed text-lab-ink">{bio}</p>
           <p className="mt-3 text-sm text-lab-ink-subtle">
-            {displayName} · @{handle}
+            {displayName} · {latinName} · @{handle}
           </p>
           <ul className="mt-4 flex flex-wrap gap-2">
             {tags.map((tag) => (
