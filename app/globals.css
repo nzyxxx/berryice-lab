@@ -519,6 +519,37 @@
   will-change: transform, opacity;
 }
 
+.rain-paused .animate-rain-layer,
+.rain-paused .rain-splash {
+  animation-play-state: paused;
+}
+
+/* 闪电那零点几秒才挂上滤镜，平时不给雨多加一层合成 */
+html.bolt .animate-rain-layer {
+  filter: brightness(1.5);
+}
+
+.rain-splash {
+  position: absolute;
+  bottom: 4px;
+  height: 6px;
+  border: 1px solid rgba(226, 240, 255, 0.8);
+  border-radius: 999px;
+  box-shadow: 0 0 10px rgba(186, 220, 255, 0.35);
+  animation: rain-splash 0.72s linear infinite;
+}
+
+@keyframes rain-splash {
+  0% {
+    transform: translate3d(-50%, 0, 0) scale(0.3, 0.55);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0) scale(1.5, 0.75);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

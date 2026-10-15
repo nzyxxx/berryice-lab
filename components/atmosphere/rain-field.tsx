@@ -27,64 +27,68 @@ type LayerSpec = {
 };
 
 /**
- * 景深按真实光学排：越近的雨越虚。
- *
- * 离眼睛最近的雨是离焦的，又被运动模糊拉长，实际读起来是一层几乎看不清的软纱，
- * 不是清晰的亮线。中景那层才是承担「看得出在下雨」的主力。
- * 反过来做（近处最锐最亮）就会变成屏保。
- *
- * 三层的 size / fall / gust 刻意取互质感的数，三层永远不会同步到一起，
- * 不然整片雨会周期性地「一起呼吸」，立刻露出是贴图。
+ * 暴雨：1px 细丝，15–30px 长，倾角不超过 5°。
+ * 远景短、淡、慢；近景更长、更亮、更快。长度差就是这一层里的速度差。
+ * 三层 fall 互质，避免整片雨同时回到起点。
+ * 倾角单位是弧度，画进贴图；图层本身只做垂直平移。
  */
 const LAYERS: LayerSpec[] = [
-  // 远景：细、慢、淡，提供雨雾般的底纹
   {
-    size: 224,
-    count: 13,
-    lenMin: 20,
-    lenMax: 34,
-    width: 1.4,
-    blur: 0.6,
-    alphaMin: 0.07,
-    alphaMax: 0.14,
-    tilt: 0.1,
-    fall: 3.7,
-    gust: 23,
-    opacityLow: 0.62,
-    opacityHigh: 1,
-  },
-  // 中景：唯一清晰可辨的一层，雨的「形」全靠它
-  {
-    size: 320,
-    count: 11,
-    lenMin: 44,
-    lenMax: 70,
-    width: 2.6,
-    blur: 1.1,
+    size: 192,
+    count: 46,
+    lenMin: 15,
+    lenMax: 20,
+    width: 1,
+    blur: 0,
     alphaMin: 0.16,
-    alphaMax: 0.28,
-    tilt: 0.16,
-    fall: 1.9,
-    gust: 17,
-    opacityLow: 0.55,
+    alphaMax: 0.3,
+    tilt: 0.03,
+    fall: 0.74,
+    gust: 19,
+    opacityLow: 0.86,
     opacityHigh: 1,
   },
-  // 近景：又宽又快又糊，压到很低的透明度，只留一道掠过的湿气
   {
-    size: 448,
-    count: 6,
-    lenMin: 90,
-    lenMax: 150,
-    width: 7,
-    blur: 3.4,
-    alphaMin: 0.08,
-    alphaMax: 0.16,
-    tilt: 0.21,
-    fall: 1.1,
+    size: 220,
+    count: 32,
+    lenMin: 18,
+    lenMax: 25,
+    width: 1,
+    blur: 0.15,
+    alphaMin: 0.32,
+    alphaMax: 0.55,
+    tilt: 0.055,
+    fall: 0.33,
     gust: 13,
-    opacityLow: 0.45,
-    opacityHigh: 0.95,
+    opacityLow: 0.9,
+    opacityHigh: 1,
   },
+  {
+    size: 256,
+    count: 22,
+    lenMin: 24,
+    lenMax: 30,
+    width: 1,
+    blur: 0.35,
+    alphaMin: 0.5,
+    alphaMax: 0.82,
+    tilt: 0.08,
+    fall: 0.17,
+    gust: 11,
+    opacityLow: 0.92,
+    opacityHigh: 1,
+  },
+];
+
+const SPLASHES = [
+  { left: "6%", delay: "0s", duration: "0.68s", width: 14 },
+  { left: "18%", delay: "0.22s", duration: "0.8s", width: 22 },
+  { left: "31%", delay: "0.41s", duration: "0.62s", width: 16 },
+  { left: "44%", delay: "0.12s", duration: "0.74s", width: 26 },
+  { left: "57%", delay: "0.33s", duration: "0.86s", width: 18 },
+  { left: "71%", delay: "0.08s", duration: "0.7s", width: 24 },
+  { left: "84%", delay: "0.47s", duration: "0.64s", width: 15 },
+  { left: "93%", delay: "0.18s", duration: "0.78s", width: 20 },
 ];
 
 function drawStreak(
@@ -123,12 +127,14 @@ function drawStreak(
  */
 function buildRainTile(spec: LayerSpec): string {
   const size = spec.size;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   const scratch = document.createElement("canvas");
-  scratch.width = size * 3;
-  scratch.height = size * 3;
+  scratch.width = Math.ceil(size * 3 * dpr);
+  scratch.height = Math.ceil(size * 3 * dpr);
   const sctx = scratch.getContext("2d");
   if (!sctx) return "";
+  sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const streaks = Array.from({ length: spec.count }, () => ({
     x: Math.random() * size,
@@ -146,13 +152,15 @@ function buildRainTile(spec: LayerSpec): string {
   }
 
   const tile = document.createElement("canvas");
-  tile.width = size;
-  tile.height = size;
+  tile.width = Math.ceil(size * dpr);
+  tile.height = Math.ceil(size * dpr);
   const tctx = tile.getContext("2d");
   if (!tctx) return "";
 
-  tctx.filter = `blur(${spec.blur}px)`;
-  tctx.drawImage(scratch, -size, -size);
+  if (spec.blur > 0) tctx.filter = `blur(${spec.blur * dpr}px)`;
+  const origin = Math.round(size * dpr);
+  const span = Math.round(size * dpr);
+  tctx.drawImage(scratch, origin, origin, span, span, 0, 0, tile.width, tile.height);
 
   return tile.toDataURL("image/png");
 }
@@ -179,6 +187,7 @@ function getRainTiles(): string[] {
  */
 export function RainField({ density = "normal" }: { density?: Density }) {
   const [tiles, setTiles] = useState<string[] | null>(null);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia(
@@ -190,15 +199,22 @@ export function RainField({ density = "normal" }: { density?: Density }) {
       // 三层超出视口的合成层在移动端 GPU 上要吃掉可观的显存
       setTiles(media.matches ? null : getRainTiles());
     };
+    const onVisibility = () => setPaused(document.hidden);
 
     sync();
+    onVisibility();
     media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      media.removeEventListener("change", sync);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   const dim = density === "low" ? 0.5 : 1;
 
   return (
+    <>
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
       <div className="absolute inset-0 bg-lab-canvas" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(56,189,248,0.12),transparent_55%)]" />
@@ -209,36 +225,55 @@ export function RainField({ density = "normal" }: { density?: Density }) {
         你只在路灯、窗光扫到的那片区域看得见它。
       */}
       {tiles && (
-        <div
-          className="absolute inset-0 [mask-image:radial-gradient(ellipse_90%_80%_at_50%_-10%,#000_0%,rgba(0,0,0,0.5)_45%,rgba(0,0,0,0.14)_100%)]"
-          style={{ opacity: dim }}
-        >
-          {LAYERS.map((spec, index) =>
-            tiles[index] ? (
-              <div
-                key={spec.size}
-                className="absolute inset-x-0 animate-rain-layer"
-                style={
-                  {
-                    top: -spec.size,
-                    bottom: 0,
-                    backgroundImage: `url(${tiles[index]})`,
-                    backgroundRepeat: "repeat",
-                    backgroundSize: `${spec.size}px ${spec.size}px`,
-                    "--rain-shift": `${spec.size}px`,
-                    "--rain-fall": `${spec.fall}s`,
-                    "--rain-gust": `${spec.gust}s`,
-                    "--rain-lo": spec.opacityLow,
-                    "--rain-hi": spec.opacityHigh,
-                  } as React.CSSProperties
-                }
-              />
-            ) : null
-          )}
+        <div className={paused ? "rain-paused" : undefined}>
+          <div
+            className="absolute inset-0 [mask-image:linear-gradient(to_bottom,#000_0%,rgba(0,0,0,0.88)_70%,rgba(0,0,0,0.62)_100%)]"
+            style={{ opacity: dim }}
+          >
+            {LAYERS.map((spec, index) =>
+              tiles[index] ? (
+                <div
+                  key={spec.size}
+                  className="absolute inset-x-0 animate-rain-layer"
+                  style={
+                    {
+                      top: -spec.size,
+                      bottom: 0,
+                      backgroundImage: `url(${tiles[index]})`,
+                      backgroundRepeat: "repeat",
+                      backgroundSize: `${spec.size}px ${spec.size}px`,
+                      "--rain-shift": `${spec.size}px`,
+                      "--rain-fall": `${spec.fall}s`,
+                      "--rain-gust": `${spec.gust}s`,
+                      "--rain-lo": spec.opacityLow,
+                      "--rain-hi": spec.opacityHigh,
+                    } as React.CSSProperties
+                  }
+                />
+              ) : null
+            )}
+          </div>
         </div>
       )}
 
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(8,9,13,0.35))] dark:bg-[linear-gradient(to_bottom,transparent,rgba(8,9,13,0.55))]" />
     </div>
+    {tiles ? (
+      <div className={paused ? "rain-paused pointer-events-none fixed inset-x-0 bottom-0 z-30 h-8" : "pointer-events-none fixed inset-x-0 bottom-0 z-30 h-8"} aria-hidden>
+        {SPLASHES.map((splash) => (
+          <span
+            key={splash.left}
+            className="rain-splash"
+            style={{
+              left: splash.left,
+              width: splash.width,
+              animationDelay: splash.delay,
+              animationDuration: splash.duration,
+            }}
+          />
+        ))}
+      </div>
+    ) : null}
+    </>
   );
 }
