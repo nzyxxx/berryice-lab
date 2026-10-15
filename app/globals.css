@@ -326,16 +326,6 @@
   }
 }
 
-@keyframes rain-gust {
-  0%,
-  100% {
-    opacity: var(--rain-lo);
-  }
-  50% {
-    opacity: var(--rain-hi);
-  }
-}
-
 /* 从 0.4 起步而不是 0：opacity 归零的那几帧里内容是「没画出来」的，
    FCP/LCP 只能等淡入爬上来，实测在降频手机上要多等 300–1200ms。
    0.4 起步第一帧就可读，过渡感照样在。
@@ -357,17 +347,6 @@
   }
   50% {
     transform: translateY(-10px);
-  }
-}
-
-@keyframes rain-pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(0.35);
-    opacity: 0.7;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(3.2);
-    opacity: 0;
   }
 }
 
@@ -513,10 +492,8 @@
 /* 下落用 linear：雨匀速落，加了缓动就会在每个循环边界一顿一顿。
    两条动画分别只碰 transform 和 opacity，都留在合成线程上。 */
 .animate-rain-layer {
-  animation:
-    rain-fall var(--rain-fall) linear infinite,
-    rain-gust var(--rain-gust) ease-in-out infinite;
-  will-change: transform, opacity;
+  animation: rain-fall var(--rain-fall) linear infinite;
+  will-change: transform;
 }
 
 .rain-paused .animate-rain-layer,
@@ -524,19 +501,13 @@
   animation-play-state: paused;
 }
 
-/* 闪电那零点几秒才挂上滤镜，平时不给雨多加一层合成 */
-html.bolt .animate-rain-layer {
-  filter: brightness(1.5);
-}
-
 .rain-splash {
   position: absolute;
   bottom: 4px;
   height: 6px;
-  border: 1px solid rgba(226, 240, 255, 0.8);
+  border: 1px solid rgba(226, 240, 255, 0.7);
   border-radius: 999px;
-  box-shadow: 0 0 10px rgba(186, 220, 255, 0.35);
-  animation: rain-splash 0.72s linear infinite;
+  animation: rain-splash 0.9s linear infinite;
 }
 
 @keyframes rain-splash {
@@ -573,123 +544,67 @@ html.bolt .animate-rain-layer {
 /* 首页互动只在 html.home-motion 下生效。这个类由客户端在桌面、未减少动效时加上。
    拆字和模糊入场是 React Bits BlurText / Split Text 的 CSS 版：
    首屏不写 opacity:0，避免 motion initial 把字藏进 SSR。 */
-.home-orb {
-  transition: filter 0.45s ease;
-}
-.home-orb[data-hot="1"] {
-  filter: drop-shadow(0 0 18px color-mix(in oklab, currentColor 80%, transparent));
-}
-
-.water-ripple {
+.home-glow {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   z-index: 1;
+  width: 360px;
+  height: 360px;
+  margin: -180px 0 0 -180px;
+  border-radius: 999px;
   pointer-events: none;
-  mix-blend-mode: screen;
+  background: radial-gradient(circle, color-mix(in oklab, var(--lab-primary) 12%, transparent), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.45s linear;
 }
-.water-ripple canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
+.home-glow.is-on {
+  opacity: 1;
 }
 
-.home-bento {
-  perspective: 1200px;
-}
-.home-magnet {
+.home-card {
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.home-card:hover .home-magnet {
-  transform: translate3d(8px, 0, 0);
+.home-card:hover {
+  transform: translate3d(0, -2px, 0);
+}
+.home-card:hover .home-arrow {
+  transform: translate3d(3px, -3px, 0);
 }
 
 html.home-motion .home-split > span {
   display: inline-block;
-  animation: home-split 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(var(--i, 0) * 42ms);
+  animation: home-split 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
 }
 
 @keyframes home-split {
   from {
-    filter: blur(10px);
-    transform: translate3d(0, 0.4em, 0);
+    opacity: 0.35;
+    transform: translate3d(0, 0.28em, 0);
   }
   to {
-    filter: blur(0);
+    opacity: 1;
     transform: none;
   }
 }
 
-html.home-motion .home-card {
-  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transform-style: preserve-3d;
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
-}
-html.home-motion .home-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  background: radial-gradient(
-    420px circle at var(--mx, 50%) var(--my, 20%),
-    color-mix(in oklab, var(--lab-primary) 34%, transparent),
-    transparent 42%
-  );
-}
-html.home-motion .home-card:hover {
-  border-color: color-mix(in oklab, var(--lab-primary) 55%, var(--lab-hairline));
-}
-html.home-motion .home-card:hover::before {
-  opacity: 1;
-}
-html.home-motion .home-card > * {
-  position: relative;
-  z-index: 1;
-}
-html.home-motion .home-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  pointer-events: none;
-  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 0%), var(--lab-primary), transparent 40%);
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-html.home-motion .home-card:hover::after {
-  opacity: 1;
-}
-html.home-motion .home-card:hover .home-arrow,
-.home-card:hover .home-arrow {
-  transform: translate(4px, -4px);
-  color: var(--lab-primary);
-}
-.home-card:hover {
-  border-color: color-mix(in oklab, var(--lab-primary) 45%, var(--lab-hairline));
-}
-
 html.home-motion [data-reveal].is-waiting {
-  filter: blur(8px);
-  transform: translate3d(0, 18px, 0);
+  opacity: 0.4;
+  transform: translate3d(0, 12px, 0);
 }
 html.home-motion [data-reveal].is-shown {
-  animation: home-rise 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(var(--i, 0) * 90ms);
+  animation: home-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
 }
 
 @keyframes home-rise {
   from {
-    filter: blur(12px);
-    transform: translate3d(0, 22px, 0);
+    opacity: 0.4;
+    transform: translate3d(0, 12px, 0);
   }
   to {
-    filter: blur(0);
+    opacity: 1;
     transform: none;
   }
 }

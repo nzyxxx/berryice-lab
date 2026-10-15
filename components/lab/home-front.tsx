@@ -6,7 +6,7 @@ import { profileConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight, Crosshair } from "lucide-react";
 import Link from "next/link";
-import { useEffect, type PointerEvent } from "react";
+import { useEffect, useRef } from "react";
 
 const cardClass =
   "home-card group relative flex h-full flex-col rounded-3xl border border-lab-hairline bg-lab-surface-1/80 px-7 py-8 backdrop-blur-md dark:bg-lab-surface-2/70";
@@ -39,30 +39,6 @@ function SplitLine({ text, className }: { text: string; className?: string }) {
       ))}
     </span>
   );
-}
-
-function tilt(event: PointerEvent<HTMLElement>) {
-  if (!document.documentElement.classList.contains("home-motion")) return;
-  const rect = event.currentTarget.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  const px = x / rect.width - 0.5;
-  const py = y / rect.height - 0.5;
-  const style = event.currentTarget.style;
-  style.setProperty("--mx", `${x}px`);
-  style.setProperty("--my", `${y}px`);
-  style.setProperty("--rx", `${(-py * 4).toFixed(2)}deg`);
-  style.setProperty("--ry", `${(px * 6).toFixed(2)}deg`);
-  style.setProperty("--tx", `${(px * 10).toFixed(1)}px`);
-  style.setProperty("--ty", `${(py * 8).toFixed(1)}px`);
-}
-
-function untilt(event: PointerEvent<HTMLElement>) {
-  const style = event.currentTarget.style;
-  style.setProperty("--rx", "0deg");
-  style.setProperty("--ry", "0deg");
-  style.setProperty("--tx", "0px");
-  style.setProperty("--ty", "0px");
 }
 
 function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
@@ -115,7 +91,7 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
                 {entry.href ? (
                   <Link
                     href={entry.href}
-                    className="group/entry home-magnet flex min-h-11 items-start gap-3 py-4 text-lab-ink outline-none transition-colors hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-ink/30 sm:items-center"
+                    className="group/entry flex min-h-11 items-start gap-3 py-4 text-lab-ink outline-none transition-colors hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-ink/30 sm:items-center"
                   >
                     {row}
                   </Link>
@@ -137,8 +113,6 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
       <li data-reveal style={reveal} className={cn("h-full", spanClass[module.id] ?? "sm:col-span-3")}>
         <Link
           href={module.href}
-          onPointerMove={tilt}
-          onPointerLeave={untilt}
           className={cn(cardClass, "outline-none focus-visible:ring-2 focus-visible:ring-lab-ink/30")}
         >
           {body}
@@ -149,7 +123,7 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
 
   return (
     <li data-reveal style={reveal} className={cn("h-full", spanClass[module.id] ?? "sm:col-span-3")}>
-      <article className={cardClass} onPointerMove={tilt} onPointerLeave={untilt}>
+      <article className={cardClass}>
         {body}
       </article>
     </li>
@@ -158,6 +132,7 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
 
 export function HomeFront() {
   const { displayName, latinName } = profileConfig;
+  const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 768px) and (pointer: fine)").matches;
@@ -166,10 +141,7 @@ export function HomeFront() {
 
     const root = document.documentElement;
     root.classList.add("home-motion");
-    let dead = false;
-    let lenisRaf = 0;
-    let lenis: { raf: (time: number) => void; destroy: () => void; velocity: number; on: (event: "scroll", cb: () => void) => void } | null = null;
-    let calm = 0;
+    const glow = glowRef.current;
 
     const nodes = [...document.querySelectorAll<HTMLElement>("[data-reveal]")];
     const seen = new IntersectionObserver(
@@ -189,37 +161,27 @@ export function HomeFront() {
       seen.observe(node);
     }
 
-    const pumpLenis = (time: number) => {
-      lenis?.raf(time);
-      const moving = Math.abs(lenis?.velocity ?? 0) > 0.08;
-      calm = moving ? 0 : calm + 1;
-      lenisRaf = calm < 10 ? requestAnimationFrame(pumpLenis) : 0;
+    const onPointer = (event: globalThis.PointerEvent) => {
+      if (!glow || event.pointerType === "touch") return;
+      glow.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
+      glow.classList.add("is-on");
     };
-    const kickLenis = () => {
-      calm = 0;
-      if (!lenisRaf) lenisRaf = requestAnimationFrame(pumpLenis);
-    };
+    const onLeave = () => glow?.classList.remove("is-on");
 
-    window.addEventListener("wheel", kickLenis, { passive: true });
-
-    void import("lenis").then(({ default: Lenis }) => {
-      if (dead) return;
-      lenis = new Lenis({ lerp: 0.08, smoothWheel: true, autoRaf: false });
-      lenis.on("scroll", kickLenis);
-    });
+    window.addEventListener("pointermove", onPointer, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onLeave);
 
     return () => {
-      dead = true;
       root.classList.remove("home-motion");
       seen.disconnect();
-      cancelAnimationFrame(lenisRaf);
-      window.removeEventListener("wheel", kickLenis);
-      lenis?.destroy();
+      window.removeEventListener("pointermove", onPointer);
+      document.documentElement.removeEventListener("pointerleave", onLeave);
     };
   }, []);
 
   return (
     <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-6">
+      <div ref={glowRef} className="home-glow" aria-hidden />
       <header className="flex min-h-[72vh] flex-col justify-end pb-10 pt-16">
         <div className="flex items-center gap-6 sm:gap-10">
           <HalftoneMark />

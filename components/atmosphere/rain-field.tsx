@@ -81,14 +81,10 @@ const LAYERS: LayerSpec[] = [
 ];
 
 const SPLASHES = [
-  { left: "6%", delay: "0s", duration: "0.68s", width: 14 },
-  { left: "18%", delay: "0.22s", duration: "0.8s", width: 22 },
-  { left: "31%", delay: "0.41s", duration: "0.62s", width: 16 },
-  { left: "44%", delay: "0.12s", duration: "0.74s", width: 26 },
-  { left: "57%", delay: "0.33s", duration: "0.86s", width: 18 },
-  { left: "71%", delay: "0.08s", duration: "0.7s", width: 24 },
-  { left: "84%", delay: "0.47s", duration: "0.64s", width: 15 },
-  { left: "93%", delay: "0.18s", duration: "0.78s", width: 20 },
+  { left: "18%", delay: "0s", duration: "0.9s", width: 18 },
+  { left: "42%", delay: "0.3s", duration: "1s", width: 22 },
+  { left: "67%", delay: "0.15s", duration: "0.85s", width: 16 },
+  { left: "86%", delay: "0.45s", duration: "0.95s", width: 20 },
 ];
 
 function drawStreak(
