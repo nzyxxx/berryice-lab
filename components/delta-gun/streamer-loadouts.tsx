@@ -26,6 +26,12 @@ function toCardItem(loadout: StoredStreamerLoadout): CommunityCodeItem {
     valueText: loadout.valueText,
     copyCount: loadout.copyCount,
     collectedAt: loadout.collectedAt,
+    source: loadout.source,
+    sourceUrl: loadout.sourceUrl,
+    focusTags: loadout.focusTags,
+    recommendation: loadout.recommendation,
+    season: loadout.season,
+    postedAt: loadout.postedAt ?? undefined,
   };
 }
 

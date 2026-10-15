@@ -42,8 +42,11 @@ export function clampRecommendation(value: unknown): number | null {
 
 export function isStaleCode(input: { season?: string | null; postedAt?: string | null }): boolean {
   const season = input.season?.trim() ?? "";
-  if (season && season !== CURRENT_SEASON) return true;
-  if (season === CURRENT_SEASON) return false;
+  const current = CURRENT_SEASON.trim();
+  // 「当季」是还没写具体赛季号时的占位。这时相信枪码自己标的赛季，避免 S11 被一律打成过季。
+  const currentIsPlaceholder = current === "" || current === "当季";
+  if (season && !currentIsPlaceholder && season !== current) return true;
+  if (season && (currentIsPlaceholder || season === current)) return false;
   if (!input.postedAt) return true;
   const posted = new Date(input.postedAt).getTime();
   if (Number.isNaN(posted)) return true;

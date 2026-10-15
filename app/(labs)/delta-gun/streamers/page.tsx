@@ -32,11 +32,11 @@ export default async function StreamersPage() {
         label="Players"
         title="主播改枪码"
         headingLevel="h1"
-        description="职业选手、抖音主播与改枪 UP 主的实战配装，点进任意一位查看全部方案。"
+        description="S11 已核对的主播改枪方案。每条都能看到方向、推荐、赛季、发布日期和来源。"
         className="mb-8"
       />
       <StreamersView streamers={streamers} />
-      <p className="mt-6 text-center text-xs text-lab-ink-tertiary">数据来自 yunmaku.com，每日同步</p>
+      <p className="mt-6 text-center text-xs text-lab-ink-tertiary">只列出 S11 核对方案。更早或其他赛季的枪码已归档，仍留在库里。</p>
     </PageContainer>
   );
 }
