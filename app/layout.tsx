@@ -1,5 +1,6 @@
 import { SiteAtmosphere } from "@/components/atmosphere/site-atmosphere";
 import { ThemeProvider } from "@/components/lab/theme-provider";
+import { getSiteUrl } from "@/lib/site-config";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
@@ -27,7 +28,7 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://berryice.cn";
+const siteUrl = getSiteUrl();
 const siteTitle = "BerryIce Lab | 个人学习实验室";
 const siteDescription =
   "BerryIce 的个人入口：三角洲改枪实验室、主播枪码、社区配装与学习记录。";

@@ -5,7 +5,10 @@ import { ensureStreamerTables, listStreamers } from "@/lib/repositories/streamer
 import type { StoredStreamer } from "@/lib/types/streamer";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+// 主播名单按日更新。force-dynamic 会让每个访问都打库；
+// 静态预渲染又会给出 s-maxage=31536000，nginx 能存一年。
+// 一小时 ISR：共享缓存到期就回源，小机器不用每次查库。
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "主播改枪码 · 三角洲",
@@ -18,7 +21,10 @@ async function loadStreamers(): Promise<StoredStreamer[]> {
     return await listStreamers();
   } catch (error) {
     console.error("加载主播列表失败:", error);
-    return [];
+    // 没有 DATABASE_URL 的构建（本机验收）不能因此失败，页面先空着。
+    // 线上配了库却暂时连不上时要抛出，ISR 才会留着上一份页面，而不是把空列表存一小时。
+    if (!process.env.DATABASE_URL) return [];
+    throw error;
   }
 }
 

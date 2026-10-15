@@ -3,17 +3,10 @@
 import { useTheme } from "@/components/lab/theme-provider";
 import { cn } from "@/lib/utils";
 import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDark = !mounted || theme === "dark";
+  const isDark = theme === "dark";
 
   return (
     <button

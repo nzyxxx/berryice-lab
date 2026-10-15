@@ -1,5 +1,11 @@
 /** 站点公开配置（备案号等通过环境变量注入，勿写入密钥） */
 
+/** 不带末尾斜杠的站点绝对地址。metadata、robots、sitemap 都从这里取。 */
+export function getSiteUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL ?? "https://berryice.cn";
+  return configured.replace(/\/$/, "");
+}
+
 export const siteConfig = {
   name: process.env.NEXT_PUBLIC_SITE_NAME ?? "BerryIce Lab",
   tagline: process.env.NEXT_PUBLIC_SITE_TAGLINE ?? "程序员 · 游戏玩家 · 创作者",
