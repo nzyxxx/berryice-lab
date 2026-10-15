@@ -14,23 +14,25 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// 与列表页同一窗口。没有 generateStaticParams，详情在第一次访问时生成，之后按小时更新。
+// 与列表页同一窗口。空的 generateStaticParams 让未知 slug 在第一次访问时生成，
+// 之后按小时 ISR。不返回空数组的话，这条动态路由会一直是 no-store。
 export const revalidate = 3600;
+
+export function generateStaticParams() {
+  return [];
+}
 
 type PageProps = { params: Promise<{ slug: string }> };
 
 async function loadStreamer(
   slug: string
 ): Promise<{ streamer: StoredStreamer | null; loadouts: StoredStreamerLoadout[] }> {
-  try {
-    await ensureStreamerTables();
-    const streamer = await getStreamerBySlug(slug);
-    if (!streamer) return { streamer: null, loadouts: [] };
-    return { streamer, loadouts: await listStreamerLoadouts(slug) };
-  } catch (error) {
-    console.error("加载主播详情失败:", error);
-    return { streamer: null, loadouts: [] };
-  }
+  // 数据库故障要抛出去。吞掉之后 notFound() 会被 ISR 存一小时，
+  // 短暂连不上库就会把还在的主播页冻成 404。
+  await ensureStreamerTables();
+  const streamer = await getStreamerBySlug(slug);
+  if (!streamer) return { streamer: null, loadouts: [] };
+  return { streamer, loadouts: await listStreamerLoadouts(slug) };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

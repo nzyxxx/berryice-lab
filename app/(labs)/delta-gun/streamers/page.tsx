@@ -21,7 +21,10 @@ async function loadStreamers(): Promise<StoredStreamer[]> {
     return await listStreamers();
   } catch (error) {
     console.error("加载主播列表失败:", error);
-    return [];
+    // 没有 DATABASE_URL 的构建（本机验收）不能因此失败，页面先空着。
+    // 线上配了库却暂时连不上时要抛出，ISR 才会留着上一份页面，而不是把空列表存一小时。
+    if (!process.env.DATABASE_URL) return [];
+    throw error;
   }
 }
 

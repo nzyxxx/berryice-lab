@@ -40,6 +40,7 @@ async function streamerEntries(siteUrl: string): Promise<MetadataRoute.Sitemap> 
       "sitemap: 主播页未写入（没有数据库时跳过）:",
       error instanceof Error ? error.message : error
     );
+    if (process.env.DATABASE_URL) throw error;
     return [];
   }
 }
