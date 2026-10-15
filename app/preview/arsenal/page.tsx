@@ -40,7 +40,7 @@ function pickGuns(guns: Gun[]): ArsenalGun[] {
     const gun = guns.find((item) => item.type === type && item.imageUrl && item.stats);
     if (gun) picked.push(toCard(gun));
   }
-  return picked;
+  return picked.slice(0, 7);
 }
 
 export default async function ArsenalPreviewPage() {

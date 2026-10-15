@@ -463,6 +463,44 @@
   }
 }
 
+@keyframes ocean-bob {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -1.1%, 0);
+  }
+}
+
+@keyframes ocean-reveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translate3d(0, 16%, 0);
+  }
+  to {
+    clip-path: inset(0);
+    transform: none;
+  }
+}
+
+.ocean-reveal {
+  animation: ocean-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.arsenal-stat {
+  opacity: 0;
+  transform: translate3d(28px, 0, 0);
+}
+
+.arsenal-stats.is-in .arsenal-stat {
+  opacity: 1;
+  transform: none;
+  transition:
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i) * 90ms);
+}
+
 /* 瓦片入场。
    这里必须是 CSS 而不是 motion 的 initial —— 后者会被序列化进 SSR 产物，
    于是首屏 HTML 里躺着一排 opacity:0 的卡片，要等整棵树水合完才显形。

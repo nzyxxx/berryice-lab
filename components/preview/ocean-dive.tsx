@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, type CSSProperties } from "react";
+import { useLenisLoop } from "@/components/preview/use-lenis-loop";
 
 /**
  * 三张实拍关键帧接滚动：海面、吃水线、水下。
@@ -28,9 +29,16 @@ function clamp(value: number, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value));
 }
 
+function ramp(p: number, a: number, b: number) {
+  const t = clamp((p - a) / (b - a));
+  return t * t * (3 - 2 * t);
+}
+
 export function OceanDive() {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const waveRef = useRef<SVGPathElement>(null);
+  const shown = useRef(0);
 
   useEffect(() => {
     const width = window.innerWidth;
@@ -44,65 +52,49 @@ export function OceanDive() {
     }
   }, []);
 
-  useEffect(() => {
+  useLenisLoop(() => {
     const track = trackRef.current;
     const stage = stageRef.current;
     if (!track || !stage) return;
-
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-
-    const paint = () => {
-      if (motion.matches) {
-        stage.style.setProperty("--ken", "0");
-        stage.style.setProperty("--surface", "1");
-        stage.style.setProperty("--water", "0");
-        stage.style.setProperty("--under", "0");
-        stage.style.setProperty("--wipe", "1");
-        stage.style.setProperty("--blur", "0px");
-        stage.style.setProperty("--text", "1");
-        stage.style.setProperty("--tone", "0");
-        track.style.height = "100svh";
-        return;
-      }
-      track.style.height = "";
-      const total = Math.max(track.offsetHeight - window.innerHeight, 1);
-      const p = clamp(-track.getBoundingClientRect().top / total);
-      const ken = clamp(p / 0.4);
-      const surface = 1 - clamp((p - 0.28) / 0.2);
-      const water = clamp((p - 0.26) / 0.18) * (1 - clamp((p - 0.56) / 0.16));
-      const under = clamp((p - 0.52) / 0.18);
-      const wipe = clamp((p - 0.24) / 0.26);
-      const blur = Math.max(0, 1 - Math.abs(p - 0.4) / 0.07) * 7;
-      let text = 1;
-      if (p >= 0.34 && p < 0.5) text = 1 - (p - 0.34) / 0.16;
-      else if (p >= 0.5 && p < 0.66) text = (p - 0.5) / 0.16;
-      stage.style.setProperty("--ken", ken.toFixed(4));
-      stage.style.setProperty("--surface", surface.toFixed(4));
-      stage.style.setProperty("--water", water.toFixed(4));
-      stage.style.setProperty("--under", under.toFixed(4));
-      stage.style.setProperty("--wipe", wipe.toFixed(4));
-      stage.style.setProperty("--blur", `${blur.toFixed(2)}px`);
-      stage.style.setProperty("--text", text.toFixed(4));
-      stage.style.setProperty("--tone", clamp((p - 0.58) / 0.12).toFixed(4));
-    };
-
-    const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(paint);
-    };
-
-    paint();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    motion.addEventListener("change", onScroll);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      motion.removeEventListener("change", onScroll);
-    };
-  }, []);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      stage.style.setProperty("--p", "0");
+      stage.style.setProperty("--surface", "1");
+      stage.style.setProperty("--water", "0");
+      stage.style.setProperty("--under", "0");
+      stage.style.setProperty("--blur", "0px");
+      stage.style.setProperty("--text", "1");
+      stage.style.setProperty("--tone", "0");
+      track.style.height = "100svh";
+      return;
+    }
+    track.style.height = "";
+    const total = Math.max(track.offsetHeight - window.innerHeight, 1);
+    const target = clamp(-track.getBoundingClientRect().top / total);
+    shown.current += (target - shown.current) * 0.065;
+    const p = shown.current;
+    const surface = 1 - ramp(p, 0.2, 0.52);
+    const water = ramp(p, 0.14, 0.36) * (1 - ramp(p, 0.48, 0.74));
+    const under = ramp(p, 0.4, 0.7);
+    const wipe = ramp(p, 0.16, 0.58);
+    const blur = Math.exp(-(((p - 0.4) / 0.065) ** 2)) * 8;
+    const fadeOut = 1 - ramp(p, 0.34, 0.5);
+    const fadeIn = ramp(p, 0.5, 0.68);
+    const text = p < 0.5 ? fadeOut : fadeIn;
+    stage.style.setProperty("--p", p.toFixed(4));
+    stage.style.setProperty("--surface", surface.toFixed(4));
+    stage.style.setProperty("--water", water.toFixed(4));
+    stage.style.setProperty("--under", under.toFixed(4));
+    stage.style.setProperty("--blur", `${blur.toFixed(2)}px`);
+    stage.style.setProperty("--text", text.toFixed(4));
+    stage.style.setProperty("--tone", ramp(p, 0.56, 0.72).toFixed(4));
+    const y = 1.08 - wipe * 1.22;
+    const amp = 0.05;
+    waveRef.current?.setAttribute(
+      "d",
+      `M0 ${y} C0.18 ${y - amp} 0.32 ${y + amp} 0.5 ${y} C0.7 ${y - amp} 0.84 ${y + amp} 1 ${y} V1.2 H0 Z`
+    );
+  });
 
   const { displayName, latinName } = profileConfig;
 
@@ -110,6 +102,13 @@ export function OceanDive() {
     <>
       <div ref={trackRef} className="relative h-[420vh]">
         <div ref={stageRef} className="sticky top-0 h-svh overflow-hidden bg-[#071018]">
+          <svg className="absolute h-0 w-0" aria-hidden>
+            <defs>
+              <mask id="ocean-wave" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+                <path ref={waveRef} fill="white" d="M0 1.08 V1.2 H0 Z" />
+              </mask>
+            </defs>
+          </svg>
           <PhotoFrame
             name="surface"
             alt="日落时的流冰海面"
@@ -117,8 +116,9 @@ export function OceanDive() {
             style={{
               opacity: "var(--surface, 1)",
               transform:
-                "translate3d(0, calc(var(--ken, 0) * -6%), 0) scale(calc(1.06 + var(--ken, 0) * 0.16))",
+                "translate3d(0, calc(var(--p, 0) * -8%), 0) scale(calc(1.05 + var(--p, 0) * 0.22))",
             }}
+            bob
           />
           <PhotoFrame
             name="waterline"
@@ -126,12 +126,10 @@ export function OceanDive() {
             className="z-10"
             style={{
               opacity: "var(--water, 0)",
-              transform: "translate3d(0, calc((1 - var(--wipe, 0)) * 10%), 0) scale(1.05)",
+              transform: "translate3d(0, calc(var(--p, 0) * -6%), 0) scale(calc(1.08 + var(--p, 0) * 0.12))",
               filter: "blur(var(--blur, 0px))",
-              maskImage:
-                "linear-gradient(to top, #000 0%, #000 calc(var(--wipe, 1) * 100%), transparent calc(var(--wipe, 1) * 100% + 16%))",
-              WebkitMaskImage:
-                "linear-gradient(to top, #000 0%, #000 calc(var(--wipe, 1) * 100%), transparent calc(var(--wipe, 1) * 100% + 16%))",
+              mask: "url(#ocean-wave)",
+              WebkitMask: "url(#ocean-wave)",
             }}
           />
           <PhotoFrame
@@ -140,13 +138,13 @@ export function OceanDive() {
             className="z-20"
             style={{
               opacity: "var(--under, 0)",
-              transform: "translate3d(0, calc(var(--under, 0) * -3%), 0) scale(calc(1.08 + var(--under, 0) * 0.1))",
+              transform: "translate3d(0, calc(var(--p, 0) * -4%), 0) scale(calc(1.1 + var(--p, 0) * 0.12))",
             }}
           />
 
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 z-30 mix-blend-screen motion-safe:animate-[caustic_9s_ease-in-out_infinite_alternate]"
+            className="pointer-events-none absolute inset-0 z-30 mix-blend-screen motion-safe:animate-[caustic_16s_ease-in-out_infinite_alternate]"
             style={{
               opacity: "calc(var(--under, 0) * 0.35)",
               background:
@@ -156,7 +154,7 @@ export function OceanDive() {
           <Particles />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 z-40 opacity-25 mix-blend-overlay"
+            className="pointer-events-none absolute inset-0 z-40 opacity-[0.16] mix-blend-overlay"
             style={{
               backgroundImage:
                 "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.55'/></svg>\")",
@@ -172,7 +170,10 @@ export function OceanDive() {
           />
 
           <div className="absolute inset-0 z-50" style={{ opacity: "var(--text, 1)" }}>
-            <div className="flex h-full items-center px-6 sm:px-12">
+            <div
+              className="flex h-full items-start px-6 pt-[15vh] sm:px-12 sm:pt-[18vh]"
+              style={{ transform: "translate3d(0, calc(var(--p, 0) * -22px), 0)" }}
+            >
               <HeroCopy displayName={displayName} latinName={latinName} />
             </div>
             <p className="pointer-events-none absolute bottom-6 left-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/80 mix-blend-difference">
@@ -205,21 +206,25 @@ function PhotoFrame({
   alt,
   className,
   style,
+  bob,
 }: {
   name: (typeof FRAMES)[number];
   alt: string;
   className?: string;
   style?: CSSProperties;
+  bob?: boolean;
 }) {
   const src = frameSources(name);
   return (
-    <div className={cn("pointer-events-none absolute -inset-[8%] will-change-transform", className)} style={style}>
+    <div className={cn("pointer-events-none absolute -inset-[10%]", className)} style={style}>
+      <div className={cn("h-full w-full", bob && "motion-safe:animate-[ocean-bob_7s_ease-in-out_infinite_alternate]")}>
       <picture>
         <source media="(max-width: 767px)" srcSet={src.mobileAvif} type="image/avif" />
         <source media="(max-width: 767px)" srcSet={src.mobileWebp} type="image/webp" />
         <source srcSet={src.avif} type="image/avif" />
         <img src={src.webp} alt={alt} className="h-full w-full object-cover" draggable={false} />
       </picture>
+      </div>
     </div>
   );
 }
@@ -254,28 +259,48 @@ function Particles() {
 
 function HeroCopy({ displayName, latinName }: { displayName: string; latinName: string }) {
   return (
-    <div className="relative mx-auto w-full max-w-3xl">
+    <div className="relative mx-auto w-full max-w-xl">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -inset-x-16 -top-12 bottom-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.62),transparent_68%)]"
+      />
       <p
-        className="font-mono text-[11px] uppercase tracking-[0.28em]"
-        style={{ color: "color-mix(in srgb, #163044 calc((1 - var(--tone, 0)) * 100%), white)" }}
+        className="ocean-reveal relative font-mono text-[11px] uppercase tracking-[0.28em]"
+        style={{
+          animationDelay: "0.05s",
+          color: "color-mix(in srgb, #163044 calc((1 - var(--tone, 0)) * 100%), white)",
+          textShadow: "0 1px 12px rgba(255,255,255,0.45)",
+        }}
       >
         Drift ice
       </p>
       <h1
-        className="mt-4 font-serif text-[clamp(3.5rem,10vw,7rem)] leading-[0.92] tracking-tight"
-        style={{ color: "color-mix(in srgb, #102033 calc((1 - var(--tone, 0)) * 100%), white)" }}
+        className="ocean-reveal relative mt-4 font-serif text-[clamp(3.5rem,10vw,7rem)] leading-[0.92] tracking-tight"
+        style={{
+          animationDelay: "0.16s",
+          color: "color-mix(in srgb, #102033 calc((1 - var(--tone, 0)) * 100%), white)",
+          textShadow: "0 2px 18px rgba(255,255,255,0.35)",
+        }}
       >
         {displayName}
       </h1>
       <p
-        className="mt-3 font-mono text-sm tracking-[0.16em]"
-        style={{ color: "color-mix(in srgb, #2a4660 calc((1 - var(--tone, 0)) * 100%), rgba(255,255,255,0.78))" }}
+        className="ocean-reveal relative mt-3 font-mono text-sm tracking-[0.16em]"
+        style={{
+          animationDelay: "0.28s",
+          color: "color-mix(in srgb, #1d3b56 calc((1 - var(--tone, 0)) * 100%), rgba(255,255,255,0.86))",
+          textShadow: "0 1px 10px rgba(255,255,255,0.4)",
+        }}
       >
         {latinName}
       </p>
       <p
-        className="mt-6 max-w-md text-base leading-relaxed"
-        style={{ color: "color-mix(in srgb, #1b3348 calc((1 - var(--tone, 0)) * 100%), rgba(255,255,255,0.88))" }}
+        className="ocean-reveal relative mt-6 max-w-md text-base leading-relaxed"
+        style={{
+          animationDelay: "0.4s",
+          color: "color-mix(in srgb, #163044 calc((1 - var(--tone, 0)) * 100%), rgba(255,255,255,0.92))",
+          textShadow: "0 1px 12px rgba(255,255,255,0.55)",
+        }}
       >
         {homeIntro}
       </p>
