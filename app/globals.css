@@ -538,3 +538,136 @@
   filter: blur(48px);
   animation: arsenal-haze 16s ease-in-out infinite alternate;
 }
+
+/* 首页互动只在 html.home-motion 下生效。这个类由客户端在桌面、未减少动效时加上。
+   拆字和模糊入场是 React Bits BlurText / Split Text 的 CSS 版：
+   首屏不写 opacity:0，避免 motion initial 把字藏进 SSR。 */
+.home-orb {
+  transition: filter 0.45s ease;
+}
+.home-orb[data-hot="1"] {
+  filter: drop-shadow(0 0 18px color-mix(in oklab, currentColor 80%, transparent));
+}
+
+html.home-motion:has(.home-cursor.is-on),
+html.home-motion:has(.home-cursor.is-on) * {
+  cursor: none;
+}
+
+.home-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+}
+html.home-motion .home-cursor.is-on {
+  opacity: 1;
+}
+.home-cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: var(--lab-primary);
+  box-shadow: 0 0 12px color-mix(in oklab, var(--lab-primary) 70%, transparent);
+}
+.home-cursor-ring {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1px solid var(--lab-primary);
+  box-shadow: 0 0 18px color-mix(in oklab, var(--lab-primary) 45%, transparent);
+}
+.home-cursor-ring.is-hot {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  background: color-mix(in oklab, var(--lab-primary) 18%, transparent);
+}
+
+.home-bento {
+  perspective: 1200px;
+}
+.home-magnet {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-card:hover .home-magnet {
+  transform: translate3d(8px, 0, 0);
+}
+
+html.home-motion .home-split > span {
+  display: inline-block;
+  animation: home-split 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 42ms);
+}
+
+@keyframes home-split {
+  from {
+    filter: blur(10px);
+    transform: translate3d(0, 0.4em, 0);
+  }
+  to {
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+html.home-motion .home-card {
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+  background-image: radial-gradient(
+    420px circle at var(--mx, 50%) var(--my, 20%),
+    color-mix(in oklab, var(--lab-primary) 32%, transparent),
+    transparent 42%
+  );
+}
+html.home-motion .home-card:hover {
+  border-color: color-mix(in oklab, var(--lab-primary) 55%, var(--lab-hairline));
+}
+html.home-motion .home-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 0%), var(--lab-primary), transparent 40%);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+html.home-motion .home-card:hover::after {
+  opacity: 1;
+}
+html.home-motion .home-card:hover .home-arrow,
+.home-card:hover .home-arrow {
+  transform: translate(4px, -4px);
+  color: var(--lab-primary);
+}
+.home-card:hover {
+  border-color: color-mix(in oklab, var(--lab-primary) 45%, var(--lab-hairline));
+}
+
+html.home-motion [data-reveal].is-waiting {
+  filter: blur(8px);
+  transform: translate3d(0, 18px, 0);
+}
+html.home-motion [data-reveal].is-shown {
+  animation: home-rise 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+@keyframes home-rise {
+  from {
+    filter: blur(12px);
+    transform: translate3d(0, 22px, 0);
+  }
+  to {
+    filter: blur(0);
+    transform: none;
+  }
+}
