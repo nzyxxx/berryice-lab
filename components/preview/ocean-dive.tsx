@@ -5,19 +5,44 @@ import { profileConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 /**
- * 流冰入海。
- *
- * 参考画面是一条镜头从海面沉到水下。Pexels / Coverr 上能找到的免版权短片
- * 要么是潜水员横游，要么全关键帧压完超过 6MB，对不上「冰面 → 水花 → 吃水线 → 光柱」。
- * 这里用分层画面跟滚动走，不引视频、不引 GSAP。滚动时最多挂一个 rAF，离开页面就取消。
- * prefers-reduced-motion 停在海面，不再跟手。
+ * 三张实拍关键帧接滚动：海面、吃水线、水下。
+ * 原图由页面压成 public/preview/ocean 的 AVIF / WebP（2560 与 1080）。
+ * 只改 transform 和 opacity。模糊只在穿过水面的一小段里脉冲一次。
  */
+
+const FRAMES = ["surface", "waterline", "under"] as const;
+
+function frameSources(name: (typeof FRAMES)[number]) {
+  return {
+    mobileAvif: `/preview/ocean/${name}-1080.avif`,
+    mobileWebp: `/preview/ocean/${name}-1080.webp`,
+    avif: `/preview/ocean/${name}-2560.avif`,
+    webp: `/preview/ocean/${name}-2560.webp`,
+  };
+}
+
+function clamp(value: number, min = 0, max = 1) {
+  return Math.min(max, Math.max(min, value));
+}
+
 export function OceanDive() {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const width = window.innerWidth;
+    const next = FRAMES.flatMap((name) => {
+      const src = frameSources(name);
+      return width < 768 ? [src.mobileAvif, src.mobileWebp] : [src.avif, src.webp];
+    });
+    for (const href of next) {
+      const image = new Image();
+      image.src = href;
+    }
+  }, []);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -29,19 +54,37 @@ export function OceanDive() {
 
     const paint = () => {
       if (motion.matches) {
-        stage.style.setProperty("--p", "0");
-        track.classList.add("h-auto");
+        stage.style.setProperty("--ken", "0");
+        stage.style.setProperty("--surface", "1");
+        stage.style.setProperty("--water", "0");
+        stage.style.setProperty("--under", "0");
+        stage.style.setProperty("--wipe", "1");
+        stage.style.setProperty("--blur", "0px");
+        stage.style.setProperty("--text", "1");
+        stage.style.setProperty("--tone", "0");
+        track.style.height = "100svh";
         return;
       }
-      track.classList.remove("h-auto");
+      track.style.height = "";
       const total = Math.max(track.offsetHeight - window.innerHeight, 1);
-      const scrolled = Math.min(Math.max(-track.getBoundingClientRect().top, 0), total);
-      const p = scrolled / total;
-      stage.style.setProperty("--p", p.toFixed(4));
+      const p = clamp(-track.getBoundingClientRect().top / total);
+      const ken = clamp(p / 0.4);
+      const surface = 1 - clamp((p - 0.28) / 0.2);
+      const water = clamp((p - 0.26) / 0.18) * (1 - clamp((p - 0.56) / 0.16));
+      const under = clamp((p - 0.52) / 0.18);
+      const wipe = clamp((p - 0.24) / 0.26);
+      const blur = Math.max(0, 1 - Math.abs(p - 0.4) / 0.07) * 7;
       let text = 1;
-      if (p >= 0.32 && p < 0.48) text = 1 - (p - 0.32) / 0.16;
-      else if (p >= 0.48 && p < 0.62) text = (p - 0.48) / 0.14;
-      stage.style.setProperty("--text", text.toFixed(3));
+      if (p >= 0.34 && p < 0.5) text = 1 - (p - 0.34) / 0.16;
+      else if (p >= 0.5 && p < 0.66) text = (p - 0.5) / 0.16;
+      stage.style.setProperty("--ken", ken.toFixed(4));
+      stage.style.setProperty("--surface", surface.toFixed(4));
+      stage.style.setProperty("--water", water.toFixed(4));
+      stage.style.setProperty("--under", under.toFixed(4));
+      stage.style.setProperty("--wipe", wipe.toFixed(4));
+      stage.style.setProperty("--blur", `${blur.toFixed(2)}px`);
+      stage.style.setProperty("--text", text.toFixed(4));
+      stage.style.setProperty("--tone", clamp((p - 0.58) / 0.12).toFixed(4));
     };
 
     const onScroll = () => {
@@ -65,98 +108,79 @@ export function OceanDive() {
 
   return (
     <>
-      <div ref={trackRef} className="relative h-[400vh]">
-        <div
-          ref={stageRef}
-          className="sticky top-0 h-svh overflow-hidden text-white"
-          style={{ ["--p" as string]: 0, ["--text" as string]: 1 }}
-        >
+      <div ref={trackRef} className="relative h-[420vh]">
+        <div ref={stageRef} className="sticky top-0 h-svh overflow-hidden bg-[#071018]">
+          <PhotoFrame
+            name="surface"
+            alt="日落时的流冰海面"
+            className="z-0"
+            style={{
+              opacity: "var(--surface, 1)",
+              transform:
+                "translate3d(0, calc(var(--ken, 0) * -6%), 0) scale(calc(1.06 + var(--ken, 0) * 0.16))",
+            }}
+          />
+          <PhotoFrame
+            name="waterline"
+            alt="穿过海面的吃水线"
+            className="z-10"
+            style={{
+              opacity: "var(--water, 0)",
+              transform: "translate3d(0, calc((1 - var(--wipe, 0)) * 10%), 0) scale(1.05)",
+              filter: "blur(var(--blur, 0px))",
+              maskImage:
+                "linear-gradient(to top, #000 0%, #000 calc(var(--wipe, 1) * 100%), transparent calc(var(--wipe, 1) * 100% + 16%))",
+              WebkitMaskImage:
+                "linear-gradient(to top, #000 0%, #000 calc(var(--wipe, 1) * 100%), transparent calc(var(--wipe, 1) * 100% + 16%))",
+            }}
+          />
+          <PhotoFrame
+            name="under"
+            alt="水下的冰与光柱"
+            className="z-20"
+            style={{
+              opacity: "var(--under, 0)",
+              transform: "translate3d(0, calc(var(--under, 0) * -3%), 0) scale(calc(1.08 + var(--under, 0) * 0.1))",
+            }}
+          />
+
           <div
             aria-hidden
-            className="absolute inset-0"
+            className="pointer-events-none absolute inset-0 z-30 mix-blend-screen motion-safe:animate-[caustic_9s_ease-in-out_infinite_alternate]"
+            style={{
+              opacity: "calc(var(--under, 0) * 0.35)",
+              background:
+                "radial-gradient(ellipse at 20% 30%, rgba(190,230,255,0.45), transparent 42%), radial-gradient(ellipse at 70% 20%, rgba(255,255,255,0.28), transparent 36%)",
+            }}
+          />
+          <Particles />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-40 opacity-25 mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.55'/></svg>\")",
+            }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-40"
             style={{
               background:
-                "linear-gradient(to bottom, #d5e7f2 0%, #8eb9d4 42%, #1d5878 100%)",
-              opacity: "clamp(0, calc(1 - (var(--p) - 0.22) * 2.4), 1)",
-            }}
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to bottom, #0b3a52 0%, #062433 46%, #021018 100%)",
-              opacity: "clamp(0, calc((var(--p) - 0.34) * 2.6), 1)",
+                "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.38) 100%)",
             }}
           />
 
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-[10%] top-[-20%] h-[140%] w-[70%] origin-top"
-            style={{
-              background:
-                "repeating-linear-gradient(108deg, transparent 0 46px, rgba(186,224,255,0.16) 46px 78px)",
-              opacity: "clamp(0, calc((var(--p) - 0.5) * 2.2), 0.85)",
-              transform: "rotate(calc(var(--p) * 10deg)) scale(1.3)",
-            }}
-          />
-
-          <div
-            aria-hidden
-            className="absolute inset-x-0 h-40"
-            style={{
-              top: "calc(72% - var(--p) * 78%)",
-              background:
-                "linear-gradient(to bottom, rgba(255,255,255,0.55), rgba(120,190,220,0.15) 40%, transparent)",
-              opacity: "clamp(0, calc(1 - (var(--p) - 0.15) * 1.6), 1)",
-            }}
-          />
-
-          {[
-            { left: "8%", width: "22%", delay: "0%" },
-            { left: "28%", width: "18%", delay: "6%" },
-            { left: "52%", width: "26%", delay: "2%" },
-            { left: "78%", width: "16%", delay: "10%" },
-          ].map((floe) => (
-            <div
-              key={floe.left}
-              aria-hidden
-              className="absolute h-10 rounded-[40%] border border-white/70 bg-white/80 shadow-[0_12px_30px_rgba(8,40,60,0.18)]"
-              style={{
-                left: floe.left,
-                width: floe.width,
-                top: `calc(68% - var(--p) * ${70 + Number.parseInt(floe.delay, 10)}%)`,
-                opacity: "clamp(0, calc(1 - var(--p) * 1.7), 1)",
-              }}
-            />
-          ))}
-
-          <div
-            aria-hidden
-            className="absolute left-1/2 top-1/2 size-[140vmax] -translate-x-1/2 -translate-y-1/2 rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(255,255,255,0.55), rgba(255,255,255,0.05) 42%, transparent 68%)",
-              opacity: "clamp(0, calc(1 - abs(var(--p) - 0.4) * 5), 0.9)",
-              transform: "translate(-50%, -50%) scale(calc(0.2 + var(--p)))",
-            }}
-          />
-
-          <div
-            aria-hidden
-            className="absolute inset-x-0 h-px bg-white/80"
-            style={{
-              top: "calc(64% - var(--p) * 64%)",
-              boxShadow: "0 0 24px rgba(255,255,255,0.45)",
-              opacity: "clamp(0, calc(1 - abs(var(--p) - 0.48) * 3.2), 1)",
-            }}
-          />
-
-          <div
-            className="absolute inset-0 flex items-center px-6 sm:px-12"
-            style={{ opacity: "var(--text)" }}
-          >
-            <HeroCopy displayName={displayName} latinName={latinName} />
+          <div className="absolute inset-0 z-50" style={{ opacity: "var(--text, 1)" }}>
+            <div className="flex h-full items-center px-6 sm:px-12">
+              <HeroCopy displayName={displayName} latinName={latinName} />
+            </div>
+            <p className="pointer-events-none absolute bottom-6 left-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/80 mix-blend-difference">
+              Scroll to explore ↓
+            </p>
+            <p className="pointer-events-none absolute bottom-6 right-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/80 mix-blend-difference">
+              Surface to depth
+            </p>
           </div>
         </div>
       </div>
@@ -176,27 +200,91 @@ export function OceanDive() {
   );
 }
 
+function PhotoFrame({
+  name,
+  alt,
+  className,
+  style,
+}: {
+  name: (typeof FRAMES)[number];
+  alt: string;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const src = frameSources(name);
+  return (
+    <div className={cn("pointer-events-none absolute -inset-[8%] will-change-transform", className)} style={style}>
+      <picture>
+        <source media="(max-width: 767px)" srcSet={src.mobileAvif} type="image/avif" />
+        <source media="(max-width: 767px)" srcSet={src.mobileWebp} type="image/webp" />
+        <source srcSet={src.avif} type="image/avif" />
+        <img src={src.webp} alt={alt} className="h-full w-full object-cover" draggable={false} />
+      </picture>
+    </div>
+  );
+}
+
+function Particles() {
+  const dots = [
+    { left: "12%", delay: "0s", size: 4 },
+    { left: "22%", delay: "1.2s", size: 3 },
+    { left: "38%", delay: "0.4s", size: 5 },
+    { left: "54%", delay: "2s", size: 3 },
+    { left: "67%", delay: "0.8s", size: 4 },
+    { left: "78%", delay: "1.6s", size: 3 },
+    { left: "88%", delay: "0.2s", size: 5 },
+  ];
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-30" style={{ opacity: "var(--under, 0)" }}>
+      {dots.map((dot) => (
+        <span
+          key={dot.left}
+          className="absolute bottom-[-8%] rounded-full bg-white/70 motion-safe:animate-[ocean-rise_11s_linear_infinite]"
+          style={{
+            left: dot.left,
+            width: dot.size,
+            height: dot.size,
+            animationDelay: dot.delay,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function HeroCopy({ displayName, latinName }: { displayName: string; latinName: string }) {
   return (
-    <div className="mx-auto w-full max-w-3xl">
-      <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-white/80">Drift ice</p>
-      <h1 className="mt-4 font-serif text-[clamp(3.5rem,10vw,7rem)] leading-[0.92] tracking-tight">
+    <div className="relative mx-auto w-full max-w-3xl">
+      <p
+        className="font-mono text-[11px] uppercase tracking-[0.28em]"
+        style={{ color: "color-mix(in srgb, #163044 calc((1 - var(--tone, 0)) * 100%), white)" }}
+      >
+        Drift ice
+      </p>
+      <h1
+        className="mt-4 font-serif text-[clamp(3.5rem,10vw,7rem)] leading-[0.92] tracking-tight"
+        style={{ color: "color-mix(in srgb, #102033 calc((1 - var(--tone, 0)) * 100%), white)" }}
+      >
         {displayName}
       </h1>
-      <p className="mt-3 font-mono text-sm tracking-[0.16em] text-white/75">{latinName}</p>
-      <p className="mt-6 max-w-md text-base leading-relaxed text-white/85">{homeIntro}</p>
+      <p
+        className="mt-3 font-mono text-sm tracking-[0.16em]"
+        style={{ color: "color-mix(in srgb, #2a4660 calc((1 - var(--tone, 0)) * 100%), rgba(255,255,255,0.78))" }}
+      >
+        {latinName}
+      </p>
+      <p
+        className="mt-6 max-w-md text-base leading-relaxed"
+        style={{ color: "color-mix(in srgb, #1b3348 calc((1 - var(--tone, 0)) * 100%), rgba(255,255,255,0.88))" }}
+      >
+        {homeIntro}
+      </p>
       <Link
         href="#ocean-modules"
-        className="pointer-events-auto mt-8 inline-flex min-h-11 items-center rounded-full bg-white px-5 text-sm font-medium text-[#102833]"
+        className="pointer-events-auto mt-8 inline-flex min-h-11 items-center rounded-full bg-white px-5 text-sm font-medium text-[#102033]"
       >
         进入栏目
       </Link>
-      <p className="pointer-events-none absolute bottom-6 left-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/70">
-        Scroll to explore ↓
-      </p>
-      <p className="pointer-events-none absolute bottom-6 right-6 font-mono text-[11px] uppercase tracking-[0.18em] text-white/70">
-        Surface to depth
-      </p>
     </div>
   );
 }
@@ -214,7 +302,9 @@ function ModuleCard({ module }: { module: HomeModule }) {
           <ArrowUpRight className="size-4 text-lab-ink-tertiary" />
         ) : null}
       </div>
-      {module.description ? <p className="mt-4 text-sm leading-relaxed text-lab-ink-subtle">{module.description}</p> : null}
+      {module.description ? (
+        <p className="mt-4 text-sm leading-relaxed text-lab-ink-subtle">{module.description}</p>
+      ) : null}
       {entries.map((entry) =>
         entry.href ? (
           <Link key={entry.title} href={entry.href} className="mt-4 block min-h-11 border-t border-lab-hairline pt-3 text-sm">
@@ -229,7 +319,7 @@ function ModuleCard({ module }: { module: HomeModule }) {
   if (!href) return <li>{body}</li>;
   return (
     <li>
-      <Link href={href} className={cn("block h-full rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-lab-ink/30")}>
+      <Link href={href} className="block h-full rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-lab-ink/30">
         {body}
       </Link>
     </li>

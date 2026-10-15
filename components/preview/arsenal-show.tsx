@@ -48,6 +48,13 @@ function Scramble({ text, className }: { text: string; className?: string }) {
     tick();
   };
 
+  useEffect(() => {
+    play();
+    return () => window.clearTimeout(timer.current);
+    // 换一把枪时重新打乱一次标题
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]);
+
   return (
     <span className={className} onMouseEnter={play} onMouseLeave={stop} onFocus={play} onBlur={stop}>
       {value}
@@ -59,6 +66,7 @@ export function ArsenalShow({ guns }: { guns: ArsenalGun[] }) {
   const ringRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const rotorRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const [selected, setSelected] = useState<ArsenalGun | null>(guns[0] ?? null);
 
@@ -67,19 +75,18 @@ export function ArsenalShow({ guns }: { guns: ArsenalGun[] }) {
     if (!ring) return;
     let frame = 0;
     const paint = () => {
-      if (window.innerWidth < 768) return;
+      const rotor = rotorRef.current;
+      if (!rotor || window.innerWidth < 768) return;
       const total = Math.max(ring.offsetHeight - window.innerHeight, 1);
       const scrolled = Math.min(Math.max(-ring.getBoundingClientRect().top, 0), total);
-      const spin = (scrolled / total) * Math.PI * 1.35;
+      const spin = (scrolled / total) * 220;
+      rotor.style.setProperty("--spin", `${spin}deg`);
       cardsRef.current.forEach((card, index) => {
         if (!card) return;
-        const theta = (index / guns.length) * Math.PI * 2 + spin;
-        const depth = Math.cos(theta);
-        const x = Math.sin(theta) * 250;
-        const scale = 0.78 + depth * 0.22;
-        card.style.transform = `translate3d(${x}px, ${depth * 10}px, 0) scale(${scale})`;
-        card.style.zIndex = String(Math.round((depth + 1) * 20));
-        card.style.opacity = String(0.55 + (depth + 1) * 0.22);
+        const facing = Math.cos(((index / guns.length) * 360 + spin) * (Math.PI / 180));
+        const front = Math.max(0, facing);
+        card.style.opacity = facing < -0.05 ? "0" : String(0.38 + front * 0.62);
+        card.style.setProperty("--front", String(0.84 + front * 0.2));
       });
     };
     const onScroll = () => {
@@ -126,7 +133,7 @@ export function ArsenalShow({ guns }: { guns: ArsenalGun[] }) {
   return (
     <div className="bg-[#f4f1ea] text-[#1c1a16]">
       <div ref={ringRef} className="relative h-auto md:h-[220vh]">
-        <div className="relative flex flex-col px-4 py-10 md:sticky md:top-0 md:h-svh md:justify-center md:overflow-hidden md:px-6">
+        <div className="relative flex flex-col px-4 py-10 md:sticky md:top-0 md:h-svh md:justify-center md:px-6">
           <p className="mx-auto max-w-5xl font-mono text-[11px] uppercase tracking-[0.22em] text-[#6d675d]">
             Arsenal
           </p>
@@ -141,23 +148,34 @@ export function ArsenalShow({ guns }: { guns: ArsenalGun[] }) {
                 </li>
               ))}
             </ul>
-            <div className="relative mx-auto mt-6 hidden h-[340px] w-full max-w-5xl md:block">
-              {guns.map((item, index) => (
-                <button
-                  key={item.id}
-                  ref={(node) => {
-                    cardsRef.current[index] = node;
-                  }}
-                  type="button"
-                  onClick={() => {
-                    setSelected(item);
-                    detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                  className="absolute left-1/2 top-8 w-52 -translate-x-1/2"
-                >
-                  <GunCard gun={item} selected={item.id === gun?.id} />
-                </button>
-              ))}
+            <div className="relative mx-auto mt-4 hidden h-[440px] w-full max-w-5xl [perspective:1400px] md:block">
+              <div
+                ref={rotorRef}
+                className="absolute left-1/2 top-1/2 h-0 w-0 [transform-style:preserve-3d]"
+                style={{ transform: "rotateX(8deg) rotateY(var(--spin, 0deg))" }}
+              >
+                {guns.map((item, index) => (
+                  <button
+                    key={item.id}
+                    ref={(node) => {
+                      cardsRef.current[index] = node;
+                    }}
+                    type="button"
+                    onClick={() => {
+                      setSelected(item);
+                      detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="absolute left-0 top-0 [backface-visibility:hidden]"
+                    style={{
+                      transform: `rotateY(${(360 / guns.length) * index}deg) translateZ(430px) translate(-50%, -50%)`,
+                    }}
+                  >
+                    <span className="block" style={{ transform: "scale(var(--front, 1))" }}>
+                      <GunCard gun={item} selected={item.id === gun?.id} />
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
         </div>
       </div>
@@ -166,23 +184,28 @@ export function ArsenalShow({ guns }: { guns: ArsenalGun[] }) {
         <div ref={stageRef} className="sticky top-0 flex h-svh items-center overflow-hidden" style={{ ["--d" as string]: 0 }}>
           {gun ? (
             <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-6 md:grid-cols-[1.2fr_0.8fr]">
-              <div
-                className="relative"
-                style={{
-                  transform:
-                    "perspective(900px) rotateY(calc((var(--d) - 0.45) * -26deg)) translateY(calc((0.5 - var(--d)) * 24px))",
-                }}
-              >
-                <div aria-hidden className="absolute inset-8 rounded-full bg-black/40 blur-lg" />
-                {/* 官方平面图没有授权模型，用两层位移做出厚度 */}
+              <div className="relative [perspective:1100px]">
+                <div aria-hidden className="absolute inset-10 rounded-full bg-black/50 blur-lg" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={gun.imageUrl}
                   alt=""
-                  className="absolute left-6 top-4 w-[86%] opacity-30 blur-[1px]"
+                  className="absolute left-8 top-6 w-[88%] opacity-35"
+                  style={{
+                    transform:
+                      "translate3d(calc((var(--d) - 0.5) * -64px), calc((var(--d) - 0.4) * 28px), 0)",
+                  }}
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={gun.imageUrl} alt={gun.name} className="relative w-full object-contain" />
+                <img
+                  src={gun.imageUrl}
+                  alt={gun.name}
+                  className="relative w-full object-contain"
+                  style={{
+                    transform:
+                      "translate3d(calc((var(--d) - 0.5) * 36px), calc((0.35 - var(--d)) * 22px), 0) scale(calc(1.02 + var(--d) * 0.08))",
+                  }}
+                />
               </div>
               <div>
                 <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#9aa08a]">{gun.typeLabel}</p>

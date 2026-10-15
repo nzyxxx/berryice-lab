@@ -445,6 +445,24 @@
   animation: preview-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
+@keyframes caustic {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-3%, -2%, 0) scale(1.06);
+  }
+}
+
+@keyframes ocean-rise {
+  from {
+    transform: translate3d(0, 8vh, 0);
+  }
+  to {
+    transform: translate3d(0, -78vh, 0);
+  }
+}
+
 /* 瓦片入场。
    这里必须是 CSS 而不是 motion 的 initial —— 后者会被序列化进 SSR 产物，
    于是首屏 HTML 里躺着一排 opacity:0 的卡片，要等整棵树水合完才显形。
