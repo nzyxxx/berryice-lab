@@ -58,6 +58,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
     initialGameMode(searchParams)
   );
   const [activeCategory, setActiveCategory] = useState<CategoryTab>("all");
+  const [weaponFilter, setWeaponFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("hot");
   const parentRef = useRef<HTMLDivElement>(null);
@@ -100,7 +101,14 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
 
   const handleGameChange = (game: GameTab) => {
     setActiveGame(game);
+    setWeaponFilter("all");
   };
+
+  const weaponOptions = useMemo(() => {
+    return [...new Set(communityCodes.map((item) => item.weapon).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b, "zh-CN")
+    );
+  }, [communityCodes]);
 
   const filteredCodes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -108,6 +116,9 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
 
     if (activeCategory !== "all") {
       list = list.filter((item) => inferWeaponType(item.weapon) === activeCategory);
+    }
+    if (weaponFilter !== "all") {
+      list = list.filter((item) => item.weapon === weaponFilter);
     }
 
     if (q) {
@@ -125,7 +136,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
     });
 
     return list;
-  }, [communityCodes, searchQuery, sortBy, activeCategory]);
+  }, [communityCodes, searchQuery, sortBy, activeCategory, weaponFilter]);
 
   const hotRankMap = useMemo(() => {
     const sorted = [...communityCodes].sort((a, b) => b.copyCount - a.copyCount);
@@ -181,7 +192,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
           <div>
             <h1 className="text-display-section text-lab-ink">社区改枪码</h1>
             <p className="mt-2 max-w-xl text-base text-lab-ink-subtle">
-              社区热门改枪码由服务端定时同步。可按武器类型筛选，支持搜索与一键导入改枪页。
+              枪码留在这页上。按模式和武器筛选，复制即可。只有来源一行会打开原站。
             </p>
           </div>
         </MotionReveal>
@@ -240,6 +251,20 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="sr-only" htmlFor="weapon-filter">武器</label>
+          <select
+            id="weapon-filter"
+            value={weaponFilter}
+            onChange={(event) => setWeaponFilter(event.target.value)}
+            className="h-11 min-w-40 rounded-md border border-lab-hairline bg-lab-canvas px-3 text-sm text-lab-ink outline-none focus:border-lab-primary/50"
+          >
+            <option value="all">全部武器</option>
+            {weaponOptions.map((weapon) => (
+              <option key={weapon} value={weapon}>
+                {weapon}
+              </option>
+            ))}
+          </select>
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-lab-ink-tertiary" />
             <input
@@ -247,7 +272,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
               placeholder="搜索武器、描述、枪码…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 w-full rounded-md border border-lab-hairline bg-lab-canvas pr-3 pl-10 font-mono text-sm outline-none focus:border-lab-primary/50 focus:ring-2 focus:ring-lab-primary/20"
+              className="h-11 w-full rounded-md border border-lab-hairline bg-lab-canvas pr-3 pl-10 font-mono text-sm outline-none focus:border-lab-primary/50 focus:ring-2 focus:ring-lab-primary/20"
             />
           </div>
           <div className="flex rounded-md border border-lab-hairline bg-lab-canvas p-1">
@@ -279,6 +304,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
           <p className="text-xs text-lab-ink-tertiary">
             显示 {filteredCodes.length} / {communityCodes.length} 条
             {activeCategory !== "all" && ` · ${weaponTypeLabel(activeCategory)}`}
+            {weaponFilter !== "all" && ` · ${weaponFilter}`}
           </p>
         )}
       </Panel>
