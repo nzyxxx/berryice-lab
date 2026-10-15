@@ -5,20 +5,27 @@ import { homeIntro, homeModules, type HomeModule } from "@/lib/content/home-modu
 import { articles } from "@/lib/content/writing";
 import { profileConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
+import { ArrowUpRight, FlaskConical, PenLine, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 const spanClass: Record<string, string> = {
-  lab: "sm:col-span-7 sm:row-span-2",
-  writing: "sm:col-span-5",
+  writing: "sm:col-span-7",
   about: "sm:col-span-5",
+  lab: "sm:col-span-12",
+};
+
+const glowClass: Record<string, string> = {
+  writing: "home-glow-blue",
+  about: "home-glow-sand",
+  lab: "home-glow-violet",
 };
 
 /** 还没写完的占位卡不进首页。数据留在 home-modules，有了去处再出现。 */
 const visibleModules = homeModules
   .filter((module) => module.badge !== "即将上线")
   .sort((a, b) => {
-    const order = ["lab", "writing", "about"];
+    const order = ["writing", "about", "lab"];
     const rank = (id: string) => {
       const index = order.indexOf(id);
       return index === -1 ? order.length : index;
@@ -38,102 +45,94 @@ function SplitLine({ text, className }: { text: string; className?: string }) {
   );
 }
 
-function Pill({ children }: { children: string }) {
+function Mark({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex h-11 items-center rounded-full bg-white px-4 text-sm font-medium text-neutral-950">
+    <span className="mb-8 inline-flex text-white/70">
       {children}
     </span>
   );
 }
 
-function LabPreview() {
+function TileCopy({ title, line }: { title: string; line: string }) {
   return (
-    <div className="relative flex min-h-56 flex-1 items-center justify-center">
-      <img
-        src="/arsenal/ak-12.webp"
-        alt=""
-        className="home-preview pointer-events-none h-48 w-full object-contain sm:h-64"
-      />
-    </div>
-  );
-}
-
-function WritingPreview() {
-  const latest = articles.slice(0, 3);
-  return (
-    <div className="home-preview relative h-36 overflow-hidden">
-      {[0, 1, 2].map((sheet) => (
-        <div
-          key={sheet}
-          className="absolute inset-x-4 top-3 h-24 rounded-2xl border border-white/10 bg-[#16181e]"
-          style={{ transform: `translate3d(${sheet * 10}px, ${sheet * 12}px, 0)` }}
-        >
-          {latest[sheet] ? (
-            <p className="truncate px-4 pt-4 text-sm font-medium text-white">{latest[sheet].title}</p>
-          ) : (
-            <span className="mt-4 ml-4 block h-2.5 w-2/3 rounded-full bg-white/20" />
-          )}
-          <span className="mt-3 ml-4 block h-2 w-1/2 rounded-full bg-white/10" />
-          <span className="mt-2 ml-4 block h-2 w-1/3 rounded-full bg-white/10" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function AboutPreview() {
-  const { displayName, latinName, tags, avatarInitials } = profileConfig;
-  return (
-    <div className="home-preview flex h-36 items-center">
-      <div className="flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-[#14161c] px-4 py-4">
-        <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-semibold text-neutral-950">
-          {avatarInitials}
+    <span className="relative z-[1] block">
+      <span className="flex items-start justify-between gap-6">
+        <span className="block text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
+          {title}
         </span>
-        <span className="min-w-0">
-          <span className="block truncate text-lg font-semibold tracking-tight text-white">{displayName}</span>
-          <span className="mt-0.5 block text-sm text-white/50">{latinName}</span>
-          <span className="mt-2 flex flex-wrap gap-1.5">
-            {tags.slice(0, 2).map((tag) => (
-              <span key={tag} className="rounded-full border border-white/15 px-2 py-0.5 text-[11px] text-white/70">
-                {tag}
-              </span>
-            ))}
-          </span>
-        </span>
-      </div>
-    </div>
+        <ArrowUpRight className="home-arrow mt-1 size-4 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
+      </span>
+      <span className="mt-3 block max-w-md text-[15px] leading-relaxed text-white/45">{line}</span>
+    </span>
   );
 }
 
 function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
-  const featured = module.id === "lab";
-  const href = module.href ?? module.entries?.find((entry) => entry.href)?.href ?? "/";
+  const reveal = { ["--i" as string]: index + 2 };
+  const glow = glowClass[module.id] ?? "home-glow-blue";
+
+  if (module.id === "lab") {
+    const rows = module.entries?.filter((entry) => entry.href) ?? [];
+    return (
+      <li data-reveal style={reveal} className={cn("h-full", spanClass.lab)}>
+        <article className={cn("home-tile flex h-full flex-col rounded-3xl px-8 py-8 sm:px-10 sm:py-9", glow)}>
+          <span className="home-tile-ring" aria-hidden />
+          <Mark>
+            <FlaskConical className="size-5" strokeWidth={1.25} />
+          </Mark>
+          <span className="relative z-[1] text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
+            {module.title}
+          </span>
+          <span className="relative z-[1] mt-3 block text-[15px] leading-relaxed text-white/45">
+            在做的实验。
+          </span>
+          <ul className="relative z-[1] mt-8 border-t border-white/10">
+            {rows.map((entry) => (
+              <li key={entry.title}>
+                <Link
+                  href={entry.href ?? "/"}
+                  className="group/row flex min-h-12 items-center justify-between gap-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                >
+                  <span className="min-w-0">
+                    <span className="text-sm font-medium text-white">{entry.title}</span>
+                    {entry.description ? (
+                      <span className="ml-3 text-sm text-white/40">{entry.description}</span>
+                    ) : null}
+                  </span>
+                  <ArrowUpRight className="home-arrow size-4 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </article>
+      </li>
+    );
+  }
+
+  const href = module.href ?? "/";
   const line =
     module.id === "writing"
-      ? articles[0]?.title ?? "写完的长文会出现在这里"
-      : module.id === "about"
-        ? "现在在做什么，以及怎么找到我"
-        : "枪械库、社区改枪码、主播配装";
-  const pill = featured ? "进入实验室" : module.id === "writing" ? "阅读" : "关于我";
+      ? articles[0]?.title ?? "写完的长文和随记。"
+      : "现在在做什么，以及怎么找到我。";
+  const icon =
+    module.id === "writing" ? (
+      <PenLine className="size-5" strokeWidth={1.25} />
+    ) : (
+      <UserRound className="size-5" strokeWidth={1.25} />
+    );
 
   return (
-    <li data-reveal style={{ ["--i" as string]: index + 2 }} className={cn("h-full", spanClass[module.id])}>
+    <li data-reveal style={reveal} className={cn("h-full", spanClass[module.id])}>
       <Link
         href={href}
         className={cn(
-          "home-tile group flex h-full min-h-64 flex-col justify-between rounded-[1.75rem] p-6 outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:p-7",
-          featured && "home-tile-glass min-h-[28rem]"
+          "home-tile group flex h-full min-h-64 flex-col justify-between rounded-3xl px-8 py-8 outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:min-h-72 sm:px-10 sm:py-10",
+          glow
         )}
       >
-        <span className="home-tile-glow" aria-hidden />
-        {featured ? <LabPreview /> : module.id === "writing" ? <WritingPreview /> : <AboutPreview />}
-        <span className="relative z-[1] mt-6">
-          <span className="block text-3xl font-semibold tracking-[-0.04em] text-white">{module.title}</span>
-          <span className="mt-2 block truncate text-sm text-white/50">{line}</span>
-          <span className="mt-5 block">
-            <Pill>{pill}</Pill>
-          </span>
-        </span>
+        <span className="home-tile-ring" aria-hidden />
+        <Mark>{icon}</Mark>
+        <TileCopy title={module.title} line={line} />
       </Link>
     </li>
   );

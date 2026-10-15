@@ -31,7 +31,7 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -564,40 +564,53 @@
 
 .home-tile {
   position: relative;
-  background: #0c0e13;
+  overflow: hidden;
+  background: #0b0c10;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.home-tile-glass {
-  background: rgba(255, 255, 255, 0.06);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  backdrop-filter: blur(24px) saturate(160%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+.home-tile::before {
+  content: "";
+  position: absolute;
+  top: -4.5rem;
+  right: -2.5rem;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--tile-glow, rgba(148, 163, 184, 0.22)), transparent 68%);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 0.45s linear, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.home-tile-glow {
+.home-glow-blue { --tile-glow: rgba(125, 168, 214, 0.28); }
+.home-glow-sand { --tile-glow: rgba(196, 168, 132, 0.26); }
+.home-glow-violet { --tile-glow: rgba(164, 150, 196, 0.24); }
+.home-tile-ring {
   position: absolute;
   inset: 0;
   z-index: 2;
   border-radius: inherit;
-  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.35s linear;
 }
-.home-preview {
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  transform-origin: center;
-}
-img.home-preview {
-  transform-origin: 70% 80%;
+.home-arrow {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .home-tile:hover {
-  transform: translate3d(0, -6px, 0);
+  transform: translate3d(0, -3px, 0);
 }
-.home-tile:hover .home-tile-glow {
+.home-tile:hover::before {
+  opacity: 1;
+  transform: translate3d(-10px, 12px, 0);
+}
+.home-tile:hover .home-tile-ring {
   opacity: 1;
 }
-.home-tile:hover .home-preview {
-  transform: scale(1.06);
+.group:hover .home-arrow,
+.group\/row:hover .home-arrow {
+  transform: translate3d(3px, -3px, 0);
 }
 
 html.home-motion .home-split > span {
