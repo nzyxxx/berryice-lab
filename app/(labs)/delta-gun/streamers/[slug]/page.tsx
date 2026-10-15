@@ -14,7 +14,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+// 与列表页同一窗口。没有 generateStaticParams，详情在第一次访问时生成，之后按小时更新。
+export const revalidate = 3600;
 
 type PageProps = { params: Promise<{ slug: string }> };
 

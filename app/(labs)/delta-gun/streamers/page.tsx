@@ -5,7 +5,10 @@ import { ensureStreamerTables, listStreamers } from "@/lib/repositories/streamer
 import type { StoredStreamer } from "@/lib/types/streamer";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+// 主播名单按日更新。force-dynamic 会让每个访问都打库；
+// 静态预渲染又会给出 s-maxage=31536000，nginx 能存一年。
+// 一小时 ISR：共享缓存到期就回源，小机器不用每次查库。
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "主播改枪码 · 三角洲",

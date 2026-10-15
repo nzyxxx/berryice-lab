@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { dailyJson } from "@/lib/http/daily-cache";
 import {
   ensureStreamerTables,
   getStreamerBySlug,
@@ -17,14 +16,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
     await ensureStreamerTables();
     const streamer = await getStreamerBySlug(decoded);
     if (!streamer) {
-      return NextResponse.json({ ok: false, message: "主播不存在" }, { status: 404 });
+      return dailyJson({ ok: false, message: "主播不存在" }, 404);
     }
 
     const loadouts = await listStreamerLoadouts(decoded);
-    return NextResponse.json({ ok: true, data: { ...streamer, loadouts } });
+    return dailyJson({ ok: true, data: { ...streamer, loadouts } });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("GET /api/streamers/[slug] failed:", message);
-    return NextResponse.json({ ok: false, message }, { status: 500 });
+    return dailyJson({ ok: false, message }, 500);
   }
 }

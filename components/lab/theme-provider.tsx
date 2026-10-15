@@ -4,9 +4,8 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -20,6 +19,7 @@ type ThemeContextValue = {
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
+const THEME_CHANGE_EVENT = "berryice-theme-change";
 
 function applyTheme(next: Theme) {
   document.documentElement.classList.toggle("dark", next === "dark");
@@ -31,19 +31,31 @@ function applyTheme(next: Theme) {
   }
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+function subscribeTheme(onStoreChange: () => void) {
+  window.addEventListener(THEME_CHANGE_EVENT, onStoreChange);
+  return () => window.removeEventListener(THEME_CHANGE_EVENT, onStoreChange);
+}
 
-  useEffect(() => {
-    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
-  }, []);
+/**
+ * 首屏主题由 layout 里的内联脚本写到 <html> 上，避免水合前闪一下。
+ * 服务端快照固定为 dark，和水合时的默认 class 一致；
+ * 水合完成后再读真实 class，浅色用户只改图标，不改已经画好的背景。
+ */
+function readTheme(): Theme {
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
+function readServerTheme(): Theme {
+  return "dark";
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, readServerTheme);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next: Theme = prev === "dark" ? "light" : "dark";
-      applyTheme(next);
-      return next;
-    });
+    const next: Theme = readTheme() === "dark" ? "light" : "dark";
+    applyTheme(next);
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }, []);
 
   const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
