@@ -618,14 +618,30 @@ html.home-motion .home-card {
   transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transform-style: preserve-3d;
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
-  background-image: radial-gradient(
+}
+html.home-motion .home-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
     420px circle at var(--mx, 50%) var(--my, 20%),
-    color-mix(in oklab, var(--lab-primary) 32%, transparent),
+    color-mix(in oklab, var(--lab-primary) 34%, transparent),
     transparent 42%
   );
 }
 html.home-motion .home-card:hover {
   border-color: color-mix(in oklab, var(--lab-primary) 55%, var(--lab-hairline));
+}
+html.home-motion .home-card:hover::before {
+  opacity: 1;
+}
+html.home-motion .home-card > * {
+  position: relative;
+  z-index: 1;
 }
 html.home-motion .home-card::after {
   content: "";
