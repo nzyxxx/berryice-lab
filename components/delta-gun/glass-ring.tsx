@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
- * 松手后的摩擦和吸附，改自 Yousuf Soomro 的 liquid-glass-carousel（MIT）。
- * 排法是平面封面流：侧卡只缩小、变淡，不再转成一条棱。
+ * 松手后的惯性，再弹簧吸到最近一张。
+ * 摩擦常量来自 Yousuf Soomro 的 liquid-glass-carousel（MIT）。
  *
  * Copyright (c) 2026 Yousuf Soomro
  * https://github.com/Yousuf-developer/liquid-glass-carousel
@@ -35,146 +35,140 @@ export type RingCard = {
   onAction?: () => void;
 };
 
-type Layout = "cover" | "list";
+const RADIUS = 380;
+const STEP = 32;
+const PERSPECTIVE = 1100;
+const CARD_W = 168;
+const CARD_H = 292;
 
-type Metrics = {
-  window: number;
-  width: number;
-  height: number;
-  slots: number[];
-  scales: number[];
-};
-
-const DESKTOP: Metrics = {
-  window: 3,
-  width: 200,
-  height: 372,
-  slots: [0, 196, 360, 496],
-  scales: [1, 0.82, 0.68, 0.56],
-};
-
-const MOBILE: Metrics = {
-  window: 1,
-  width: 200,
-  height: 352,
-  slots: [0, 200],
-  scales: [1, 0.88],
-};
+type Mode = "idle" | "coast" | "spring";
 
 function wrapOffset(index: number, position: number, count: number) {
   const delta = index - position;
   return delta - count * Math.round(delta / count);
 }
 
-function place(abs: number, metrics: Metrics) {
-  const last = metrics.slots.length - 1;
-  const index = Math.min(last, Math.floor(abs));
-  const next = Math.min(last, index + 1);
-  const t = abs - index;
-  return {
-    x: metrics.slots[index]! + (metrics.slots[next]! - metrics.slots[index]!) * t,
-    scale: metrics.scales[index]! + (metrics.scales[next]! - metrics.scales[index]!) * t,
-  };
-}
-
-function nearestSlot(index: number, position: number, count: number) {
+function nearestIndex(index: number, position: number, count: number) {
   const turns = Math.round((position - index) / count);
   return index + turns * count;
 }
 
 export function GlassRing({ cards, label }: { cards: RingCard[]; label: string }) {
-  const [layout, setLayout] = useState<Layout>("cover");
-  const [metrics, setMetrics] = useState<Metrics>(DESKTOP);
-  const [position, setPosition] = useState(0);
-  const positionRef = useRef(0);
-  const coastRef = useRef(0);
-  const dragged = useRef(false);
-  const stageRef = useRef<HTMLDivElement>(null);
   const count = cards.length;
+  const motion = useRef({
+    pos: 0,
+    vel: 0,
+    mode: "idle" as Mode,
+    springTo: null as number | null,
+    zoom: 1,
+    zoomTo: 1,
+  });
+  const rafRef = useRef(0);
+  const dragged = useRef(false);
+  const pendingOpen = useRef<string | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [pose, setPose] = useState({ pos: 0, zoom: 1, moving: false });
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [list, setList] = useState(false);
+
+  const publish = () => {
+    const m = motion.current;
+    setPose({ pos: m.pos, zoom: m.zoom, moving: m.mode !== "idle" || Math.abs(m.zoom - m.zoomTo) > 0.001 });
+  };
+
+  const stop = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = 0;
+  };
+
+  const tick = () => {
+    const m = motion.current;
+    let alive = false;
+    if (m.mode === "coast") {
+      m.vel *= 0.865;
+      m.pos += m.vel;
+      alive = true;
+      if (Math.abs(m.vel) < 0.012) {
+        m.mode = "spring";
+        m.springTo = Math.round(m.pos);
+      }
+    } else if (m.mode === "spring" && m.springTo != null) {
+      const delta = m.springTo - m.pos;
+      m.vel = m.vel * 0.72 + delta * 0.22;
+      m.pos += m.vel;
+      alive = true;
+      if (Math.abs(delta) < 0.0012 && Math.abs(m.vel) < 0.0012) {
+        m.pos = m.springTo;
+        m.vel = 0;
+        m.mode = "idle";
+        m.springTo = null;
+        const pending = pendingOpen.current;
+        pendingOpen.current = null;
+        if (pending) setOpenId(pending);
+      }
+    }
+    if (Math.abs(m.zoomTo - m.zoom) > 0.001) {
+      m.zoom += (m.zoomTo - m.zoom) * 0.18;
+      alive = true;
+    } else {
+      m.zoom = m.zoomTo;
+    }
+    publish();
+    rafRef.current = alive ? requestAnimationFrame(tick) : 0;
+  };
+
+  const kick = () => {
+    if (!rafRef.current) rafRef.current = requestAnimationFrame(tick);
+  };
+
+  const springToIndex = (index: number) => {
+    if (count === 0) return;
+    const m = motion.current;
+    m.mode = "spring";
+    m.springTo = nearestIndex(index, m.pos, count);
+    m.vel *= 0.4;
+    kick();
+  };
 
   useEffect(() => {
-    return () => {
-      if (coastRef.current) cancelAnimationFrame(coastRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const fine = window.matchMedia("(pointer: fine) and (min-width: 768px)");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const apply = () => {
-      setLayout(reduce.matches ? "list" : "cover");
-      setMetrics(fine.matches ? DESKTOP : MOBILE);
-    };
+    const apply = () => setList(reduce.matches);
     apply();
-    fine.addEventListener("change", apply);
     reduce.addEventListener("change", apply);
     return () => {
-      fine.removeEventListener("change", apply);
       reduce.removeEventListener("change", apply);
+      stop();
     };
   }, []);
-
-  const stopCoast = () => {
-    if (coastRef.current) cancelAnimationFrame(coastRef.current);
-    coastRef.current = 0;
-  };
-
-  const commit = (value: number) => {
-    positionRef.current = value;
-    setPosition(value);
-  };
-
-  const animateTo = (target: number) => {
-    stopCoast();
-    const tick = () => {
-      const delta = target - positionRef.current;
-      if (Math.abs(delta) < 0.012) {
-        commit(target);
-        coastRef.current = 0;
-        return;
-      }
-      commit(positionRef.current + delta * 0.18);
-      coastRef.current = requestAnimationFrame(tick);
-    };
-    coastRef.current = requestAnimationFrame(tick);
-  };
-
-  const focusIndex = (index: number) => {
-    if (count === 0) return;
-    animateTo(nearestSlot(index, positionRef.current, count));
-  };
 
   useEffect(() => {
     const node = stageRef.current;
-    if (!node || layout !== "cover") return;
-    let idle = 0;
+    if (!node || list) return;
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
-      stopCoast();
-      commit(positionRef.current + event.deltaY * 0.0016);
-      window.clearTimeout(idle);
-      idle = window.setTimeout(() => {
-        animateTo(Math.round(positionRef.current));
-      }, 140);
+      const m = motion.current;
+      const room = event.deltaY > 0 ? m.zoomTo - 0.84 : 1.16 - m.zoomTo;
+      const ease = Math.max(0.18, room / 0.32);
+      m.zoomTo = Math.min(1.16, Math.max(0.84, m.zoomTo - event.deltaY * 0.00105 * ease));
+      kick();
     };
     node.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      node.removeEventListener("wheel", onWheel);
-      window.clearTimeout(idle);
-    };
-  }, [layout, count]);
+    return () => node.removeEventListener("wheel", onWheel);
+  }, [list, count]);
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (layout !== "cover" || count === 0) return;
+    if (list || count === 0) return;
     if ((event.target as HTMLElement).closest("a, button")) return;
-    stopCoast();
+    const m = motion.current;
+    m.mode = "idle";
+    m.springTo = null;
+    m.vel = 0;
     const startX = event.clientX;
     const startY = event.clientY;
     let lastX = startX;
-    let velocity = 0;
     let axis: "x" | "y" | null = null;
     dragged.current = false;
-    const step = metrics.slots[1] || 196;
     const target = event.currentTarget;
     target.setPointerCapture(event.pointerId);
 
@@ -182,97 +176,81 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label: string }
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
       if (!axis) {
-        if (Math.hypot(dx, dy) < 6) return;
+        if (Math.hypot(dx, dy) < 5) return;
         axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
       }
       if (axis !== "x") return;
       dragged.current = true;
+      setOpenId(null);
       const delta = ev.clientX - lastX;
       lastX = ev.clientX;
-      velocity = -delta / step;
-      commit(positionRef.current + velocity);
+      const stepPx = 168;
+      m.vel = -delta / stepPx;
+      m.pos += m.vel;
+      publish();
     };
     const up = () => {
       target.removeEventListener("pointermove", move);
       target.removeEventListener("pointerup", up);
-      if (dragged.current) {
-        window.setTimeout(() => {
-          dragged.current = false;
-        }, 0);
-      }
       if (!dragged.current) return;
-      let v = velocity;
-      const coast = () => {
-        v *= 0.865;
-        if (Math.abs(v) < 0.012) {
-          animateTo(Math.round(positionRef.current));
-          return;
-        }
-        commit(positionRef.current + v);
-        coastRef.current = requestAnimationFrame(coast);
-      };
-      coastRef.current = requestAnimationFrame(coast);
+      window.setTimeout(() => {
+        dragged.current = false;
+      }, 0);
+      m.mode = "coast";
+      kick();
     };
     target.addEventListener("pointermove", move);
     target.addEventListener("pointerup", up);
-    target.addEventListener("pointercancel", stopCoast, { once: true });
+    target.addEventListener("pointercancel", () => {
+      m.mode = "spring";
+      m.springTo = Math.round(m.pos);
+      kick();
+    }, { once: true });
   };
 
   const onKey = (event: React.KeyboardEvent) => {
-    if (layout !== "cover" || count === 0) return;
-    const current = Math.round(positionRef.current);
+    if (list || count === 0) return;
+    const front = ((Math.round(motion.current.pos) % count) + count) % count;
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      animateTo(current + 1);
+      setOpenId(null);
+      springToIndex(front + 1);
     } else if (event.key === "ArrowLeft") {
       event.preventDefault();
-      animateTo(current - 1);
-    } else if (event.key === "Home") {
+      setOpenId(null);
+      springToIndex(front - 1);
+    } else if (event.key === "Enter") {
       event.preventDefault();
-      animateTo(nearestSlot(0, positionRef.current, count));
-    } else if (event.key === "End") {
-      event.preventDefault();
-      animateTo(nearestSlot(count - 1, positionRef.current, count));
+      const card = cards[front];
+      if (card) setOpenId((id) => (id === card.id ? null : card.id));
     }
   };
 
   if (count === 0) return null;
-
-  const active = ((Math.round(position) % count) + count) % count;
-  const activeCard = cards[active];
+  const frontIndex = ((Math.round(pose.pos) % count) + count) % count;
 
   return (
     <div className="mb-8">
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-3 flex items-end justify-between gap-3">
         <p className="text-sm text-lab-ink-subtle">{label}</p>
-        <div className="flex rounded-full border border-white/10 p-1">
-          {(["cover", "list"] as const).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setLayout(key)}
-              className={cn(
-                "h-11 rounded-full px-3 text-xs",
-                layout === key ? "bg-white/10 text-lab-ink" : "text-lab-ink-subtle"
-              )}
-            >
-              {key === "cover" ? "封面" : "列表"}
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => setList((value) => !value)}
+          className="h-11 rounded-full border border-lab-hairline px-4 text-xs text-lab-ink-subtle"
+        >
+          {list ? "看环" : "列表"}
+        </button>
       </div>
 
-      {layout === "list" ? (
+      {list ? (
         <ul className="space-y-2">
           {cards.map((card) => (
-            <li key={card.id}>
-              <div className="flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                <span className="min-w-0">
-                  <span className="block truncate text-xs text-lab-ink-subtle">{card.kicker}</span>
-                  <span className="block truncate text-base text-lab-ink">{card.title}</span>
-                </span>
-                <CardActions card={card} />
-              </div>
+            <li key={card.id} className="flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-lab-hairline bg-lab-surface-1/80 px-4 py-3">
+              <span className="min-w-0">
+                <span className="block truncate text-xs text-lab-ink-subtle">{card.kicker}</span>
+                <span className="block truncate text-base text-lab-ink">{card.title}</span>
+              </span>
+              <CardActions card={card} />
             </li>
           ))}
         </ul>
@@ -284,88 +262,95 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label: string }
           onKeyDown={onKey}
           aria-label={label}
           aria-roledescription="carousel"
-          className="relative mx-auto w-full cursor-grab overflow-hidden outline-none active:cursor-grabbing"
-          style={{ height: metrics.height + 28, perspective: "1400px", touchAction: "pan-y" }}
+          className="relative h-[440px] cursor-grab overflow-hidden outline-none active:cursor-grabbing"
+          style={{ perspective: `${PERSPECTIVE}px`, touchAction: "pan-y" }}
         >
-          {cards.map((card, index) => {
-            const offset = wrapOffset(index, position, count);
-            const abs = Math.abs(offset);
-            if (abs > metrics.window + 0.65) return null;
-            const { x, scale } = place(abs, metrics);
-            const quiet = abs > 0.55;
-            return (
-              <div
-                key={card.id}
-                className="absolute left-1/2 top-1/2 [backface-visibility:hidden]"
-                style={{
-                  width: metrics.width,
-                  height: metrics.height,
-                  zIndex: 40 - Math.round(abs * 8),
-                  transform: `translate(-50%, -50%) translate3d(${Math.sign(offset) * x}px, 0, 0) rotateY(${Math.max(-12, Math.min(12, offset * -7))}deg) scale(${scale})`,
-                  opacity: Math.max(0.28, 1 - abs * 0.24),
-                  filter: `brightness(${Math.max(0.62, 1 - abs * 0.12)})`,
-                }}
-              >
+          <div
+            className="absolute inset-0"
+            style={{ transform: `translateZ(-180px) scale(${pose.zoom})`, transformStyle: "preserve-3d" }}
+          >
+            {cards.map((card, index) => {
+              const offset = wrapOffset(index, pose.pos, count);
+              if (Math.abs(offset) > 1.4) return null;
+              const angle = offset * STEP;
+              const depth = Math.min(1, Math.abs(offset));
+              const front = Math.abs(offset) < 0.42;
+              const open = front && openId === card.id;
+              const hover = hoverId === card.id && !pose.moving && !front;
+              const scale = (front ? (open ? 1.12 : 1.06) : 1 - depth * 0.08) * (hover ? 1.03 : 1);
+              const lift = hover ? -12 : 0;
+              return (
                 <div
-                  role="group"
-                  aria-label={card.title}
-                  aria-current={index === active ? "true" : undefined}
-                  onClick={() => {
-                    if (dragged.current) {
-                      dragged.current = false;
-                      return;
-                    }
-                    focusIndex(index);
+                  key={card.id}
+                  className="absolute top-1/2 left-1/2 [backface-visibility:hidden]"
+                  style={{
+                    width: CARD_W,
+                    height: CARD_H,
+                    zIndex: 30 - Math.round(Math.abs(angle)),
+                    opacity: Math.max(0.22, 1 - Math.abs(offset) * 0.42),
+                    transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${RADIUS}px) translateY(${lift}px) rotateX(${hover ? 7 : 0}deg) scale(${scale})`,
+                    transition: pose.moving ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
-                  className="flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c1018]/75 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-lg"
+                  onMouseEnter={() => setHoverId(card.id)}
+                  onMouseLeave={() => setHoverId((id) => (id === card.id ? null : id))}
                 >
-                  <CardArt src={card.imageUrl} />
-                  <div className="flex min-h-0 flex-1 flex-col px-3.5 pt-2 pb-3">
-                    <p className="truncate text-[11px] tracking-[0.14em] text-lab-ink-subtle">{card.kicker}</p>
-                    <p className="mt-1 line-clamp-2 shrink-0 text-base font-semibold leading-snug tracking-tight text-lab-ink">
-                      {card.title}
-                    </p>
-                    {quiet ? null : (
-                      <ul className="mt-3 space-y-1">
-                        {(card.stats ?? []).slice(0, 3).map((stat) => (
-                          <li key={stat.label} className="flex items-baseline justify-between gap-3 text-xs">
-                            <span className="shrink-0 text-lab-ink-subtle">{stat.label}</span>
-                            <span className="truncate text-lab-ink">{stat.value}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  <div
+                    role="group"
+                    aria-label={card.title}
+                    aria-current={index === frontIndex ? "true" : undefined}
+                    onClick={() => {
+                      if (dragged.current) return;
+                      if (front) {
+                        pendingOpen.current = null;
+                        setOpenId((id) => (id === card.id ? null : card.id));
+                        return;
+                      }
+                      pendingOpen.current = card.id;
+                      setOpenId(null);
+                      springToIndex(index);
+                    }}
+                    className={cn(
+                      "flex h-full cursor-pointer flex-col overflow-hidden rounded-[22px] border text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_18px_36px_rgba(0,0,0,0.32)] backdrop-blur-lg",
+                      front ? "border-lab-primary/55 bg-lab-primary/20" : "border-white/15 bg-white/[0.06]"
                     )}
-                    {quiet ? null : (
-                      <div className="mt-auto pt-2">
-                        <CardActions card={card} />
-                      </div>
+                  >
+                    {card.imageUrl ? (
+                      <img src={card.imageUrl} alt="" draggable={false} className={cn("w-full shrink-0 object-contain px-3 pt-3", open ? "h-20" : "h-36")} />
+                    ) : (
+                      <div className="h-10 shrink-0" />
                     )}
+                    <div className="flex min-h-0 flex-1 flex-col px-3.5 pt-2 pb-3">
+                      <p className="truncate text-[11px] tracking-[0.14em] text-lab-ink-subtle">{card.kicker}</p>
+                      <p className="mt-1 line-clamp-2 text-base leading-snug font-semibold text-lab-ink">{card.title}</p>
+                      {!open && card.stats?.[0] ? (
+                        <p className="mt-auto flex items-baseline justify-between text-xs text-lab-ink-subtle">
+                          <span>{card.stats[0].label}</span>
+                          <span className="truncate text-lab-ink">{card.stats[0].value}</span>
+                        </p>
+                      ) : null}
+                      {open ? (
+                        <div className="mt-3 min-h-0 flex-1">
+                          <ul className="space-y-1">
+                            {(card.stats ?? []).slice(0, 3).map((stat) => (
+                              <li key={stat.label} className="flex items-baseline justify-between gap-2 text-xs">
+                                <span className="shrink-0 text-lab-ink-subtle">{stat.label}</span>
+                                <span className="truncate text-lab-ink">{stat.value}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="mt-2">
+                            <CardActions card={card} />
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-          <p className="sr-only" aria-live="polite">
-            {activeCard ? `${active + 1} / ${count} ${activeCard.title}` : ""}
-          </p>
+              );
+            })}
+          </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function CardArt({ src }: { src?: string }) {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed) return null;
-  return (
-    <div className="flex h-44 shrink-0 items-center justify-center px-3 pt-4">
-      <img
-        src={src}
-        alt=""
-        draggable={false}
-        className="max-h-full max-w-full object-contain"
-        onError={() => setFailed(true)}
-      />
     </div>
   );
 }
@@ -396,5 +381,5 @@ function CardActions({ card }: { card: RingCard }) {
     );
   }
   if (nodes.length === 0) return null;
-  return <div className="flex items-center gap-3">{nodes}</div>;
+  return <span className="flex items-center gap-3">{nodes}</span>;
 }
