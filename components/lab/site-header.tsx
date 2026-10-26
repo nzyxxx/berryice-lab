@@ -52,11 +52,11 @@ export function SiteHeader({
             </Button>
           ) : (
             <Link href="/" className="flex items-center gap-2.5">
-              <span className="flex size-7 items-center justify-center rounded-full border border-white/15 bg-lab-primary/15 text-[11px] font-bold text-lab-primary">
+              <span className="flex size-7 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-[11px] font-bold text-lab-ink">
                 B
               </span>
               <span className="text-sm font-medium tracking-tight text-lab-ink">
-                BerryIce<span className="text-lab-primary">.</span>Lab
+                BerryIce<span className="text-lab-ink">.</span>Lab
               </span>
             </Link>
           )}

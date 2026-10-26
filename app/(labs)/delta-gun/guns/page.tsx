@@ -13,6 +13,8 @@ export default async function GunsPage() {
         label="Armory"
         title="枪械库"
         headingLevel="h1"
+        hideKicker
+        descriptionClassName="mt-3 max-w-xl text-base leading-relaxed text-lab-ink"
         description={`收录三角洲行动 ${guns.length} 把武器。点卡片看属性，进改枪台配配件。`}
       >
         <GunRing guns={guns} />

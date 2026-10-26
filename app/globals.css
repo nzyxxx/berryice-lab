@@ -550,47 +550,18 @@
 /* 首页互动只在 html.home-motion 下生效。这个类由客户端在桌面、未减少动效时加上。
    拆字和模糊入场是 React Bits BlurText / Split Text 的 CSS 版：
    首屏不写 opacity:0，避免 motion initial 把字藏进 SSR。 */
-.home-glow {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1;
-  width: 360px;
-  height: 360px;
-  margin: -180px 0 0 -180px;
-  border-radius: 999px;
-  pointer-events: none;
-  background: radial-gradient(circle, color-mix(in oklab, var(--lab-primary) 12%, transparent), transparent 70%);
-  opacity: 0;
-  transition: opacity 0.45s linear;
-}
-.home-glow.is-on {
-  opacity: 1;
-}
-
 .home-tile {
   position: relative;
   overflow: hidden;
   background: #0b0c10;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.home-tile::before {
-  content: "";
-  position: absolute;
-  top: -4.5rem;
-  right: -2.5rem;
-  width: 14rem;
-  height: 14rem;
-  border-radius: 999px;
-  background: radial-gradient(circle, var(--tile-glow, rgba(148, 163, 184, 0.22)), transparent 68%);
-  opacity: 0.7;
-  pointer-events: none;
-  transition: opacity 0.45s linear, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+.home-tile:active {
+  transform: scale(0.98);
 }
-.home-glow-blue { --tile-glow: rgba(125, 168, 214, 0.28); }
-.home-glow-sand { --tile-glow: rgba(196, 168, 132, 0.26); }
-.home-glow-violet { --tile-glow: rgba(164, 150, 196, 0.24); }
+html.home-motion .home-tile:active {
+  transform: none;
+}
 .home-tile-ring {
   position: absolute;
   inset: 0;
@@ -603,13 +574,6 @@
 }
 .home-arrow {
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.home-tile:hover {
-  transform: translate3d(0, -3px, 0);
-}
-.home-tile:hover::before {
-  opacity: 1;
-  transform: translate3d(-10px, 12px, 0);
 }
 .home-tile:hover .home-tile-ring {
   opacity: 1;

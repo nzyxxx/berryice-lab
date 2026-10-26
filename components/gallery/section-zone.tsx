@@ -10,6 +10,8 @@ export function SectionZone({
   className,
   headingLevel = "h2",
   titleClassName,
+  descriptionClassName,
+  hideKicker = false,
 }: {
   index: string;
   label: string;
@@ -21,14 +23,18 @@ export function SectionZone({
   headingLevel?: "h1" | "h2";
   /** 覆盖标题字号。首页人名用 text-display-hero，其它页不要传 */
   titleClassName?: string;
+  descriptionClassName?: string;
+  hideKicker?: boolean;
 }) {
   const Heading = headingLevel;
 
   return (
     <section className={cn("relative", className)}>
-      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-lab-primary">
-        {index} / {label}
-      </p>
+      {hideKicker ? null : (
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-lab-primary">
+          {index} / {label}
+        </p>
+      )}
       {title ? (
         <Heading
           className={cn(
@@ -41,7 +47,7 @@ export function SectionZone({
         </Heading>
       ) : null}
       {description ? (
-        <p className="mt-1 max-w-xl text-sm leading-relaxed text-lab-ink-subtle">{description}</p>
+        <p className={descriptionClassName ?? "mt-1 max-w-xl text-sm leading-relaxed text-lab-ink-subtle"}>{description}</p>
       ) : null}
       {children ? <div className={cn(title || description ? "mt-5" : "mt-4")}>{children}</div> : null}
     </section>

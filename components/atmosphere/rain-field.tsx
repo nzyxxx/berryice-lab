@@ -202,36 +202,45 @@ export function RainField({ density = "normal" }: { density?: Density }) {
   const [tiles, setTiles] = useState<string[] | null>(null);
   const [splashes, setSplashes] = useState<Splash[]>([]);
   const [paused, setPaused] = useState(false);
+  const [light, setLight] = useState(false);
 
   useEffect(() => {
-    const media = window.matchMedia(
-      "(prefers-reduced-motion: reduce), (max-width: 767px), (pointer: coarse)"
-    );
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const small = window.matchMedia("(max-width: 767px), (pointer: coarse)");
 
     const sync = () => {
-      // 手机和「减少动态效果」都只留静态湿雾：
-      // 三层超出视口的合成层在移动端 GPU 上要吃掉可观的显存
-      if (media.matches) {
+      if (reduce.matches) {
         setTiles(null);
         setSplashes([]);
+        setLight(false);
         return;
       }
-      setTiles(getRainTiles());
+      const all = getRainTiles();
+      if (small.matches) {
+        setLight(true);
+        setTiles(all.slice(0, 1));
+        setSplashes((current) => (current.length > 0 ? current.slice(0, 5) : Array.from({ length: 5 }, () => makeSplash(true))));
+        return;
+      }
+      setLight(false);
+      setTiles(all);
       setSplashes((current) => (current.length > 0 ? current : Array.from({ length: 11 }, () => makeSplash(true))));
     };
     const onVisibility = () => setPaused(document.hidden);
 
     sync();
     onVisibility();
-    media.addEventListener("change", sync);
+    reduce.addEventListener("change", sync);
+    small.addEventListener("change", sync);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      media.removeEventListener("change", sync);
+      reduce.removeEventListener("change", sync);
+      small.removeEventListener("change", sync);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
-  const dim = density === "low" ? 0.5 : 1;
+  const dim = light ? 0.42 : density === "low" ? 0.5 : 1;
 
   return (
     <>

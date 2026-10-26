@@ -32,7 +32,7 @@ export function GunRing({ guns }: { guns: Gun[] }) {
   const [list, setList] = useState(false);
   return (
     <div className="mt-8">
-      <GlassRing cards={toCards(guns)} label="拖动、滚轮或方向键换枪。前面那张才是正文。" />
+      <GlassRing cards={toCards(guns)} />
       <button
         type="button"
         onClick={() => setList((value) => !value)}

@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const SLOTS = [
   { src: "/support/wechat.png", label: "微信" },
@@ -33,7 +33,7 @@ function QrSlot({ src, label, active }: { src: string; label: string; active: bo
         ) : null}
         {ok === false ? (
           <div className="px-3 text-center">
-            <p className="font-mono text-[11px] tracking-[0.18em] text-lab-ink uppercase">Coming soon</p>
+            <p className="text-sm text-lab-ink">码还在路上</p>
           </div>
         ) : null}
       </div>
@@ -42,22 +42,43 @@ function QrSlot({ src, label, active }: { src: string; label: string; active: bo
   );
 }
 
-/** 顶栏的投喂。码图放在 /public/support/，缺文件就留一句 Coming soon。 */
+/** 顶栏的投喂。码图放在 /public/support/，缺文件就写「码还在路上」。 */
 export function SupportButton() {
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState({ top: 64, left: 16 });
+
+  const place = () => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = Math.min(448, window.innerWidth - 32);
+    const left = Math.max(16, Math.min(rect.right - width, window.innerWidth - width - 16));
+    setAnchor({ top: rect.bottom + 8, left });
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) place();
+        setOpen(next);
+      }}
+    >
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex h-11 items-center rounded-full border border-white/10 bg-white/5 px-3.5 text-xs tracking-[0.14em] text-lab-ink-subtle transition-colors hover:border-white/25 hover:text-lab-ink"
+        onClick={() => {
+          place();
+          setOpen(true);
+        }}
+        className="inline-flex h-11 items-center rounded-full border border-lab-primary/40 bg-lab-primary/15 px-3.5 text-sm text-lab-primary"
       >
         投喂
       </button>
       <DialogContent
         showCloseButton={false}
-        className="max-w-md border border-white/15 bg-lab-canvas/75 p-5 text-lab-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-lg sm:max-w-md"
+        style={{ top: anchor.top, left: anchor.left, transformOrigin: "top right" }}
+        className="w-[min(28rem,calc(100vw-2rem))] max-w-none origin-top-right !translate-x-0 !translate-y-0 border border-white/15 bg-lab-canvas/75 p-5 text-lab-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] backdrop-blur-lg sm:max-w-none"
       >
         <DialogHeader>
           <DialogTitle className="text-lab-ink">投喂</DialogTitle>

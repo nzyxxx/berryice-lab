@@ -5,20 +5,14 @@ import { homeIntro, homeModules, type HomeModule } from "@/lib/content/home-modu
 import { articles } from "@/lib/content/writing";
 import { profileConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, FlaskConical, PenLine, UserRound } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 
 const spanClass: Record<string, string> = {
   writing: "sm:col-span-7",
   about: "sm:col-span-5",
   lab: "sm:col-span-12",
-};
-
-const glowClass: Record<string, string> = {
-  writing: "home-glow-blue",
-  about: "home-glow-sand",
-  lab: "home-glow-violet",
 };
 
 /** 还没写完的占位卡不进首页。数据留在 home-modules，有了去处再出现。 */
@@ -45,48 +39,93 @@ function SplitLine({ text, className }: { text: string; className?: string }) {
   );
 }
 
-function Mark({ children }: { children: ReactNode }) {
-  return (
-    <span className="mb-8 inline-flex text-white/70">
-      {children}
-    </span>
-  );
-}
+function usePressLift() {
+  const ref = useRef<HTMLElement | null>(null);
+  const y = useRef(0);
+  const vel = useRef(0);
+  const target = useRef(0);
+  const scale = useRef(1);
+  const raf = useRef(0);
 
-function TileCopy({ title, line }: { title: string; line: string }) {
-  return (
-    <span className="relative z-[1] block">
-      <span className="flex items-start justify-between gap-6">
-        <span className="block text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
-          {title}
-        </span>
-        <ArrowUpRight className="home-arrow mt-1 size-4 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
-      </span>
-      <span className="mt-3 block max-w-md text-[15px] leading-relaxed text-white/45">{line}</span>
-    </span>
-  );
+  const apply = () => {
+    const node = ref.current;
+    if (!node) return;
+    node.style.transform = `translate3d(0, ${y.current}px, 0) scale(${scale.current})`;
+  };
+  const tick = () => {
+    const delta = target.current - y.current;
+    vel.current = vel.current * 0.78 + delta * 0.34;
+    y.current += vel.current;
+    if (Math.abs(delta) < 0.04 && Math.abs(vel.current) < 0.04) {
+      y.current = target.current;
+      vel.current = 0;
+      apply();
+      raf.current = 0;
+      return;
+    }
+    apply();
+    raf.current = requestAnimationFrame(tick);
+  };
+  const kick = () => {
+    if (raf.current) return;
+    raf.current = requestAnimationFrame(tick);
+  };
+
+  useEffect(() => () => {
+    if (raf.current) cancelAnimationFrame(raf.current);
+  }, []);
+
+  return {
+    setRef: (node: HTMLElement | null) => {
+      ref.current = node;
+    },
+    onPointerEnter: () => {
+      if (!document.documentElement.classList.contains("home-motion")) return;
+      target.current = -3;
+      kick();
+    },
+    onPointerLeave: () => {
+      target.current = 0;
+      scale.current = 1;
+      kick();
+    },
+    onPointerDown: () => {
+      if (!document.documentElement.classList.contains("home-motion")) return;
+      scale.current = 0.98;
+      apply();
+    },
+    onPointerUp: () => {
+      scale.current = 1;
+      apply();
+    },
+  };
 }
 
 function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
   const reveal = { ["--i" as string]: index + 2 };
-  const glow = glowClass[module.id] ?? "home-glow-blue";
+  const lift = usePressLift();
 
   if (module.id === "lab") {
     const rows = module.entries?.filter((entry) => entry.href) ?? [];
     return (
       <li data-reveal style={reveal} className={cn("h-full", spanClass.lab)}>
-        <article className={cn("home-tile flex h-full flex-col rounded-3xl px-8 py-8 sm:px-10 sm:py-9", glow)}>
+        <article
+          ref={lift.setRef}
+          onPointerEnter={lift.onPointerEnter}
+          onPointerLeave={lift.onPointerLeave}
+          onPointerDown={lift.onPointerDown}
+          onPointerUp={lift.onPointerUp}
+          onPointerCancel={lift.onPointerUp}
+          className="home-tile flex h-full flex-col rounded-3xl px-8 py-8 sm:px-10 sm:py-9"
+        >
           <span className="home-tile-ring" aria-hidden />
-          <Mark>
-            <FlaskConical className="size-5" strokeWidth={1.25} />
-          </Mark>
           <span className="relative z-[1] text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
             {module.title}
           </span>
-          <span className="relative z-[1] mt-3 block text-[15px] leading-relaxed text-white/45">
+          <span className="relative z-[1] mt-3 block text-base leading-relaxed text-lab-ink">
             在做的实验。
           </span>
-          <ul className="relative z-[1] mt-8 border-t border-white/10">
+          <ul className="relative z-[1] mt-10 space-y-1">
             {rows.map((entry) => (
               <li key={entry.title}>
                 <Link
@@ -96,7 +135,7 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
                   <span className="min-w-0">
                     <span className="text-sm font-medium text-white">{entry.title}</span>
                     {entry.description ? (
-                      <span className="ml-3 text-sm text-white/40">{entry.description}</span>
+                      <span className="ml-3 text-base text-lab-ink">{entry.description}</span>
                     ) : null}
                   </span>
                   <ArrowUpRight className="home-arrow size-4 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
@@ -114,25 +153,45 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
     module.id === "writing"
       ? articles[0]?.title ?? "写完的长文和随记。"
       : "现在在做什么，以及怎么找到我。";
-  const icon =
-    module.id === "writing" ? (
-      <PenLine className="size-5" strokeWidth={1.25} />
-    ) : (
-      <UserRound className="size-5" strokeWidth={1.25} />
-    );
+  const writing = module.id === "writing";
 
   return (
     <li data-reveal style={reveal} className={cn("h-full", spanClass[module.id])}>
       <Link
+        ref={lift.setRef}
         href={href}
+        onPointerEnter={lift.onPointerEnter}
+        onPointerLeave={lift.onPointerLeave}
+        onPointerDown={lift.onPointerDown}
+        onPointerUp={lift.onPointerUp}
+        onPointerCancel={lift.onPointerUp}
         className={cn(
-          "home-tile group flex h-full min-h-64 flex-col justify-between rounded-3xl px-8 py-8 outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:min-h-72 sm:px-10 sm:py-10",
-          glow
+          "home-tile group flex h-full min-h-64 rounded-3xl px-8 py-8 outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:min-h-72 sm:px-10 sm:py-10",
+          writing ? "flex-col justify-between sm:flex-row sm:items-end sm:gap-8" : "flex-col justify-end pt-16 sm:pt-24"
         )}
       >
         <span className="home-tile-ring" aria-hidden />
-        <Mark>{icon}</Mark>
-        <TileCopy title={module.title} line={line} />
+        {writing ? (
+          <>
+            <span className="relative z-[1] block text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
+              {module.title}
+            </span>
+            <span className="relative z-[1] mt-4 block max-w-xs text-base leading-relaxed text-lab-ink sm:mt-0 sm:text-right">
+              {line}
+              <ArrowUpRight className="home-arrow ml-2 inline size-4 text-white/70" strokeWidth={1.5} aria-hidden />
+            </span>
+          </>
+        ) : (
+          <span className="relative z-[1] block">
+            <span className="block text-base leading-relaxed text-lab-ink">{line}</span>
+            <span className="mt-6 flex items-end justify-between gap-4">
+              <span className="block text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
+                {module.title}
+              </span>
+              <ArrowUpRight className="home-arrow size-4 shrink-0 text-white/70" strokeWidth={1.5} aria-hidden />
+            </span>
+          </span>
+        )}
       </Link>
     </li>
   );
@@ -140,7 +199,6 @@ function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
 
 export function HomeFront() {
   const { displayName, latinName } = profileConfig;
-  const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 768px) and (pointer: fine)").matches;
@@ -149,7 +207,6 @@ export function HomeFront() {
 
     const root = document.documentElement;
     root.classList.add("home-motion");
-    const glow = glowRef.current;
 
     const nodes = [...document.querySelectorAll<HTMLElement>("[data-reveal]")];
     const seen = new IntersectionObserver(
@@ -169,35 +226,22 @@ export function HomeFront() {
       seen.observe(node);
     }
 
-    const onPointer = (event: globalThis.PointerEvent) => {
-      if (!glow || event.pointerType === "touch") return;
-      glow.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
-      glow.classList.add("is-on");
-    };
-    const onLeave = () => glow?.classList.remove("is-on");
-
-    window.addEventListener("pointermove", onPointer, { passive: true });
-    document.documentElement.addEventListener("pointerleave", onLeave);
-
     return () => {
       root.classList.remove("home-motion");
       seen.disconnect();
-      window.removeEventListener("pointermove", onPointer);
-      document.documentElement.removeEventListener("pointerleave", onLeave);
     };
   }, []);
 
   return (
     <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-5 sm:px-6">
-      <div ref={glowRef} className="home-glow" aria-hidden />
       <header className="flex min-h-[72vh] flex-col justify-end pb-10 pt-16">
         <div className="flex items-center gap-6 sm:gap-10">
           <HalftoneMark />
           <div className="min-w-0">
-            <h1 className="text-[2.75rem] font-semibold leading-none tracking-tight text-lab-ink transition-colors duration-300 hover:text-lab-primary sm:text-7xl lg:text-8xl">
+            <h1 className="text-[2.75rem] font-semibold leading-none tracking-tight text-lab-ink sm:text-7xl lg:text-8xl">
               <SplitLine text={displayName} />
             </h1>
-            <p className="mt-4 font-mono text-lg tracking-[0.16em] text-lab-ink-muted transition-colors duration-300 hover:text-lab-ink sm:text-xl">
+            <p className="mt-4 text-lg text-lab-ink-muted sm:text-xl">
               <SplitLine text={latinName} />
             </p>
           </div>
@@ -205,17 +249,20 @@ export function HomeFront() {
         <p
           data-reveal
           style={{ ["--i" as string]: 1 }}
-          className="mt-10 max-w-xl text-xl leading-relaxed text-lab-ink transition-colors duration-300 hover:text-lab-primary sm:text-2xl"
+          className="mt-10 max-w-xl text-xl leading-relaxed text-lab-ink sm:text-2xl"
         >
           {homeIntro}
         </p>
+        <Link
+          href="/delta-gun"
+          className="mt-8 inline-flex h-11 w-fit items-center self-start rounded-full bg-lab-primary px-5 text-sm font-medium text-[#04131c]"
+        >
+          进入实验室
+        </Link>
       </header>
 
       <section aria-label="栏目" className="pb-24">
-        <p className="font-mono text-sm uppercase tracking-[0.22em] text-lab-ink-muted transition-colors duration-300 hover:text-lab-ink">
-          栏目
-        </p>
-        <ul className="home-bento mt-8 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-12 sm:gap-5">
+        <ul className="home-bento grid grid-cols-1 items-stretch gap-4 sm:grid-cols-12 sm:gap-5">
           {visibleModules.map((module, index) => (
             <ModuleCard key={module.id} module={module} index={index} />
           ))}

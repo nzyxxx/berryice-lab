@@ -135,11 +135,15 @@ export function FluidField() {
       if (!raf && !hidden) raf = requestAnimationFrame(loop);
     };
 
-    draw();
+    let awake = false;
     const onPointer = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
       mouse.tx = event.clientX / window.innerWidth;
       mouse.ty = 1 - event.clientY / window.innerHeight;
+      if (!awake) {
+        awake = true;
+        canvas.style.opacity = "1";
+      }
       kick();
     };
     const onVisibility = () => {
@@ -164,8 +168,8 @@ export function FluidField() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0" aria-hidden>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(14,70,96,0.55),transparent_55%),radial-gradient(ellipse_at_80%_70%,rgba(8,28,48,0.65),#07080c_70%)]" />
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+      <div className="absolute inset-0 bg-[#07080d]" />
+      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full opacity-0" />
     </div>
   );
 }
