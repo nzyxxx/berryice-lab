@@ -22,19 +22,22 @@ export function LinkInBio() {
 
       <SectionZone index="02" label="Modules" className="mt-2">
         {/*
-          三角洲占满整行，另外两块并排。
-          五个等大瓦片的时候，唯一有完整主路径的模块跟占位页一样大，
-          进站的人看不出该先点哪个。
+          三角洲占满整行。写作 / 知识库 / 关于在宽屏并排，
+          手机上仍是一列。主路径继续比旁边三块更大。
         */}
-        <div className="grid grid-cols-1 gap-3 [perspective:900px] sm:grid-cols-2">
-          {moduleLinks.map((module, index) => (
-            <ModuleTile
-              key={module.id}
-              id={module.id}
-              delay={index * 0.06}
-              className={module.featured ? "sm:col-span-2" : undefined}
-            />
-          ))}
+        <div className="flex flex-col gap-3 [perspective:900px]">
+          {moduleLinks
+            .filter((module) => module.featured)
+            .map((module, index) => (
+              <ModuleTile key={module.id} id={module.id} delay={index * 0.06} />
+            ))}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {moduleLinks
+              .filter((module) => !module.featured)
+              .map((module, index) => (
+                <ModuleTile key={module.id} id={module.id} delay={(index + 1) * 0.06} />
+              ))}
+          </div>
         </div>
       </SectionZone>
 

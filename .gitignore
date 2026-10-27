@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# 知识库写入时的临时文件
+content/wiki/.*.tmp
+
 # vercel
 .vercel
 
