@@ -6,6 +6,12 @@ export const siteTitle = "小莓流冰 | BerryIce";
 export const siteDescription =
   "小莓流冰（BerryIce）的个人站点。项目、文章、实验室、关于与生活。";
 
+/** 不带末尾斜杠的站点绝对地址。metadata、robots、sitemap 都从这里取。 */
+export function getSiteUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL ?? "https://berryice.cn";
+  return configured.replace(/\/$/, "");
+}
+
 export const siteConfig = {
   name: process.env.NEXT_PUBLIC_SITE_NAME ?? "BerryIce Lab",
   tagline: process.env.NEXT_PUBLIC_SITE_TAGLINE ?? "程序员 · 游戏玩家 · 创作者",
@@ -30,16 +36,19 @@ export const profileConfig = {
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
 
-export type ModuleId = "delta" | "writing" | "about";
+export type ModuleId = "delta" | "writing" | "wiki" | "about";
 
 /**
- * 导航只有三个去处。首页介绍人，这三个是接下来能去的地方，
- * 谁也不许再被画成整行主瓦片。
+ * 导航有四个去处：三角洲、写作、知识库、关于。
+ * 清单只维护在这里，顶栏和移动端抽屉从它派生。
  *
- * 之前是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系）。
- * 文章和笔记是同一件事的长短两种形态，合成「写作」；
- * 音乐和联系是「关于我」的下属信息，放在 /about。
- * 三角洲是工具专栏，不是这个站的封面。
+ * 首页不是这四块门户瓦片。雨夜首页的栏目在 `lib/content/home-modules.ts`。
+ * 写作是自己的长文和随记。知识库是 Bear 收录的笔记，走 `/wiki`，
+ * 有单独的收录和删除，不塞进写作。
+ *
+ * 更早是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系）。
+ * 文章和笔记合成「写作」；音乐和联系降进 /about。
+ * 三角洲留在导航里，是专栏，不是封面。
  */
 export const moduleLinks: {
   id: ModuleId;
@@ -65,6 +74,13 @@ export const moduleLinks: {
     navLabel: "写作",
     description: "长文和短记。写完才会放上来。",
     accent: "#38bdf8",
+  },
+  {
+    id: "wiki",
+    href: "/wiki",
+    title: "知识库",
+    description: "Bear 收录的笔记，手机上翻阅。",
+    accent: "#7dd3fc",
   },
   {
     id: "about",

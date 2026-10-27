@@ -6,8 +6,17 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+
+function subscribeToNothing() {
+  return () => {};
+}
+
+/** 服务端和第一次水合都是 false，避免 portal 到还不存在的 document.body。 */
+function useIsClient() {
+  return useSyncExternalStore(subscribeToNothing, () => true, () => false);
+}
 
 const NAV_ITEMS = [
   { href: "/", title: "首页", description: "回到个人站点" },
@@ -25,20 +34,24 @@ const NAV_ITEMS = [
  */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const [pathWhenClosed, setPathWhenClosed] = useState(pathname);
 
-  useEffect(() => setMounted(true), []);
-
-  // 路由变了就关掉，否则跳转后抽屉还盖在新页面上
-  useEffect(() => setOpen(false), [pathname]);
+  // 路由变了就关掉。在渲染期间对齐状态，避免 effect 里同步 setState。
+  if (pathname !== pathWhenClosed) {
+    setPathWhenClosed(pathname);
+    setOpen(false);
+  }
 
   useEffect(() => {
     if (!open) return;
 
+    const trigger = triggerRef.current;
+    const panel = panelRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -47,12 +60,12 @@ export function MobileNav() {
     };
     document.addEventListener("keydown", onKeyDown);
 
-    panelRef.current?.focus();
+    panel?.focus();
 
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
-      triggerRef.current?.focus();
+      trigger?.focus();
     };
   }, [open]);
 

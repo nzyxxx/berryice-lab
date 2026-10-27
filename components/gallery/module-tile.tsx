@@ -4,12 +4,13 @@ import SpotlightCard from "@/components/SpotlightCard";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { type ModuleId, moduleLinks } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, Gamepad2, PenLine, UserRound, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Gamepad2, Library, PenLine, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 const ICONS: Record<ModuleId, LucideIcon> = {
   delta: Gamepad2,
   writing: PenLine,
+  wiki: Library,
   about: UserRound,
 };
 

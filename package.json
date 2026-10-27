@@ -1,5 +1,5 @@
 {
-  "name": "delta-gun-lab",
+  "name": "berryice-lab",
   "version": "0.1.0",
   "private": true,
   "packageManager": "yarn@1.22.22",
@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync:weapons": "tsx scripts/sync-weapons.ts"
+    "sync:weapons": "tsx scripts/sync-weapons.ts",
+    "sync:wiki": "node scripts/sync-wiki.mjs",
+    "test:wiki": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/content/wiki-parse.test.ts lib/content/wiki-markdown.test.ts"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.26",

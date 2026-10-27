@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isCronAuthorized } from "@/lib/api/cron-auth";
+import { revalidateStreamerPages } from "@/lib/cache/revalidate-streamers";
 import { scrapeStreamers } from "@/lib/services/streamersScraper";
 
 export const runtime = "nodejs";
@@ -14,6 +15,11 @@ export async function GET(request: Request) {
 
   try {
     const summary = await scrapeStreamers();
+    try {
+      revalidateStreamerPages();
+    } catch (error) {
+      console.error("revalidate streamer pages failed:", error);
+    }
     return NextResponse.json({ ok: true, mode: "cron", ...summary });
   } catch (error) {
     console.error("GET /api/cron/streamers failed:", error);

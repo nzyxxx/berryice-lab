@@ -1,6 +1,6 @@
 import { SiteAtmosphere } from "@/components/atmosphere/site-atmosphere";
 import { ThemeProvider } from "@/components/lab/theme-provider";
-import { siteDescription } from "@/lib/site-config";
+import { getSiteUrl, siteDescription } from "@/lib/site-config";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
@@ -28,7 +28,7 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://berryice.cn";
+const siteUrl = getSiteUrl();
 /** 没单独写 title 的页面（含三角洲子页）继续用这个，避免整库枪械页的标签被首页标题盖掉。 */
 const fallbackTitle = "BerryIce Lab | 个人学习实验室";
 

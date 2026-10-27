@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { dailyJson } from "@/lib/http/daily-cache";
 import { ensureGunCodesTable, listGunCodes } from "@/lib/repositories/gunCodesRepo";
 
 export const runtime = "nodejs";
@@ -14,10 +13,10 @@ export async function GET(request: Request) {
 
     await ensureGunCodesTable();
     const data = await listGunCodes(limit, game);
-    return NextResponse.json({ ok: true, count: data.length, data });
+    return dailyJson({ ok: true, count: data.length, data });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("GET /api/gun-codes failed:", msg);
-    return NextResponse.json({ ok: false, message: msg }, { status: 500 });
+    return dailyJson({ ok: false, message: msg }, 500);
   }
 }
