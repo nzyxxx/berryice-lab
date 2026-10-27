@@ -55,7 +55,7 @@ export function GunsLibrary({ guns }: { guns: Gun[] }) {
           placeholder="搜索枪械名称…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="h-10 w-full rounded-md border border-lab-hairline bg-lab-surface-1 pr-3 pl-10 text-sm outline-none focus:border-lab-primary/50 focus:ring-2 focus:ring-lab-primary/20"
+          className="h-11 w-full rounded-md border border-lab-hairline bg-lab-surface-1 pr-3 pl-10 text-sm outline-none focus:border-lab-primary/50 focus:ring-2 focus:ring-lab-primary/20"
         />
       </div>
 
@@ -92,8 +92,8 @@ export function GunsLibrary({ guns }: { guns: Gun[] }) {
             key={gun.id}
             href={`/delta-gun/guns/${gun.id}`}
             className={cn(
-              "group flex flex-col overflow-hidden rounded-lg border border-lab-hairline bg-lab-surface-1 transition-colors",
-              "hover:border-lab-primary/35 hover:bg-lab-surface-2"
+              "group flex flex-col overflow-hidden rounded-3xl border border-lab-hairline bg-lab-surface-1/80 transition duration-200",
+              "hover:-translate-y-0.5 hover:border-lab-primary/35 hover:bg-lab-surface-2"
             )}
           >
             <div className="flex items-center justify-center border-b border-lab-hairline bg-lab-canvas/50 p-6">

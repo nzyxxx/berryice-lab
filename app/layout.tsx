@@ -1,6 +1,6 @@
 import { SiteAtmosphere } from "@/components/atmosphere/site-atmosphere";
 import { ThemeProvider } from "@/components/lab/theme-provider";
-import { getSiteUrl } from "@/lib/site-config";
+import { getSiteUrl, siteDescription } from "@/lib/site-config";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
@@ -29,15 +29,14 @@ const geistMono = localFont({
 });
 
 const siteUrl = getSiteUrl();
-const siteTitle = "BerryIce Lab | 个人学习实验室";
-const siteDescription =
-  "BerryIce 的个人入口：三角洲改枪实验室、主播枪码、社区配装与学习记录。";
+/** 没单独写 title 的页面（含三角洲子页）继续用这个，避免整库枪械页的标签被首页标题盖掉。 */
+const fallbackTitle = "BerryIce Lab | 个人学习实验室";
 
 export const metadata: Metadata = {
   // 有了 metadataBase，OG / Twitter 里的相对图片路径才会被补成绝对地址
   metadataBase: new URL(siteUrl),
   title: {
-    default: siteTitle,
+    default: fallbackTitle,
     template: "%s | BerryIce Lab",
   },
   description: siteDescription,
@@ -47,12 +46,12 @@ export const metadata: Metadata = {
     locale: "zh_CN",
     url: siteUrl,
     siteName: "BerryIce Lab",
-    title: siteTitle,
+    title: fallbackTitle,
     description: siteDescription,
   },
   twitter: {
     card: "summary_large_image",
-    title: siteTitle,
+    title: fallbackTitle,
     description: siteDescription,
   },
   robots: {

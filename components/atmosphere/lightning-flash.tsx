@@ -108,8 +108,13 @@ export function LightningFlash() {
       canvas.style.display = live ? "block" : "none";
     };
 
+    const clearBolt = () => {
+      document.documentElement.classList.remove("bolt");
+      document.documentElement.style.removeProperty("--bolt");
+    };
+
     const strike = () => {
-      if (!running) return;
+      if (!running || document.hidden) return;
 
       // 大部分是远处的天光，只有少数真正劈下来 —— 全是主干会腻
       const distant = Math.random() < 0.45;
@@ -149,22 +154,32 @@ export function LightningFlash() {
       setLive(true);
 
       const animate = (now: number) => {
-        if (!running) return;
+        if (!running || document.hidden) {
+          frame = 0;
+          setLive(false);
+          clearBolt();
+          return;
+        }
         const t = (now - start) / duration;
         ctx.clearRect(0, 0, width, height);
 
         if (t >= 1) {
           frame = 0;
           setLive(false);
+          clearBolt();
           return;
         }
 
         const alpha = envelope(t);
+        document.documentElement.style.setProperty("--bolt", alpha.toFixed(3));
+        document.documentElement.classList.toggle("bolt", alpha > 0.02);
         if (alpha > 0.001) {
-          // 天光：从落点上方铺开的一片泛白
+          ctx.fillStyle = `rgba(226, 238, 255, ${alpha * 0.1})`;
+          ctx.fillRect(0, 0, width, height);
+          // 天光：从落点上方铺开的一片泛白，雨丝和页面一起被照亮
           const sky = ctx.createRadialGradient(originX, -height * 0.1, 0, originX, -height * 0.1, height * 1.15);
-          sky.addColorStop(0, `rgba(214, 232, 255, ${alpha * (distant ? 0.16 : 0.11)})`);
-          sky.addColorStop(1, "rgba(214, 232, 255, 0)");
+          sky.addColorStop(0, `rgba(232, 244, 255, ${alpha * (distant ? 0.36 : 0.28)})`);
+          sky.addColorStop(1, "rgba(232, 244, 255, 0)");
           ctx.fillStyle = sky;
           ctx.fillRect(0, 0, width, height);
 
@@ -181,15 +196,31 @@ export function LightningFlash() {
       timer = setTimeout(strike, 4500 + Math.random() * 11000);
     };
 
+    const onVisibility = () => {
+      if (!document.hidden) {
+        if (!timer) timer = setTimeout(strike, 700);
+        return;
+      }
+      if (timer) clearTimeout(timer);
+      timer = null;
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      setLive(false);
+      clearBolt();
+    };
+
     resize();
     window.addEventListener("resize", resize);
-    timer = setTimeout(strike, 1500 + Math.random() * 2500);
+    document.addEventListener("visibilitychange", onVisibility);
+    if (!document.hidden) timer = setTimeout(strike, 1500 + Math.random() * 2500);
 
     return () => {
       running = false;
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", onVisibility);
       if (timer) clearTimeout(timer);
+      clearBolt();
     };
   }, []);
 

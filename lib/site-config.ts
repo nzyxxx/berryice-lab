@@ -1,5 +1,11 @@
 /** 站点公开配置（备案号等通过环境变量注入，勿写入密钥） */
 
+/** 首页 `<title>` 与分享卡标题。个人站，不把改枪实验室写进封面。 */
+export const siteTitle = "小莓流冰 | BerryIce";
+
+export const siteDescription =
+  "小莓流冰（BerryIce）的个人站点。项目、文章、实验室、关于与生活。";
+
 /** 不带末尾斜杠的站点绝对地址。metadata、robots、sitemap 都从这里取。 */
 export function getSiteUrl(): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL ?? "https://berryice.cn";
@@ -20,12 +26,12 @@ export const siteConfig = {
 } as const;
 
 export const profileConfig = {
-  displayName: process.env.NEXT_PUBLIC_DISPLAY_NAME ?? "BerryIce",
-  handle: process.env.NEXT_PUBLIC_HANDLE ?? "berryice",
+  displayName: process.env.NEXT_PUBLIC_DISPLAY_NAME ?? "小莓流冰",
+  /** 拉丁写法，和中文名一起出现，不单独当站名 */
+  latinName: process.env.NEXT_PUBLIC_LATIN_NAME ?? "BerryIce",
+  handle: process.env.NEXT_PUBLIC_HANDLE ?? "nzyxxx",
   tags: ["程序员", "游戏玩家", "创作者"],
-  bio:
-    process.env.NEXT_PUBLIC_BIO ??
-    "写代码、改枪、听音乐。三角洲是我的主项目。",
+  bio: process.env.NEXT_PUBLIC_BIO ?? "学无止境",
   avatarSrc: process.env.NEXT_PUBLIC_AVATAR_URL ?? "",
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
@@ -33,14 +39,16 @@ export const profileConfig = {
 export type ModuleId = "delta" | "writing" | "wiki" | "about";
 
 /**
- * 门户有四个去处。清单只维护在这里，导航、抽屉、门户瓦片都从它派生。
+ * 导航有四个去处：三角洲、写作、知识库、关于。
+ * 清单只维护在这里，顶栏和移动端抽屉从它派生。
  *
- * 写作是自己的长文和随记。知识库是 Bear 从外面收录进来的笔记，
- * 有单独的收录和删除，不塞进写作的空列表里。
+ * 首页不是这四块门户瓦片。雨夜首页的栏目在 `lib/content/home-modules.ts`。
+ * 写作是自己的长文和随记。知识库是 Bear 收录的笔记，走 `/wiki`，
+ * 有单独的收录和删除，不塞进写作。
  *
- * 更早的时候是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系），
- * 唯一有完整主路径的三角洲被摊薄了。文章和笔记合成「写作」；
- * 音乐和联系降进 /about。那次收敛不动。
+ * 更早是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系）。
+ * 文章和笔记合成「写作」；音乐和联系降进 /about。
+ * 三角洲留在导航里，是专栏，不是封面。
  */
 export const moduleLinks: {
   id: ModuleId;
@@ -50,23 +58,21 @@ export const moduleLinks: {
   navLabel?: string;
   description: string;
   accent: string;
-  /** 门户里占满整行的主模块 */
-  featured?: boolean;
 }[] = [
   {
     id: "delta",
     href: "/delta-gun",
-    title: "三角洲改枪实验室",
+    title: "三角洲工具",
     navLabel: "三角洲",
-    description: "查枪械、抄社区枪码、看主播配装、保存自己的方案。",
+    description: "枪械库、社区改枪码、主播配装。",
     accent: "#f97316",
-    featured: true,
   },
   {
     id: "writing",
     href: "/writing",
-    title: "写作",
-    description: "长文与随记。",
+    title: "写作与随记",
+    navLabel: "写作",
+    description: "长文和短记。写完才会放上来。",
     accent: "#38bdf8",
   },
   {
@@ -96,11 +102,6 @@ const SOCIAL_LINK_CANDIDATES: {
     id: "github",
     label: "GitHub",
     href: process.env.NEXT_PUBLIC_SOCIAL_GITHUB ?? "https://github.com/nzyxxx",
-  },
-  {
-    id: "repo",
-    label: "本站源码",
-    href: process.env.NEXT_PUBLIC_SOCIAL_REPO ?? "https://github.com/nzyxxx/berryice-lab",
   },
   {
     id: "kook",

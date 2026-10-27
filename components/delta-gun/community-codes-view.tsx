@@ -5,11 +5,14 @@ import {
   CommunityCodeCardSkeleton,
   type CommunityCodeItem,
 } from "@/components/delta-gun/community-code-card";
+import { GlassRing, type RingCard } from "@/components/delta-gun/glass-ring";
 import { MotionReveal } from "@/components/lab/motion-reveal";
 import { Panel } from "@/components/lab/module-card";
 import { GameModeTabs } from "@/components/delta-gun/game-mode-tabs";
 import { GAME_MODES, type GameMode } from "@/lib/delta-gun/game-modes";
+import { isStaleCode } from "@/lib/delta-gun/season";
 import {
+  artworkForWeaponName,
   inferWeaponType,
   parseValueScore,
   weaponTypeLabel,
@@ -58,8 +61,11 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
     initialGameMode(searchParams)
   );
   const [activeCategory, setActiveCategory] = useState<CategoryTab>("all");
+  const [weaponFilter, setWeaponFilter] = useState("all");
+  const [showStale, setShowStale] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("hot");
+  const [ring, setRing] = useState(true);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const showToast = (msg: string) => {
@@ -100,7 +106,14 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
 
   const handleGameChange = (game: GameTab) => {
     setActiveGame(game);
+    setWeaponFilter("all");
   };
+
+  const weaponOptions = useMemo(() => {
+    return [...new Set(communityCodes.map((item) => item.weapon).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b, "zh-CN")
+    );
+  }, [communityCodes]);
 
   const filteredCodes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -108,6 +121,14 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
 
     if (activeCategory !== "all") {
       list = list.filter((item) => inferWeaponType(item.weapon) === activeCategory);
+    }
+    if (weaponFilter !== "all") {
+      list = list.filter((item) => item.weapon === weaponFilter);
+    }
+    if (!showStale) {
+      list = list.filter(
+        (item) => !isStaleCode({ season: item.season, postedAt: item.postedAt || item.collectedAt })
+      );
     }
 
     if (q) {
@@ -125,7 +146,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
     });
 
     return list;
-  }, [communityCodes, searchQuery, sortBy, activeCategory]);
+  }, [communityCodes, searchQuery, sortBy, activeCategory, weaponFilter, showStale]);
 
   const hotRankMap = useMemo(() => {
     const sorted = [...communityCodes].sort((a, b) => b.copyCount - a.copyCount);
@@ -181,7 +202,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
           <div>
             <h1 className="text-display-section text-lab-ink">社区改枪码</h1>
             <p className="mt-2 max-w-xl text-base text-lab-ink-subtle">
-              社区热门改枪码由服务端定时同步。可按武器类型筛选，支持搜索与一键导入改枪页。
+              枪码留在这页上。按模式和武器筛选，复制即可。只有来源一行会打开原站。
             </p>
           </div>
         </MotionReveal>
@@ -240,6 +261,20 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="sr-only" htmlFor="weapon-filter">武器</label>
+          <select
+            id="weapon-filter"
+            value={weaponFilter}
+            onChange={(event) => setWeaponFilter(event.target.value)}
+            className="h-11 min-w-40 rounded-md border border-lab-hairline bg-lab-canvas px-3 text-sm text-lab-ink outline-none focus:border-lab-primary/50"
+          >
+            <option value="all">全部武器</option>
+            {weaponOptions.map((weapon) => (
+              <option key={weapon} value={weapon}>
+                {weapon}
+              </option>
+            ))}
+          </select>
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-lab-ink-tertiary" />
             <input
@@ -247,7 +282,7 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
               placeholder="搜索武器、描述、枪码…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 w-full rounded-md border border-lab-hairline bg-lab-canvas pr-3 pl-10 font-mono text-sm outline-none focus:border-lab-primary/50 focus:ring-2 focus:ring-lab-primary/20"
+              className="h-11 w-full rounded-md border border-lab-hairline bg-lab-canvas pr-3 pl-10 font-mono text-sm outline-none focus:border-lab-primary/50 focus:ring-2 focus:ring-lab-primary/20"
             />
           </div>
           <div className="flex rounded-md border border-lab-hairline bg-lab-canvas p-1">
@@ -279,6 +314,13 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
           <p className="text-xs text-lab-ink-tertiary">
             显示 {filteredCodes.length} / {communityCodes.length} 条
             {activeCategory !== "all" && ` · ${weaponTypeLabel(activeCategory)}`}
+            {weaponFilter !== "all" && ` · ${weaponFilter}`}
+            <button type="button" className="ml-3 underline" onClick={() => setShowStale((value) => !value)}>
+              {showStale ? "隐藏过季" : "显示过季"}
+            </button>
+            <button type="button" className="ml-3 underline" onClick={() => setRing((value) => !value)}>
+              {ring ? "改看列表" : "改看环"}
+            </button>
           </p>
         )}
       </Panel>
@@ -300,6 +342,8 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
           <p className="text-lg font-medium text-lab-ink">暂无匹配方案</p>
           <p className="mt-2 text-sm text-lab-ink-subtle">调整筛选条件。社区枪码由服务端定时同步。</p>
         </Panel>
+      ) : ring ? (
+        <CodeRing items={filteredCodes.slice(0, 12)} onCopy={(code) => void copyCode(code)} />
       ) : (
         <div
           ref={parentRef}
@@ -354,4 +398,28 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
       )}
     </>
   );
+}
+
+function CodeRing({
+  items,
+  onCopy,
+}: {
+  items: CommunityCodeItem[];
+  onCopy: (code: string) => void;
+}) {
+  const cards: RingCard[] = items.map((item) => ({
+    id: String(item.id),
+    kicker: item.game,
+    title: item.weapon,
+    imageUrl: artworkForWeaponName(item.weapon),
+    code: item.fullCode,
+    actionLabel: "复制枪码",
+    onAction: () => onCopy(item.fullCode),
+    stats: [
+      { label: "方向", value: (item.focusTags ?? []).slice(0, 2).join(" · ") || "未标" },
+      { label: "推荐", value: item.recommendation ? "★".repeat(Math.min(5, item.recommendation)) : "—" },
+      { label: "排行", value: item.rankPosition ? `#${item.rankPosition}` : "未入榜" },
+    ],
+  }));
+  return <GlassRing cards={cards} label="社区枪码环" />;
 }

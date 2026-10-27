@@ -8,7 +8,7 @@ export function StreamerCard({ streamer }: { streamer: StoredStreamer }) {
   return (
     <Link
       href={`/delta-gun/streamers/${encodeURIComponent(streamer.slug)}`}
-      className="group relative flex flex-col overflow-hidden rounded-lg border border-lab-hairline bg-lab-surface-1 p-4 transition-colors hover:border-lab-primary/35 hover:bg-lab-surface-2"
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-lab-hairline bg-lab-surface-1/80 p-5 transition duration-200 hover:-translate-y-0.5 hover:border-lab-primary/35 hover:bg-lab-surface-2"
     >
       <span
         aria-hidden

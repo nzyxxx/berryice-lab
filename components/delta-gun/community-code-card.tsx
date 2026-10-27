@@ -1,6 +1,8 @@
 "use client";
 
+import { CodeMetaRow } from "@/components/delta-gun/code-meta-row";
 import { WeaponPortrait } from "@/components/delta-gun/weapon-portrait";
+import { isStaleCode } from "@/lib/delta-gun/season";
 import { getGameModeTheme } from "@/lib/delta-gun/game-mode-theme";
 import { buildGunImportUrl } from "@/lib/delta-gun/weapon-utils";
 import { cn } from "@/lib/utils";
@@ -17,6 +19,24 @@ export interface CommunityCodeItem {
   valueText: string;
   copyCount: number;
   collectedAt: string;
+  author?: string;
+  source?: string;
+  sourceUrl?: string;
+  focusTags?: string[];
+  recommendation?: number | null;
+  rankPosition?: number | null;
+  season?: string;
+  postedAt?: string;
+}
+
+function sourceCredit(item: CommunityCodeItem): { href: string; label: string } | null {
+  const url = item.sourceUrl?.trim() ?? "";
+  if (/^https?:\/\//.test(url)) {
+    return { href: url, label: item.source?.trim() || "来源" };
+  }
+  const source = item.source?.trim() ?? "";
+  if (!source || source === "本地") return null;
+  return { href: source.startsWith("http") ? source : `https://${source}`, label: source };
 }
 
 function formatPopularity(count: number): string {
@@ -38,6 +58,7 @@ export function CommunityCodeCard({
   const [copied, setCopied] = useState(false);
   const theme = getGameModeTheme(item.game);
   const importHref = buildGunImportUrl(item.weapon, item.fullCode);
+  const credit = sourceCredit(item);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -75,15 +96,9 @@ export function CommunityCodeCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 pr-8">
             <WeaponPortrait name={item.weapon} size="sm" className="sm:hidden" />
-            <Link
-              href={importHref}
-              className={cn(
-                "truncate text-base font-medium tracking-tight text-lab-ink transition-colors",
-                theme.titleHover
-              )}
-            >
+            <h2 className="truncate text-base font-medium tracking-tight text-lab-ink">
               {item.weapon}
-            </Link>
+            </h2>
             <span
               className={cn(
                 "shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-medium",
@@ -97,6 +112,19 @@ export function CommunityCodeCard({
           {item.description ? (
             <p className="mt-1 line-clamp-2 text-sm text-lab-ink-subtle">{item.description}</p>
           ) : null}
+
+          <CodeMetaRow
+            description={item.description}
+            focusTags={item.focusTags}
+            recommendation={item.recommendation}
+            copyCount={item.copyCount}
+            rank={item.rankPosition}
+            mode={item.game}
+            season={item.season}
+            postedAt={item.postedAt || item.collectedAt}
+            stale={isStaleCode({ season: item.season, postedAt: item.postedAt || item.collectedAt })}
+            code={item.fullCode}
+          />
 
           <div
             className={cn(
@@ -143,6 +171,20 @@ export function CommunityCodeCard({
               <TrendingUp className="size-3" />
               {formatPopularity(item.copyCount)}
             </span>
+            {item.author ? <span>作者 {item.author}</span> : null}
+            {credit ? (
+              <a
+                href={credit.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-lab-hairline underline-offset-2 hover:text-lab-ink"
+              >
+                来源 {credit.label}
+              </a>
+            ) : null}
+            <Link href={importHref} className="hover:text-lab-ink">
+              在改枪台打开
+            </Link>
           </div>
         </div>
       </div>

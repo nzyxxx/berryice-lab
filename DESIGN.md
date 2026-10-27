@@ -76,7 +76,7 @@ iOS 26 那版玻璃是厚磨砂，27 改了三件事，本站照抄：
 双 accent 制：
 
 - **Hub / 雨反射**：`lab-primary` `#38bdf8` + `lab-accent-glow` `#a78bfa`
-- **三角洲模块**：`lab-accent-tactical` `#f97316`。**禁止**拿它当门户主 CTA —— 橙色一出现在门户，三角洲就从「五个模块之一」变成「整个站」。
+- **三角洲模块**：`lab-accent-tactical` `#f97316`。**禁止**拿它当首页主 CTA —— 橙色一出现在首页，这个专栏就会变成整站。
 
 文字只有四级，不要再造：`lab-ink` → `lab-ink-muted` → `lab-ink-subtle` → `lab-ink-tertiary`。
 
@@ -100,8 +100,8 @@ iOS 26 那版玻璃是厚磨砂，27 改了三件事，本站照抄：
 
 ## 5. 布局与节奏
 
-- 门户最大宽 `40rem`（画廊列）；实验室 `72rem`
-- 区块间距：Identity 紧（`gap-10`）→ Modules 疏（`mt-12`）→ Feed 再疏（`mt-16`）
+- 首页阅读列 `max-w-3xl`（48rem）；实验室 `72rem`
+- 首页人名和栏目之间留一大段空白（`mt-16` / `md:mt-24`）。栏目是同一套软卡片：大标题、一行灰字、占位用小药丸。不编号、不聚光、不发光
 - 卡片圆角统一 `rounded-2xl`；大面板 `rounded-3xl`；小控件 `rounded-full`
 - 触控目标 ≥ 44px，无例外
 - 每个分区走 `SectionZone`：序号 + 大写 eyebrow + 标题。**禁止无分区的直列**
@@ -224,7 +224,7 @@ z-80   跳到主内容（焦点态）
 
 **Don't**
 
-- 不要把首页做成无分区的 Linktree 直列
+- 不要把首页做成无分区的 Linktree 直列，也不要把三角洲画成整行主瓦片
 - 不要 `hover:scale-105`
 - 不要 `backdrop-blur-2xl` 以上
 - 不要改社区列表 / 枪械数据的主路径来「做效果」
@@ -238,9 +238,9 @@ z-80   跳到主内容（焦点态）
 
 ```bash
 # 1. 首屏 HTML 里不该有成片的隐身元素。
-#    当前合法来源只有两处：BlurText 的 8 个字母 span + 每块 ModuleTile 一个聚光遮罩。
+#    首页不再放聚光遮罩，也不再用 BlurText 把人名拆成 opacity:0 的字母。
 #    数字涨了就去看是谁又把 motion 的 initial 写进了 SSR。
-curl -s http://localhost:3000/ | grep -o 'opacity:0' | wc -l   # 8 + 门户瓦片数
+curl -s http://localhost:3000/ | grep -o 'opacity:0' | wc -l   # 0
 
 # 2. 构建通过
 yarn build

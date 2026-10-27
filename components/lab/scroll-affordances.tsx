@@ -75,7 +75,7 @@ export function ScrollAffordances() {
         tabIndex={scrollable && atDepth ? 0 : -1}
         className={cn(
           "fixed bottom-6 right-5 z-[60] flex size-11 items-center justify-center rounded-full",
-          "border border-white/12 bg-lab-canvas/70 text-lab-ink-subtle backdrop-blur-xl",
+          "border border-white/12 bg-lab-canvas/80 text-lab-ink-subtle backdrop-blur-lg",
           "transition-[opacity,transform,color,background-color] duration-300",
           "hover:text-lab-ink hover:bg-lab-canvas/90",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40",

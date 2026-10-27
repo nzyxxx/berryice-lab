@@ -2,14 +2,17 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export const alt = "BerryIce Lab · 三角洲改枪实验室与学习记录";
+export const alt = "小莓流冰（BerryIce）的个人站点。项目、文章、实验室、关于与生活。";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 /**
  * next/og 自带字体没有中文字形，缺字时会去 Google Fonts 现拉，
- * 拉不到就整片渲染成豆腐块。这里改成读仓库里的子集字体（只含本图用到的汉字，
- * 每个字重约 7KB，SIL OFL 协议可内嵌分发），构建与运行都不再依赖网络。
+ * 拉不到就整片渲染成豆腐块。这里改成读仓库里的子集字体（只含本图用到的字形，
+ * SIL OFL，可内嵌分发），构建与运行都不再依赖网络。
+ *
+ * 改这张图的汉字之前，先确认 assets/NotoSansSC-*-subset.ttf 里有这些字：
+ * 个人站点小莓流冰项目作品文章实验室关于我生活兴趣更多
  */
 async function loadFonts() {
   const [regular, bold] = await Promise.all([
@@ -23,6 +26,8 @@ async function loadFonts() {
   ];
 }
 
+const modules = ["项目 / 作品", "文章", "实验室", "关于我", "生活 / 兴趣", "更多"];
+
 export default async function OpengraphImage() {
   const fonts = await loadFonts();
 
@@ -34,62 +39,68 @@ export default async function OpengraphImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
-          padding: "80px",
+          padding: "76px 84px",
           background: "#08090d",
-          backgroundImage:
-            "radial-gradient(900px 460px at 50% -12%, rgba(56,189,248,0.20), transparent 60%)",
-          color: "#e8ecf3",
+          color: "#f4f6fb",
           fontFamily: "Noto Sans SC, sans-serif",
         }}
       >
         <div
           style={{
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: 16,
             fontSize: 22,
-            letterSpacing: 6,
-            textTransform: "uppercase",
-            color: "#38bdf8",
+            letterSpacing: 4,
+            color: "#8b93a7",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 44,
-              height: 44,
-              borderRadius: 999,
-              border: "1px solid rgba(56,189,248,0.4)",
-              background: "rgba(56,189,248,0.14)",
-              fontSize: 22,
-              fontWeight: 700,
-            }}
-          >
-            B
-          </div>
-          BerryIce Lab
-        </div>
-
-        <div style={{ display: "flex", marginTop: 40, fontSize: 76, fontWeight: 700, letterSpacing: -2 }}>
-          三角洲改枪实验室
-        </div>
-
-        <div style={{ display: "flex", marginTop: 24, fontSize: 30, color: "#9aa4b2" }}>
-          枪械库 · 主播枪码 · 社区配装 · 希腊神话剧场
+          <div style={{ display: "flex" }}>个人站点</div>
+          <div style={{ display: "flex", letterSpacing: 0 }}>berryice.cn</div>
         </div>
 
         <div
           style={{
             display: "flex",
-            marginTop: "auto",
-            fontSize: 22,
-            color: "#5b6472",
+            marginTop: 48,
+            fontSize: 92,
+            fontWeight: 700,
+            letterSpacing: -3,
+            lineHeight: 1,
           }}
         >
-          berryice.cn
+          小莓流冰
+        </div>
+
+        <div style={{ display: "flex", marginTop: 16, fontSize: 32, color: "#8b93a7" }}>
+          BerryIce
+        </div>
+
+        <div style={{ display: "flex", flexGrow: 1 }} />
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {[modules.slice(0, 3), modules.slice(3)].map((row) => (
+            <div key={row[0]} style={{ display: "flex", gap: 16 }}>
+              {row.map((label) => (
+                <div
+                  key={label}
+                  style={{
+                    display: "flex",
+                    flexGrow: 1,
+                    flexBasis: 0,
+                    alignItems: "center",
+                    height: 64,
+                    padding: "0 20px",
+                    borderRadius: 14,
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    fontSize: 24,
+                  }}
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     ),

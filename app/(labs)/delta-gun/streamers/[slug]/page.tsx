@@ -115,7 +115,7 @@ export default async function StreamerDetailPage({ params }: PageProps) {
       </div>
 
       <p className="mt-6 text-center text-xs text-lab-ink-tertiary">
-        方案来自 yunmaku.com · 点击武器名可导入改枪台
+        S11 核对方案 · 来源链接可回原帖 · 点击武器名可导入改枪台
       </p>
     </PageContainer>
   );

@@ -21,13 +21,13 @@ export default function ErrorBoundary({
       description={
         error.digest
           ? `页面渲染时出错了，可以重试一次。错误编号 ${error.digest}。`
-          : "页面渲染时出错了，可以重试一次；如果还不行，先回门户。"
+          : "页面渲染时出错了，可以重试一次；如果还不行，先回首页。"
       }
     >
       <StatusAction onClick={() => unstable_retry()} variant="primary">
         重试
       </StatusAction>
-      <StatusAction href="/">回到门户</StatusAction>
+      <StatusAction href="/">回到首页</StatusAction>
     </StatusScreen>
   );
 }

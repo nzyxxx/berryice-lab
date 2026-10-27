@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
 
 import { parseCopyCount } from "@/lib/delta-gun/parse-copy-count";
+import { CURRENT_SEASON, inferFocusTags } from "@/lib/delta-gun/season";
 import { ensureGunCodesTable, upsertGunCodes } from "@/lib/repositories/gunCodesRepo";
 import type { GunCodeRecord, UpsertSummary } from "@/lib/types/gunCode";
 
@@ -81,12 +82,25 @@ function dedupeRecords(records: GunCodeRecord[]): GunCodeRecord[] {
   return [...map.values()];
 }
 
+function cellText($row: cheerio.Cheerio<Element>, headers: string[], labels: string[]): string {
+  const index = headers.findIndex((header) => labels.some((label) => header.includes(label)));
+  if (index < 0) return "";
+  return $row.find("td").eq(index).text().replace(/\s+/g, " ").trim();
+}
+
 function pushRecord(records: GunCodeRecord[], record: GunCodeRecord): void {
   if (!record.weapon || !record.fullCode) return;
   records.push({
     ...record,
     game: detectGame(record.fullCode, record.weapon),
     source: "g.aitags.cn",
+    author: record.author?.trim() ?? "",
+    sourceUrl: record.sourceUrl || SOURCE_URL,
+    focusTags: record.focusTags?.length ? record.focusTags : inferFocusTags(`${record.description} ${record.weapon}`),
+    recommendation: record.recommendation ?? null,
+    rankPosition: record.rankPosition ?? null,
+    season: record.season || CURRENT_SEASON,
+    postedAt: record.postedAt || new Date().toISOString(),
   });
 }
 
@@ -116,6 +130,13 @@ function parseFeaturedTable($: cheerio.CheerioAPI, records: GunCodeRecord[]): vo
           valueText: $(tds[3]).text().trim(),
           copyCount: copyCountFromRow($(row), headers, 4),
           source: "g.aitags.cn",
+          author: cellText($(row), headers, ["作者", "UP", "发布"]),
+          sourceUrl: SOURCE_URL,
+          focusTags: [],
+          recommendation: null,
+          rankPosition: null,
+          season: "",
+          postedAt: "",
         });
       });
   });
@@ -139,7 +160,11 @@ function extractWeaponName($: cheerio.CheerioAPI): string {
 }
 
 /** 武器详情页表格：首列为改枪码，武器名在页面标题 */
-function parseWeaponDetailTables($: cheerio.CheerioAPI, records: GunCodeRecord[]): void {
+function parseWeaponDetailTables(
+  $: cheerio.CheerioAPI,
+  records: GunCodeRecord[],
+  sourceUrl: string
+): void {
   const weapon = extractWeaponName($);
 
   $("table").each((_, tableEl) => {
@@ -170,19 +195,30 @@ function parseWeaponDetailTables($: cheerio.CheerioAPI, records: GunCodeRecord[]
           valueText: $(tds[2]).text().trim(),
           copyCount: copyCountFromRow($(row), headers, 3),
           source: "g.aitags.cn",
+          author: cellText($(row), headers, ["作者", "UP", "发布"]),
+          sourceUrl,
+          focusTags: [],
+          recommendation: null,
+          rankPosition: null,
+          season: "",
+          postedAt: "",
         });
       });
   });
 }
 
-export function parseGunCodesFromHtml(html: string, mode: "home" | "weapon"): GunCodeRecord[] {
+export function parseGunCodesFromHtml(
+  html: string,
+  mode: "home" | "weapon",
+  sourceUrl = SOURCE_URL
+): GunCodeRecord[] {
   const $ = cheerio.load(html);
   const records: GunCodeRecord[] = [];
 
   if (mode === "home") {
     parseFeaturedTable($, records);
   } else {
-    parseWeaponDetailTables($, records);
+    parseWeaponDetailTables($, records, sourceUrl);
   }
 
   return records;
@@ -237,7 +273,7 @@ export async function scrapeGunCodes(): Promise<{ parsed: number; summary: Upser
   const weaponRecords = await mapInBatches(weaponUrls, WEAPON_FETCH_CONCURRENCY, async (url) => {
     try {
       const html = await fetchHtml(url);
-      return parseGunCodesFromHtml(html, "weapon");
+      return parseGunCodesFromHtml(html, "weapon", url);
     } catch (error) {
       console.warn(`跳过武器页 ${url}:`, error instanceof Error ? error.message : error);
       return [];

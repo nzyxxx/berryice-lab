@@ -31,7 +31,7 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -326,16 +326,6 @@
   }
 }
 
-@keyframes rain-gust {
-  0%,
-  100% {
-    opacity: var(--rain-lo);
-  }
-  50% {
-    opacity: var(--rain-hi);
-  }
-}
-
 /* 从 0.4 起步而不是 0：opacity 归零的那几帧里内容是「没画出来」的，
    FCP/LCP 只能等淡入爬上来，实测在降频手机上要多等 300–1200ms。
    0.4 起步第一帧就可读，过渡感照样在。
@@ -357,17 +347,6 @@
   }
   50% {
     transform: translateY(-10px);
-  }
-}
-
-@keyframes rain-pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(0.35);
-    opacity: 0.7;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(3.2);
-    opacity: 0;
   }
 }
 
@@ -431,6 +410,76 @@
   animation: page-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* 预览页入场只动位移。不要从 opacity:0 起，否则首屏会先空一拍。 */
+@keyframes preview-rise {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.animate-preview-rise {
+  animation: preview-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes caustic {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-3%, -2%, 0) scale(1.06);
+  }
+}
+
+@keyframes ocean-rise {
+  from {
+    transform: translate3d(0, 8vh, 0);
+  }
+  to {
+    transform: translate3d(0, -78vh, 0);
+  }
+}
+
+@keyframes ocean-bob {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -1.1%, 0);
+  }
+}
+
+@keyframes ocean-reveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translate3d(0, 16%, 0);
+  }
+  to {
+    clip-path: inset(0);
+    transform: none;
+  }
+}
+
+.ocean-reveal {
+  animation: ocean-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.arsenal-stat {
+  opacity: 0;
+  transform: translate3d(28px, 0, 0);
+}
+
+.arsenal-stats.is-in .arsenal-stat {
+  opacity: 1;
+  transform: none;
+  transition:
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i) * 90ms);
+}
+
 /* 瓦片入场。
    这里必须是 CSS 而不是 motion 的 initial —— 后者会被序列化进 SSR 产物，
    于是首屏 HTML 里躺着一排 opacity:0 的卡片，要等整棵树水合完才显形。
@@ -443,10 +492,39 @@
 /* 下落用 linear：雨匀速落，加了缓动就会在每个循环边界一顿一顿。
    两条动画分别只碰 transform 和 opacity，都留在合成线程上。 */
 .animate-rain-layer {
-  animation:
-    rain-fall var(--rain-fall) linear infinite,
-    rain-gust var(--rain-gust) ease-in-out infinite;
-  will-change: transform, opacity;
+  animation: rain-fall var(--rain-fall) linear infinite;
+  will-change: transform;
+}
+
+.rain-paused .animate-rain-layer,
+.rain-paused .rain-splash {
+  animation-play-state: paused;
+}
+
+.rain-splash {
+  position: absolute;
+  bottom: 4px;
+  height: var(--splash-h, 6px);
+  border: 1px solid rgba(226, 240, 255, 0.7);
+  border-radius: 999px;
+  opacity: 0;
+  animation-name: rain-splash;
+  animation-duration: var(--splash-dur, 0.9s);
+  animation-timing-function: linear;
+  animation-delay: var(--splash-delay, 0s);
+  animation-iteration-count: 1;
+  animation-fill-mode: none;
+}
+
+@keyframes rain-splash {
+  0% {
+    transform: translate3d(-50%, 0, 0) scale(0.3, 0.55);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0) scale(1.5, 0.75);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -456,5 +534,88 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes arsenal-haze {
+  from { transform: translate3d(-4%, 0, 0) scale(1); }
+  to { transform: translate3d(6%, -4%, 0) scale(1.08); }
+}
+
+.arsenal-haze {
+  filter: blur(48px);
+  animation: arsenal-haze 16s ease-in-out infinite alternate;
+}
+
+/* 首页互动只在 html.home-motion 下生效。这个类由客户端在桌面、未减少动效时加上。
+   拆字和模糊入场是 React Bits BlurText / Split Text 的 CSS 版：
+   首屏不写 opacity:0，避免 motion initial 把字藏进 SSR。 */
+.home-tile {
+  position: relative;
+  overflow: hidden;
+  background: #0b0c10;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.home-tile:active {
+  transform: scale(0.98);
+}
+html.home-motion .home-tile:active {
+  transform: none;
+}
+.home-tile-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s linear;
+}
+.home-arrow {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-tile:hover .home-tile-ring {
+  opacity: 1;
+}
+.group:hover .home-arrow,
+.group\/row:hover .home-arrow {
+  transform: translate3d(3px, -3px, 0);
+}
+
+html.home-motion .home-split > span {
+  display: inline-block;
+  animation: home-split 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+@keyframes home-split {
+  from {
+    opacity: 0.35;
+    transform: translate3d(0, 0.28em, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html.home-motion [data-reveal].is-waiting {
+  opacity: 0.4;
+  transform: translate3d(0, 12px, 0);
+}
+html.home-motion [data-reveal].is-shown {
+  animation: home-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@keyframes home-rise {
+  from {
+    opacity: 0.4;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

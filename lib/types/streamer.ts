@@ -3,6 +3,9 @@
 export const STREAMER_PLATFORMS = ["pc", "mobile"] as const;
 export type StreamerPlatform = (typeof STREAMER_PLATFORMS)[number];
 
+/** 主播改枪页只展示这一季。其他赛季保留在库里，但标记归档。 */
+export const VERIFIED_STREAMER_SEASON = "S11";
+
 export interface StreamerRecord {
   /** 远端 slug，同时作为本站路由段 */
   slug: string;
@@ -36,11 +39,24 @@ export interface StreamerLoadoutRecord {
   valueText: string;
   copyCount: number;
   source: string;
+  focusTags?: string[];
+  recommendation?: number | null;
+  season?: string;
+  postedAt?: string | null;
+  sourceUrl?: string;
+  /** 1 表示不在主播改枪页展示。不删除。 */
+  archived?: boolean;
 }
 
 export interface StoredStreamerLoadout extends StreamerLoadoutRecord {
   id: number;
   collectedAt: string;
+  focusTags: string[];
+  recommendation: number | null;
+  season: string;
+  postedAt: string | null;
+  sourceUrl: string;
+  archived: boolean;
 }
 
 export interface StreamerWithLoadouts extends StoredStreamer {

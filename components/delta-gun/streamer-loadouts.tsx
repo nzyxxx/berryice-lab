@@ -4,8 +4,9 @@ import {
   CommunityCodeCard,
   type CommunityCodeItem,
 } from "@/components/delta-gun/community-code-card";
+import { GlassRing, type RingCard } from "@/components/delta-gun/glass-ring";
 import { Panel } from "@/components/lab/module-card";
-import { inferWeaponType, weaponTypeLabel } from "@/lib/delta-gun/weapon-utils";
+import { artworkForWeaponName, inferWeaponType, weaponTypeLabel } from "@/lib/delta-gun/weapon-utils";
 import type { StoredStreamerLoadout } from "@/lib/types/streamer";
 import type { GunType } from "@/lib/types/gun";
 import { cn } from "@/lib/utils";
@@ -26,11 +27,18 @@ function toCardItem(loadout: StoredStreamerLoadout): CommunityCodeItem {
     valueText: loadout.valueText,
     copyCount: loadout.copyCount,
     collectedAt: loadout.collectedAt,
+    source: loadout.source,
+    sourceUrl: loadout.sourceUrl,
+    focusTags: loadout.focusTags,
+    recommendation: loadout.recommendation,
+    season: loadout.season,
+    postedAt: loadout.postedAt ?? undefined,
   };
 }
 
 export function StreamerLoadouts({ loadouts }: { loadouts: StoredStreamerLoadout[] }) {
   const [query, setQuery] = useState("");
+  const [ring, setRing] = useState(true);
   const [category, setCategory] = useState<CategoryTab>("all");
   const [toast, setToast] = useState("");
 
@@ -132,10 +140,36 @@ export function StreamerLoadouts({ loadouts }: { loadouts: StoredStreamerLoadout
         </Panel>
       )}
 
+      {visible.length > 0 ? (
+        <button type="button" className="mb-3 text-sm text-lab-ink-subtle underline" onClick={() => setRing((value) => !value)}>
+          {ring ? "改看列表" : "改看环"}
+        </button>
+      ) : null}
       {visible.length === 0 ? (
         <Panel className="py-12 text-center">
           <p className="text-sm text-lab-ink-subtle">没有匹配的方案</p>
         </Panel>
+      ) : ring ? (
+        <GlassRing
+          label="主播方案环"
+          cards={visible.slice(0, 12).map((loadout): RingCard => {
+            const item = toCardItem(loadout);
+            return {
+              id: String(item.id),
+              kicker: item.game,
+              title: item.weapon,
+              imageUrl: artworkForWeaponName(item.weapon),
+              code: item.fullCode,
+              actionLabel: "复制枪码",
+              onAction: () => void copyCode(item.fullCode),
+              stats: [
+                { label: "方向", value: (item.focusTags ?? []).slice(0, 2).join(" · ") || "未标" },
+                { label: "推荐", value: item.recommendation ? "★".repeat(Math.min(5, item.recommendation)) : "—" },
+                { label: "排行", value: item.rankPosition ? `#${item.rankPosition}` : "未入榜" },
+              ],
+            };
+          })}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {visible.map((loadout, index) => (

@@ -1,6 +1,6 @@
 # BerryIce Lab
 
-[https://berryice.cn](https://berryice.cn) 是 BerryIce 的个人站。门户通向四处：三角洲改枪实验室（枪械库、社区枪码、主播配装、我的枪码）、写作、知识库、关于。
+[https://berryice.cn](https://berryice.cn) 是小莓流冰（BerryIce）的个人站。首页是雨夜。导航通向四处：三角洲工具专栏、写作、知识库、关于。
 
 ## 技术栈
 

@@ -27,7 +27,6 @@ export function ModuleTile({
   if (!entry) return null;
 
   const Icon = ICONS[id];
-  const featured = entry.featured === true;
 
   return (
     <div
@@ -42,53 +41,32 @@ export function ModuleTile({
           href={entry.href}
           className={cn(
             glassSurfaceClass(),
-            "group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl",
-            featured ? "min-h-[10rem] p-6" : "min-h-[7rem] p-5",
-            "transition-[transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-white/20",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/30"
+            "group relative flex h-full min-h-[7.5rem] flex-col justify-between overflow-hidden rounded-2xl p-5",
+            "transition-[transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-lab-primary/35",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
           )}
-          style={{ borderColor: `${entry.accent}30` }}
         >
           <span
-            className={cn(
-              "absolute right-0 top-0 rounded-full blur-2xl transition-opacity",
-              featured ? "h-40 w-40 opacity-25 group-hover:opacity-35" : "h-24 w-24 opacity-20 group-hover:opacity-30",
-              "-translate-y-1/2 translate-x-1/2"
-            )}
+            className="absolute right-0 top-0 h-24 w-24 -translate-y-1/2 translate-x-1/2 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-30"
             style={{ backgroundColor: entry.accent }}
             aria-hidden
           />
 
           <span className="relative flex items-start justify-between gap-3">
             <span
-              className={cn(
-                "flex items-center justify-center rounded-xl border border-white/15",
-                featured ? "size-12" : "size-10"
-              )}
+              className="flex size-10 items-center justify-center rounded-xl border border-lab-hairline"
               style={{ backgroundColor: `${entry.accent}18`, color: entry.accent }}
             >
-              <Icon className={featured ? "size-6" : "size-5"} />
+              <Icon className="size-5" />
             </span>
-            {featured && (
-              <ArrowUpRight className="size-5 text-lab-ink-tertiary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-lab-ink" />
-            )}
+            <ArrowUpRight className="size-4 text-lab-ink-tertiary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-lab-ink" />
           </span>
 
           <span className="relative mt-5 block">
-            <span
-              className={cn(
-                "block font-medium tracking-tight text-lab-ink",
-                featured ? "text-xl md:text-2xl" : "text-[15px]"
-              )}
-            >
+            <span className="block text-[15px] font-medium tracking-tight text-lab-ink">
               {entry.title}
             </span>
-            <span
-              className={cn(
-                "mt-1 block leading-relaxed text-lab-ink-subtle",
-                featured ? "max-w-md text-sm" : "text-xs"
-              )}
-            >
+            <span className="mt-1 block text-xs leading-relaxed text-lab-ink-subtle">
               {entry.description}
             </span>
           </span>
