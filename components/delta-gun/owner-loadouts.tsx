@@ -50,27 +50,39 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
   const [weaponFilter, setWeaponFilter] = useState("all");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [loaded, setLoaded] = useState(false);
   const [token, setToken] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(() => emptyForm(weapons[0]?.id ?? ""));
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const load = async () => {
-    const [listRes, sessionRes] = await Promise.all([
-      fetch("/api/owner-loadouts", { cache: "no-store" }),
-      fetch("/api/admin/session", { cache: "no-store" }),
-    ]);
-    const list = await listRes.json();
-    const session = await sessionRes.json();
-    if (!list.ok) throw new Error(list.message ?? "读取失败");
-    setItems(list.data ?? []);
-    setAdmin(Boolean(session.ok));
+    try {
+      const [listRes, sessionRes] = await Promise.all([
+        fetch("/api/owner-loadouts", { cache: "no-store" }),
+        fetch("/api/admin/session", { cache: "no-store" }),
+      ]);
+      const list = await listRes.json();
+      const session = await sessionRes.json();
+      if (!list.ok) {
+        setLoadError(typeof list.message === "string" ? list.message : "读取失败");
+        setItems([]);
+      } else {
+        setLoadError("");
+        setItems(list.data ?? []);
+      }
+      setAdmin(Boolean(session.ok));
+    } catch (err: unknown) {
+      setLoadError(err instanceof Error ? err.message : "读取失败");
+      setItems([]);
+    } finally {
+      setLoaded(true);
+    }
   };
 
   useEffect(() => {
-    void load().catch((err: unknown) => {
-      setError(err instanceof Error ? err.message : "读取失败");
-    });
+    void load();
   }, []);
 
   const [showStale, setShowStale] = useState(false);
@@ -193,6 +205,7 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
       </header>
 
       {message ? <p className="mt-4 text-sm text-lab-success">{message}</p> : null}
+      {loadError ? <p className="mt-4 text-sm text-lab-error">{loadError}</p> : null}
       {error ? <p className="mt-4 text-sm text-lab-error">{error}</p> : null}
 
       {admin ? (
@@ -292,7 +305,15 @@ export function OwnerLoadouts({ weapons }: { weapons: WeaponOption[] }) {
       </div>
 
       {visible.length === 0 ? (
-        <p className="mt-10 text-sm text-lab-ink-subtle">还没有枪码。</p>
+        <p className="mt-10 text-sm text-lab-ink-subtle">
+          {loadError
+            ? "枪码列表没有读出来，上面是原因。"
+            : !loaded
+              ? "正在读取枪码。"
+              : items.length > 0
+                ? "当前筛选下没有枪码。过季的在「显示过季」里。"
+                : "还没有枪码。"}
+        </p>
       ) : (
         <ul className="mt-6 grid gap-4 md:grid-cols-2">
           {visible.map((item) => (

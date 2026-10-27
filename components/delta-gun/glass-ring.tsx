@@ -32,6 +32,8 @@ export type RingCard = {
   imageUrl?: string;
   stats?: RingStat[];
   href?: string;
+  /** 枪码原文。卡片正面就露一行，不必等点开。 */
+  code?: string;
   actionLabel?: string;
   onAction?: () => void;
 };
@@ -110,16 +112,17 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label?: string 
       const isFocus = cardId === cards[focusRef.current]?.id;
       const pressed = pressRef.current === cardId;
       const hovering = hoverRef.current === cardId && m.mode === "idle";
-      const scale = (isFocus ? (openRef.current === cardId ? 1.08 : 1.04) : 1 - depth * 0.06) * (pressed ? 0.97 : 1);
-      const lift = hovering ? m.lift : 0;
+      const scale = isFocus ? (openRef.current === cardId ? 1.08 : 1.04) : 1 - depth * 0.06;
       el.style.width = `${g.cardW}px`;
       el.style.height = `${g.cardH}px`;
       el.style.zIndex = String(30 - Math.round(Math.abs(angle)));
       el.style.opacity = String(Math.max(0.28, 1 - Math.abs(offset) * 0.4));
-      el.style.transform = `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${g.radius}px) translateY(${lift}px) scale(${scale})`;
+      el.style.transform = `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${g.radius}px) scale(${scale})`;
       el.dataset.face = isFocus ? "front" : "side";
       const panel = el.firstElementChild as HTMLElement | null;
       if (panel) {
+        const lift = hovering ? m.lift : 0;
+        panel.style.transform = `translateY(${lift}px) scale(${pressed ? 0.97 : 1})`;
         panel.style.borderColor = isFocus ? "color-mix(in srgb, var(--lab-primary) 70%, transparent)" : "rgba(255,255,255,0.15)";
         panel.style.background = isFocus
           ? "color-mix(in srgb, var(--lab-primary) 12%, rgba(255,255,255,0.06))"
@@ -436,6 +439,9 @@ export function GlassRing({ cards, label }: { cards: RingCard[]; label?: string 
                     <div className="flex min-h-0 flex-1 flex-col px-3.5 pt-2 pb-3">
                       <p className="truncate text-[11px] text-lab-ink-subtle">{card.kicker}</p>
                       <p className="mt-1 line-clamp-2 text-base leading-snug font-semibold text-lab-ink">{card.title}</p>
+                      {card.code ? (
+                        <p className="mt-2 line-clamp-3 break-all font-mono text-[11px] leading-relaxed text-lab-ink">{card.code}</p>
+                      ) : null}
                       {open ? (
                         <div className="mt-3">
                           <ul className="space-y-1">

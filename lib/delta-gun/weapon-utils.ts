@@ -59,6 +59,21 @@ export function parseValueScore(raw: string): number {
   return num;
 }
 
+const LOCAL_ART = new Set(["ak-12", "akm", "m4a1", "awm", "sr-25", "vector", "mp5", "bizon", "m249", "ci-19"]);
+
+/** 社区/主播武器名对上枪械库时才给图，对不上就留空，不拿另一把枪充数。 */
+export function artworkForWeaponName(weaponName: string): string | undefined {
+  const normalized = weaponName.replace(/\s+/g, "").toLowerCase();
+  if (!normalized) return undefined;
+  const match = guns.find((gun) => {
+    const name = gun.name.replace(/\s+/g, "").toLowerCase();
+    return name === normalized || name.includes(normalized) || normalized.includes(name);
+  });
+  if (!match) return undefined;
+  if (LOCAL_ART.has(match.id)) return `/arsenal/${match.id}.webp`;
+  return match.imageUrl;
+}
+
 /** 将社区武器名映射到本地枪械库 id（用于导入改枪） */
 export function resolveGunIdFromWeaponName(weaponName: string): string {
   const normalized = weaponName.toLowerCase().replace(/\s+/g, "");

@@ -6,7 +6,7 @@ import {
 } from "@/components/delta-gun/community-code-card";
 import { GlassRing, type RingCard } from "@/components/delta-gun/glass-ring";
 import { Panel } from "@/components/lab/module-card";
-import { inferWeaponType, weaponTypeLabel } from "@/lib/delta-gun/weapon-utils";
+import { artworkForWeaponName, inferWeaponType, weaponTypeLabel } from "@/lib/delta-gun/weapon-utils";
 import type { StoredStreamerLoadout } from "@/lib/types/streamer";
 import type { GunType } from "@/lib/types/gun";
 import { cn } from "@/lib/utils";
@@ -158,6 +158,8 @@ export function StreamerLoadouts({ loadouts }: { loadouts: StoredStreamerLoadout
               id: String(item.id),
               kicker: item.game,
               title: item.weapon,
+              imageUrl: artworkForWeaponName(item.weapon),
+              code: item.fullCode,
               actionLabel: "复制枪码",
               onAction: () => void copyCode(item.fullCode),
               stats: [

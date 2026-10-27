@@ -12,6 +12,7 @@ import { GameModeTabs } from "@/components/delta-gun/game-mode-tabs";
 import { GAME_MODES, type GameMode } from "@/lib/delta-gun/game-modes";
 import { isStaleCode } from "@/lib/delta-gun/season";
 import {
+  artworkForWeaponName,
   inferWeaponType,
   parseValueScore,
   weaponTypeLabel,
@@ -410,6 +411,8 @@ function CodeRing({
     id: String(item.id),
     kicker: item.game,
     title: item.weapon,
+    imageUrl: artworkForWeaponName(item.weapon),
+    code: item.fullCode,
     actionLabel: "复制枪码",
     onAction: () => onCopy(item.fullCode),
     stats: [
