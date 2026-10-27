@@ -30,15 +30,17 @@ export const profileConfig = {
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
 
-export type ModuleId = "delta" | "writing" | "about";
+export type ModuleId = "delta" | "writing" | "wiki" | "about";
 
 /**
- * 门户只有三个去处。
+ * 门户有四个去处。清单只维护在这里，导航、抽屉、门户瓦片都从它派生。
  *
- * 之前是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系），
- * 结果唯一有完整主路径的三角洲被摊薄成五分之一，跟三个占位页平起平坐。
- * 文章和笔记本来就是同一件事的长短两种形态，合成「写作」；
- * 音乐和联系都是「关于我」的下属信息，降级成 /about 里的两段。
+ * 写作是自己的长文和随记。知识库是 Bear 从外面收录进来的笔记，
+ * 有单独的收录和删除，不塞进写作的空列表里。
+ *
+ * 更早的时候是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系），
+ * 唯一有完整主路径的三角洲被摊薄了。文章和笔记合成「写作」；
+ * 音乐和联系降进 /about。那次收敛不动。
  */
 export const moduleLinks: {
   id: ModuleId;
@@ -66,6 +68,13 @@ export const moduleLinks: {
     title: "写作",
     description: "长文与随记。",
     accent: "#38bdf8",
+  },
+  {
+    id: "wiki",
+    href: "/wiki",
+    title: "知识库",
+    description: "Bear 收录的笔记，手机上翻阅。",
+    accent: "#7dd3fc",
   },
   {
     id: "about",

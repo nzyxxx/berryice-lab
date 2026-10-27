@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { listWikiNotes } from "@/lib/content/wiki-store";
 import { getGuns } from "@/lib/data/guns";
 import { ensureStreamerTables, listStreamers } from "@/lib/repositories/streamersRepo";
 import { getSiteUrl } from "@/lib/site-config";
@@ -21,6 +22,31 @@ const STATIC_ROUTES: {
   { path: "/delta-gun/streamers", changeFrequency: "daily", priority: 0.8 },
   { path: "/delta-gun/my-loadouts", changeFrequency: "monthly", priority: 0.4 },
 ];
+
+async function wikiEntries(siteUrl: string): Promise<MetadataRoute.Sitemap> {
+  const index: MetadataRoute.Sitemap[number] = {
+    url: `${siteUrl}/wiki`,
+    changeFrequency: "daily",
+    priority: 0.6,
+  };
+  try {
+    const notes = await listWikiNotes();
+    return [
+      index,
+      ...notes.map((note) => ({
+        url: `${siteUrl}/wiki/${encodeURIComponent(note.slug)}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.5,
+      })),
+    ];
+  } catch (error) {
+    console.warn(
+      "sitemap: 知识库笔记未写入:",
+      error instanceof Error ? error.message : error
+    );
+    return [index];
+  }
+}
 
 async function streamerEntries(siteUrl: string): Promise<MetadataRoute.Sitemap> {
   try {
@@ -68,5 +94,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]);
 
-  return [...staticEntries, ...gunEntries, ...(await streamerEntries(siteUrl))];
+  return [
+    ...staticEntries,
+    ...(await wikiEntries(siteUrl)),
+    ...gunEntries,
+    ...(await streamerEntries(siteUrl)),
+  ];
 }
