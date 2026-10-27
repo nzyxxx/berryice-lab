@@ -14,7 +14,7 @@ function WikiInlines({ nodes }: { nodes: InlineNode[] }) {
       return (
         <code
           key={index}
-          className="break-all rounded bg-lab-surface-2 px-1 py-0.5 font-mono text-[13px] text-lab-ink"
+          className="break-all rounded-md bg-lab-surface-3 px-1.5 py-0.5 font-mono text-[0.92em] text-lab-ink"
         >
           {node.text}
         </code>
@@ -39,7 +39,7 @@ function WikiInlines({ nodes }: { nodes: InlineNode[] }) {
       <a
         key={index}
         href={node.href}
-        className="break-all text-lab-primary underline decoration-lab-primary/40 underline-offset-2"
+        className="break-all text-lab-primary underline decoration-lab-primary/35 underline-offset-[3px] transition-colors hover:decoration-lab-primary"
         {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       >
         <WikiInlines nodes={node.children} />
@@ -54,8 +54,10 @@ function WikiBlock({ block }: { block: BlockNode }) {
     return (
       <Tag
         className={cn(
-          "font-semibold tracking-tight text-lab-ink",
-          block.level === 2 ? "mt-8 text-xl first:mt-0" : "mt-6 text-lg first:mt-0"
+          "text-balance font-semibold tracking-tight text-lab-ink",
+          block.level === 2
+            ? "mt-10 text-[1.375rem] leading-snug first:mt-0"
+            : "mt-8 text-lg leading-snug first:mt-0"
         )}
       >
         <WikiInlines nodes={block.children} />
@@ -65,7 +67,7 @@ function WikiBlock({ block }: { block: BlockNode }) {
 
   if (block.type === "paragraph") {
     return (
-      <p className="text-[15px] leading-relaxed text-lab-ink-muted">
+      <p className="text-[15px] leading-7 text-lab-ink-muted">
         <WikiInlines nodes={block.children} />
       </p>
     );
@@ -73,19 +75,19 @@ function WikiBlock({ block }: { block: BlockNode }) {
 
   if (block.type === "code") {
     return (
-      <pre className="overflow-x-auto rounded-2xl bg-lab-surface-1 p-3 font-mono text-xs leading-relaxed text-lab-ink">
+      <pre className="overflow-x-auto rounded-xl border border-lab-hairline bg-lab-surface-2 px-4 py-3 font-mono text-[13px] leading-relaxed text-lab-ink">
         <code>{block.text}</code>
       </pre>
     );
   }
 
   if (block.type === "hr") {
-    return <hr className="border-white/10" />;
+    return <hr className="border-lab-hairline" />;
   }
 
   if (block.type === "quote") {
     return (
-      <blockquote className="border-l border-lab-primary/40 pl-4 text-lab-ink-subtle">
+      <blockquote className="border-l border-lab-hairline-strong pl-4 text-lab-ink-subtle">
         <div className="flex flex-col gap-3">
           {block.blocks.map((child, index) => (
             <WikiBlock key={index} block={child} />
@@ -99,7 +101,7 @@ function WikiBlock({ block }: { block: BlockNode }) {
   return (
     <ListTag
       className={cn(
-        "space-y-2 pl-5 text-[15px] leading-relaxed text-lab-ink-muted marker:text-lab-ink-tertiary",
+        "space-y-2 pl-5 text-[15px] leading-7 text-lab-ink-muted marker:text-lab-ink-subtle",
         block.ordered ? "list-decimal" : "list-disc"
       )}
     >
@@ -123,7 +125,7 @@ export function WikiMarkdown({ source }: { source: string }) {
   const blocks = parseWikiBlocks(source);
   if (blocks.length === 0) return null;
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {blocks.map((block, index) => (
         <WikiBlock key={index} block={block} />
       ))}

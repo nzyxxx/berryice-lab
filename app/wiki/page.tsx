@@ -1,8 +1,8 @@
-import { EmptyState } from "@/components/gallery/empty-state";
 import { SectionZone } from "@/components/gallery/section-zone";
 import { PageContainer } from "@/components/lab/page-container";
 import { PageShell } from "@/components/lab/page-shell";
-import { WikiNoteCard } from "@/components/wiki/wiki-note-card";
+import { WikiEmpty } from "@/components/wiki/wiki-empty";
+import { WikiNoteRow } from "@/components/wiki/wiki-note-row";
 import { listWikiNotes } from "@/lib/content/wiki-store";
 import type { Metadata } from "next";
 import { connection } from "next/server";
@@ -21,35 +21,27 @@ export default async function WikiPage() {
 
   return (
     <PageShell>
-      <PageContainer className="max-w-[40rem]">
-        <SectionZone
-          index="01"
-          label="Brief"
-          title="知识库"
-          headingLevel="h1"
-          description="Bear 收录的笔记。手机上翻阅，不想留的可以从卡片上删掉。"
-        />
+      <PageContainer className="max-w-[40rem] selection:bg-lab-primary/25 selection:text-lab-ink">
+        <SectionZone index="01" label="Brief">
+          <h1 className="text-display-section text-balance">知识库</h1>
+          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-lab-ink-muted">
+            Bear 收录进来的笔记。
+          </p>
+        </SectionZone>
 
         {notes.length === 0 ? (
-          <div className="mt-12">
-            <EmptyState
-              title="知识库还是空的"
-              description="收录进来的笔记会出现在这里。没有的时候就空着，不摆占位文章。"
-            />
-          </div>
+          <WikiEmpty />
         ) : (
           <SectionZone
             index="02"
             label="Notes"
             title="笔记"
-            description={`${notes.length} 篇，按入库时间新的在前。`}
-            className="mt-12"
+            description={`${notes.length} 篇，按入库时间，新的在前。`}
+            className="mt-16"
           >
-            <ul className="grid grid-cols-1 gap-3">
-              {notes.map((note, index) => (
-                <li key={note.slug}>
-                  <WikiNoteCard note={note} index={index} />
-                </li>
+            <ul className="border-t border-lab-hairline">
+              {notes.map((note) => (
+                <WikiNoteRow key={note.slug} note={note} />
               ))}
             </ul>
           </SectionZone>
