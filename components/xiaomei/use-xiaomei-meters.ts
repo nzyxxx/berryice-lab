@@ -1,12 +1,16 @@
 "use client";
 
 import {
+  XIAOMEI_FEED_DAILY_CAP,
   XIAOMEI_HUNGER_MS,
   XIAOMEI_METERS_KEY,
   XIAOMEI_METER_DEFAULT,
   feedXiaomei,
+  nextFeedClock,
   projectXiaomeiMeters,
+  readFeedClock,
   warmXiaomei,
+  type XiaomeiFeedClock,
   type XiaomeiFeedResult,
   type XiaomeiMeters,
 } from "@/lib/xiaomei-meters";
@@ -21,6 +25,7 @@ const SERVER_METERS: XiaomeiMeters = {
 };
 
 let clock = 0;
+let feedClock: XiaomeiFeedClock = { feedDay: "", feedCountToday: 0 };
 let session: XiaomeiMeters | null = null;
 let cache: { raw: string | null; bucket: number; value: XiaomeiMeters } = {
   raw: null,
@@ -36,8 +41,15 @@ function safeGet(): string | null {
   }
 }
 
-function publish(meters: XiaomeiMeters, touchedAt: number) {
-  const raw = JSON.stringify({ fullness: meters.fullness, affection: meters.affection, touchedAt });
+function publish(meters: XiaomeiMeters, touchedAt: number, nextClock: XiaomeiFeedClock) {
+  feedClock = nextClock;
+  const raw = JSON.stringify({
+    fullness: meters.fullness,
+    affection: meters.affection,
+    touchedAt,
+    feedDay: nextClock.feedDay,
+    feedCountToday: nextClock.feedCountToday,
+  });
   clock = touchedAt;
   cache = { raw, bucket: Math.floor(Date.now() / XIAOMEI_HUNGER_MS), value: meters };
   try {
@@ -57,6 +69,7 @@ function readMeters(): XiaomeiMeters {
   if (cache.raw === raw && cache.bucket === bucket) return cache.value;
   const projected = projectXiaomeiMeters(raw, now);
   clock = projected.touchedAt;
+  feedClock = readFeedClock(raw, new Date(now));
   cache = { raw, bucket, value: projected.meters };
   return cache.value;
 }
@@ -74,27 +87,30 @@ export function useXiaomeiMeters() {
 
   useEffect(() => () => window.clearTimeout(lockTimer.current), []);
 
-  const feed = useCallback((): XiaomeiFeedResult | null => {
+  const feed = useCallback((): (XiaomeiFeedResult & { tooMuch: boolean }) | null => {
     if (lock.current) return null;
     lock.current = true;
     window.clearTimeout(lockTimer.current);
     lockTimer.current = window.setTimeout(() => {
       lock.current = false;
     }, FEED_LOCK_MS);
+    const now = Date.now();
     const result = feedXiaomei(readMeters());
-    publish(result.meters, Date.now());
-    return result;
+    const next = nextFeedClock(readFeedClock(safeGet(), new Date(now)), new Date(now));
+    publish(result.meters, now, next);
+    return { ...result, tooMuch: next.feedCountToday >= XIAOMEI_FEED_DAILY_CAP };
   }, []);
 
   const warm = useCallback(() => {
     const now = Date.now();
+    const kept = readFeedClock(safeGet(), new Date(now));
     if (session) {
-      publish(warmXiaomei(session), clock || now);
+      publish(warmXiaomei(session), clock || now, kept);
       return;
     }
     const projected = projectXiaomeiMeters(safeGet(), now);
-    publish(warmXiaomei(projected.meters), projected.touchedAt);
+    publish(warmXiaomei(projected.meters), projected.touchedAt, kept);
   }, []);
 
-  return { meters, feed, warm };
+  return { meters, feed, warm, feedCountToday: feedClock.feedCountToday };
 }

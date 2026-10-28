@@ -12,6 +12,8 @@ import {
   XIAOMEI_FEED_FULL_LINES,
   XIAOMEI_FEED_LINES,
   XIAOMEI_FEED_SOFT_LINES,
+  XIAOMEI_FEED_TOO_MUCH_LINES,
+  XIAOMEI_HUNGRY_LINES,
   XIAOMEI_HOVER_LINES,
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
@@ -26,7 +28,8 @@ import {
   type XiaomeiMood,
   type XiaomeiSayDetail,
 } from "@/lib/xiaomei-lines";
-import { readXiaomeiMemory, toneFromMeters } from "@/lib/xiaomei-memory";
+import { isXiaomeiHungry, readXiaomeiMemory, toneFromAffection } from "@/lib/xiaomei-memory";
+import { XIAOMEI_METERS_KEY, readFeedClock } from "@/lib/xiaomei-meters";
 import { peekTransform } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
@@ -86,7 +89,19 @@ export function XiaomeiCompanion() {
   const warmRef = useRef(meters.warm);
   warmRef.current = meters.warm;
   const chat = useXiaomeiChat({
-    getMeters: () => metersRef.current,
+    getMeters: () => {
+      let raw: string | null = null;
+      try {
+        raw = localStorage.getItem(XIAOMEI_METERS_KEY);
+      } catch {
+        raw = null;
+      }
+      return {
+        affection: metersRef.current.affection,
+        fullness: metersRef.current.fullness,
+        feedCountToday: readFeedClock(raw, new Date()).feedCountToday,
+      };
+    },
     onReplied: () => {
       warmRef.current();
     },
@@ -131,8 +146,11 @@ export function XiaomeiCompanion() {
       speak("annoyed", pickXiaomeiLine(XIAOMEI_SPAM_LINES, speechRef.current?.text), "spam");
       return;
     }
-    const tone = toneFromMeters(metersRef.current.affection, metersRef.current.fullness);
-    const line = pickTaggedLine(XIAOMEI_CLICK_LINES, speechRef.current?.text, tone);
+    const tone = toneFromAffection(metersRef.current.affection);
+    const pool = isXiaomeiHungry(metersRef.current.fullness)
+      ? [...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_CLICK_LINES]
+      : XIAOMEI_CLICK_LINES;
+    const line = pickTaggedLine(pool, speechRef.current?.text, tone);
     speak(line.mood, line.text, "click");
   }, [speak]);
 
@@ -152,9 +170,9 @@ export function XiaomeiCompanion() {
     const id = window.setTimeout(() => {
       if (chatOpenRef.current || mutedRef.current) return;
       const remembered = readXiaomeiMemory();
-      const tone = toneFromMeters(metersRef.current.affection, metersRef.current.fullness);
+      const tone = toneFromAffection(metersRef.current.affection);
       if (remembered.topics.length > 0) {
-        const mood: XiaomeiMood = tone === "prickly" ? "annoyed" : tone === "soft" ? "happy" : "content";
+        const mood: XiaomeiMood = tone === "guarded" ? "annoyed" : tone === "classic" ? "content" : "happy";
         const text = pickXiaomeiLine(XIAOMEI_RECALL_LINES[tone]);
         setSpeech((current) => current ?? { text, mood, source: "greet" });
         setMoodPin((current) => current ?? mood);
@@ -315,7 +333,7 @@ export function XiaomeiCompanion() {
           onTalk={openChat}
           onMutter={() => {
             setMenuOpen(false);
-            const tone = toneFromMeters(metersRef.current.affection, metersRef.current.fullness);
+            const tone = toneFromAffection(metersRef.current.affection);
             const line = pickTaggedLine(XIAOMEI_MUTTER_LINES, speechRef.current?.text, tone);
             speak(line.mood, line.text, "mutter");
           }}
@@ -323,13 +341,14 @@ export function XiaomeiCompanion() {
             const result = meters.feed();
             if (!result) return;
             setMenuOpen(false);
-            const pool =
-              result.kind === "full"
+            const pool = result.tooMuch
+              ? XIAOMEI_FEED_TOO_MUCH_LINES
+              : result.kind === "full"
                 ? XIAOMEI_FEED_FULL_LINES
                 : result.kind === "soft"
                   ? XIAOMEI_FEED_SOFT_LINES
                   : XIAOMEI_FEED_LINES;
-            const mood = result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
+            const mood = result.tooMuch || result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
             speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed");
           }}
           onMute={toggleMute}

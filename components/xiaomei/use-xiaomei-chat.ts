@@ -12,7 +12,7 @@ type ThreadMessage = XiaomeiChatTurn & { failed?: boolean };
 const FALLBACK = "线断了啦。不是我不会，是这会儿没接上。";
 
 type XiaomeiChatOptions = {
-  getMeters?: () => { affection: number; fullness: number };
+  getMeters?: () => { affection: number; fullness: number; feedCountToday?: number };
   onReplied?: () => void;
 };
 
@@ -90,11 +90,17 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: history.slice(-16).map(({ role, content: line }) => ({ role, content: line })),
-          memory: {
-            affection: hooksRef.current?.getMeters?.().affection ?? XIAOMEI_METER_DEFAULT.affection,
-            fullness: hooksRef.current?.getMeters?.().fullness ?? XIAOMEI_METER_DEFAULT.fullness,
-            topics: readXiaomeiMemory().topics,
-          },
+          memory: (() => {
+            const live = hooksRef.current?.getMeters?.();
+            const stored = readXiaomeiMemory();
+            return {
+              affection: live?.affection ?? XIAOMEI_METER_DEFAULT.affection,
+              fullness: live?.fullness ?? XIAOMEI_METER_DEFAULT.fullness,
+              feedCountToday: live?.feedCountToday ?? 0,
+              userName: stored.userName,
+              topics: stored.topics,
+            };
+          })(),
         }),
         signal: controller.signal,
       });
@@ -127,10 +133,7 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
       setReplyMood(moodAfterReply(accumulated));
       setStatus("done");
       const stored = readXiaomeiMemory();
-      const visible = messagesRef.current
-        .filter((item) => !item.failed && item.content.trim())
-        .map(({ role, content: line }) => ({ role, content: line }));
-      writeXiaomeiMemory(rememberThread(stored.topics, visible, content, accumulated.trim()));
+      writeXiaomeiMemory(rememberThread(stored, content, accumulated.trim()));
       if (!isXiaomeiJailbreak(content)) hooksRef.current?.onReplied?.();
       return true;
     } catch (error) {

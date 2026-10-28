@@ -107,6 +107,44 @@ function readTouchedAt(raw: string | null): number | null {
   }
 }
 
+/** 同一天喂到这个次数，本地台词改口嫌撑。 */
+export const XIAOMEI_FEED_DAILY_CAP = 6;
+
+export type XiaomeiFeedClock = {
+  feedDay: string;
+  feedCountToday: number;
+};
+
+export function dayKey(now: Date): string {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function readFeedClock(raw: string | null, now: Date): XiaomeiFeedClock {
+  const today = dayKey(now);
+  if (!raw) return { feedDay: today, feedCountToday: 0 };
+  try {
+    const parsed = JSON.parse(raw) as { feedDay?: unknown; feedCountToday?: unknown };
+    const day = typeof parsed.feedDay === "string" ? parsed.feedDay : "";
+    const count =
+      typeof parsed.feedCountToday === "number" && Number.isFinite(parsed.feedCountToday)
+        ? Math.max(0, Math.floor(parsed.feedCountToday))
+        : 0;
+    if (day !== today) return { feedDay: today, feedCountToday: 0 };
+    return { feedDay: today, feedCountToday: count };
+  } catch {
+    return { feedDay: today, feedCountToday: 0 };
+  }
+}
+
+export function nextFeedClock(clock: XiaomeiFeedClock, now: Date): XiaomeiFeedClock {
+  const today = dayKey(now);
+  const count = clock.feedDay === today ? clock.feedCountToday + 1 : 1;
+  return { feedDay: today, feedCountToday: count };
+}
+
 /**
  * 没记过时刻就先不上饿，等第一次喂食或聊完再开始算。
  * 好感不掉。饱腹按经过的整段往下减，避免连着打开页面重复扣。
