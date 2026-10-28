@@ -61,41 +61,118 @@ export function hasClientKeyField(payload: unknown): boolean {
   return Object.keys(payload as Record<string, unknown>).some((field) => CLIENT_KEY_FIELD.test(field));
 }
 
-function isLoopbackHost(host: string): boolean {
-  const name = host.replace(/:\d+$/, "");
-  return name === "localhost" || name === "127.0.0.1" || name === "[::1]";
+type OriginSite = { name: string; port: number; defaultPort: number; host: string };
+
+function bareHostName(value: string): string {
+  let name = value.trim().toLowerCase();
+  if (name.startsWith("[") && name.endsWith("]")) name = name.slice(1, -1);
+  return name.replace(/\.+$/, "");
+}
+
+function isLoopbackName(name: string): boolean {
+  const bare = bareHostName(name);
+  return bare === "localhost" || bare === "127.0.0.1" || bare === "::1";
+}
+
+function parsePort(value: string): number | null {
+  if (!/^\d{1,5}$/.test(value)) return null;
+  const port = Number(value);
+  if (port < 1 || port > 65535) return null;
+  return port;
+}
+
+/** 拆开 Host。没写端口时 port 为 null，不能直接当成 80 或 443。 */
+function readHost(value: string): { name: string; port: number | null } | null {
+  const raw = value.trim().toLowerCase();
+  if (!raw || /[\s/\\@?#]/.test(raw)) return null;
+
+  let name = raw;
+  let port: number | null = null;
+  if (raw.startsWith("[")) {
+    const end = raw.indexOf("]");
+    if (end <= 1) return null;
+    name = raw.slice(1, end);
+    const rest = raw.slice(end + 1);
+    if (rest !== "") {
+      if (!rest.startsWith(":")) return null;
+      port = parsePort(rest.slice(1));
+      if (port === null) return null;
+    }
+  } else {
+    const colon = raw.lastIndexOf(":");
+    if (colon !== -1) {
+      name = raw.slice(0, colon);
+      port = parsePort(raw.slice(colon + 1));
+      if (!name || port === null) return null;
+    }
+  }
+
+  name = bareHostName(name);
+  if (!name) return null;
+  return { name, port };
+}
+
+function readOrigin(origin: string): OriginSite | null {
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    return null;
+  }
+  const defaultPort = url.protocol === "https:" ? 443 : url.protocol === "http:" ? 80 : 0;
+  if (!defaultPort) return null;
+  const name = bareHostName(url.hostname);
+  if (!name) return null;
+  const port = url.port ? Number(url.port) : defaultPort;
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return null;
+  return { name, port, defaultPort, host: url.host };
+}
+
+/**
+ * 主机名必须相同。Host 带了端口就跟 Origin 的有效端口比；
+ * 没带端口时只接受该协议的默认端口（:443 / :80 已被 URL 去掉的那种）。
+ */
+function sameSite(origin: OriginSite, candidate: string): boolean {
+  const host = readHost(candidate);
+  if (!host || host.name !== origin.name) return false;
+  if (host.port === null) return origin.port === origin.defaultPort;
+  return host.port === origin.port;
+}
+
+/** 环回可以换名字（localhost 和 127.0.0.1），但两边都要写明同一个端口。 */
+function loopbackSamePort(originHost: string, hostHeader: string): boolean {
+  const origin = readHost(originHost);
+  const header = readHost(hostHeader);
+  if (!origin?.port || !header?.port) return false;
+  if (!isLoopbackName(origin.name) || !isLoopbackName(header.name)) return false;
+  return origin.port === header.port;
 }
 
 /**
  * 没带 Origin 的请求放行（curl、服务端）。
  * 浏览器的 POST 会带 Origin。Next 有时把 request.url 改成另一侧的 localhost，
- * 所以先对 Host 头，环回地址只比端口。
+ * 所以先对 Host 头。反代常把 Host 写成 `berryice.cn:443`，URL.host 会去掉默认端口，
+ * 因此按主机名和有效端口比，不按整段字符串。环回地址只比端口。
  * 响应里不加 CORS 头。
  */
 export function isXiaomeiSameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
   if (!origin) return true;
   if (origin === "null") return false;
-  let originHost = "";
-  try {
-    originHost = new URL(origin).host;
-  } catch {
-    return false;
-  }
+  const site = readOrigin(origin);
+  if (!site) return false;
+
   const hostHeader = request.headers.get("host")?.trim() ?? "";
-  if (hostHeader && originHost === hostHeader) return true;
+  if (hostHeader && sameSite(site, hostHeader)) return true;
+
   let urlHost = "";
   try {
     urlHost = new URL(request.url).host;
   } catch {
     urlHost = "";
   }
-  if (urlHost && originHost === urlHost) return true;
-  if (hostHeader && isLoopbackHost(originHost) && isLoopbackHost(hostHeader)) {
-    const originPort = originHost.split(":").at(-1);
-    const hostPort = hostHeader.split(":").at(-1);
-    return originPort === hostPort;
-  }
+  if (urlHost && sameSite(site, urlHost)) return true;
+  if (hostHeader && loopbackSamePort(site.host, hostHeader)) return true;
   return false;
 }
 
