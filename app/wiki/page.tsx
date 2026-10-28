@@ -21,7 +21,7 @@ export default async function WikiPage() {
 
   return (
     <PageShell>
-      <PageContainer className="max-w-[40rem] selection:bg-lab-primary/25 selection:text-lab-ink">
+      <PageContainer className="w-full max-w-6xl selection:bg-lab-primary/25 selection:text-lab-ink">
         <SectionZone index="01" label="Brief">
           <h1 className="text-display-section text-balance">知识库</h1>
           <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-lab-ink-muted">
