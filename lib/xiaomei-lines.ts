@@ -29,12 +29,15 @@ export type XiaomeiSpokenLine = {
 /** 签过的格言。偶尔出现，不要每句都念。 */
 export const XIAOMEI_CATCHPHRASE = "哼……蓝莓才不会随便甜给你。";
 
+/** 换图时把 v 加一，浏览器缓存才会失效。 */
+const XIAOMEI_SPRITE_VERSION = 3;
+
 export const XIAOMEI_SPRITE: Record<XiaomeiMood, string> = {
-  happy: "/xiaomei/happy.webp",
-  sad: "/xiaomei/sad.webp",
-  blank: "/xiaomei/blank.webp",
-  annoyed: "/xiaomei/annoyed.webp",
-  content: "/xiaomei/content.webp",
+  happy: `/xiaomei/happy.webp?v=${XIAOMEI_SPRITE_VERSION}`,
+  sad: `/xiaomei/sad.webp?v=${XIAOMEI_SPRITE_VERSION}`,
+  blank: `/xiaomei/blank.webp?v=${XIAOMEI_SPRITE_VERSION}`,
+  annoyed: `/xiaomei/annoyed.webp?v=${XIAOMEI_SPRITE_VERSION}`,
+  content: `/xiaomei/content.webp?v=${XIAOMEI_SPRITE_VERSION}`,
 };
 
 export const XIAOMEI_LINES: Record<XiaomeiMood, readonly string[]> = {
