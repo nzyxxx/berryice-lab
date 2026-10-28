@@ -1,7 +1,7 @@
 "use client";
 
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
-import { XIAOMEI_CATCHPHRASE } from "@/lib/xiaomei-lines";
+import { XIAOMEI_CATCHPHRASE, XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -50,7 +50,7 @@ export function XiaomeiChatSheet({
   return (
     <section
       id="xiaomei-chat"
-      aria-label="和小莓说话"
+      aria-label={`和${XIAOMEI_NAME}说话`}
       className={cn(
         glassSurfaceClass(),
         "absolute z-10 flex w-[min(17.5rem,calc(100vw-2rem))] flex-col rounded-2xl p-3",
@@ -60,7 +60,7 @@ export function XiaomeiChatSheet({
       style={{ maxHeight }}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="text-xs tracking-tight text-lab-ink-subtle">小莓</p>
+        <p className="text-xs tracking-tight text-lab-ink-subtle">{XIAOMEI_NAME}</p>
         <button
           type="button"
           aria-label="收起对话"
@@ -107,9 +107,9 @@ export function XiaomeiChatSheet({
           maxLength={400}
           enterKeyHint="send"
           autoComplete="off"
-          placeholder="想问就问"
+          placeholder="想说就说嘛"
           disabled={pending}
-          aria-label="对小莓说"
+          aria-label={`对${XIAOMEI_NAME}说`}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault();

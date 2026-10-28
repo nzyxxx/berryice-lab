@@ -1,15 +1,22 @@
 "use client";
 
-import { moodAfterReply, pullSseEvents, type XiaomeiChatTurn } from "@/lib/xiaomei-chat";
+import { isXiaomeiJailbreak, moodAfterReply, pullSseEvents, type XiaomeiChatTurn } from "@/lib/xiaomei-chat";
+import { readXiaomeiMemory, rememberThread, writeXiaomeiMemory } from "@/lib/xiaomei-memory";
+import { XIAOMEI_METER_DEFAULT } from "@/lib/xiaomei-meters";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type XiaomeiChatStatus = "idle" | "thinking" | "done" | "error";
 
 type ThreadMessage = XiaomeiChatTurn & { failed?: boolean };
 
-const FALLBACK = "线断了。不是我不会，是这会儿没接上。";
+const FALLBACK = "线断了啦。不是我不会，是这会儿没接上。";
 
-export function useXiaomeiChat() {
+type XiaomeiChatOptions = {
+  getMeters?: () => { affection: number; fullness: number };
+  onReplied?: () => void;
+};
+
+export function useXiaomeiChat(options?: XiaomeiChatOptions) {
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [pending, setPending] = useState(false);
   const [status, setStatus] = useState<XiaomeiChatStatus>("idle");
@@ -17,9 +24,27 @@ export function useXiaomeiChat() {
   const lock = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
   const messagesRef = useRef(messages);
+  const hooksRef = useRef(options);
+  const hydrated = useRef(false);
+  hooksRef.current = options;
+
+  const pullStored = useCallback(() => {
+    if (hydrated.current) return;
+    hydrated.current = true;
+    if (messagesRef.current.some((item) => item.content.trim())) return;
+    const stored = readXiaomeiMemory().turns;
+    if (stored.length === 0) return;
+    messagesRef.current = stored;
+    setMessages(stored);
+  }, []);
+
   useEffect(() => {
     messagesRef.current = messages;
   });
+
+  useEffect(() => {
+    pullStored();
+  }, [pullStored]);
 
   const resetFace = useCallback(() => {
     setStatus("idle");
@@ -32,6 +57,7 @@ export function useXiaomeiChat() {
   const send = useCallback(async (text: string) => {
     const content = text.trim();
     if (!content || lock.current) return false;
+    pullStored();
     lock.current = true;
     setPending(true);
     setStatus("thinking");
@@ -64,6 +90,11 @@ export function useXiaomeiChat() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: history.slice(-16).map(({ role, content: line }) => ({ role, content: line })),
+          memory: {
+            affection: hooksRef.current?.getMeters?.().affection ?? XIAOMEI_METER_DEFAULT.affection,
+            fullness: hooksRef.current?.getMeters?.().fullness ?? XIAOMEI_METER_DEFAULT.fullness,
+            topics: readXiaomeiMemory().topics,
+          },
         }),
         signal: controller.signal,
       });
@@ -92,14 +123,20 @@ export function useXiaomeiChat() {
         }
       }
 
-      if (!accumulated.trim()) throw new Error("……我听到了。你再说一遍？");
+      if (!accumulated.trim()) throw new Error("……我听到了啦。你再说一遍？");
       setReplyMood(moodAfterReply(accumulated));
       setStatus("done");
+      const stored = readXiaomeiMemory();
+      const visible = messagesRef.current
+        .filter((item) => !item.failed && item.content.trim())
+        .map(({ role, content: line }) => ({ role, content: line }));
+      writeXiaomeiMemory(rememberThread(stored.topics, visible, content, accumulated.trim()));
+      if (!isXiaomeiJailbreak(content)) hooksRef.current?.onReplied?.();
       return true;
     } catch (error) {
       const aborted = error instanceof DOMException && error.name === "AbortError";
       const message = aborted
-        ? "等太久了。先这样，你过会儿再问。"
+        ? "等太久了啦。你过会儿再来问我。"
         : error instanceof Error && error.message
           ? error.message
           : FALLBACK;
@@ -113,7 +150,7 @@ export function useXiaomeiChat() {
       setPending(false);
       abortRef.current = null;
     }
-  }, []);
+  }, [pullStored]);
 
   return { messages, pending, status, replyMood, send, stop, resetFace };
 }

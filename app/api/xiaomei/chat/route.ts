@@ -12,6 +12,8 @@ import {
   sanitizeXiaomeiMessages,
   shouldRetryUpstream,
 } from "@/lib/xiaomei-chat";
+import { sanitizeXiaomeiMemory } from "@/lib/xiaomei-memory";
+import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import {
   XIAOMEI_REFUSAL,
   XIAOMEI_UPSTREAM_ERROR,
@@ -90,12 +92,12 @@ export async function POST(request: Request) {
 
   // 客户端带上来的 Authorization 一律不用，也不能当成上游钥匙。
   if (xiaomeiChatDisabled()) {
-    return jsonError("小莓这会儿被按停了。", 503);
+    return jsonError(`${XIAOMEI_NAME}这会儿被按停了。`, 503);
   }
 
   const config = xiaomeiUpstreamConfig();
   if (!config) {
-    return jsonError("小莓这会儿不在线，对话钥匙还没放好。", 503);
+    return jsonError(`${XIAOMEI_NAME}这会儿不在线，对话钥匙还没放好。`, 503);
   }
 
   if (xiaomeiBudgetSnapshot().blocked) {
@@ -106,9 +108,13 @@ export async function POST(request: Request) {
   if ("error" in body) return jsonError(body.error, body.status);
   if (hasClientKeyField(body.payload)) return jsonError("不用带钥匙。", 400);
 
-  const record = body.payload && typeof body.payload === "object" ? (body.payload as { messages?: unknown }) : null;
+  const record =
+    body.payload && typeof body.payload === "object"
+      ? (body.payload as { messages?: unknown; memory?: unknown })
+      : null;
   const messages = sanitizeXiaomeiMessages(record?.messages);
   if (!messages) return jsonError("你倒是说句话。", 400);
+  const memory = sanitizeXiaomeiMemory(record?.memory);
 
   const ip = clientAddress(request);
   const ipDecision = buckets.allow(`ip:${ip}`);
@@ -138,11 +144,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    let upstream = await requestXiaomeiUpstream(config, config.primary, messages);
+    let upstream = await requestXiaomeiUpstream(config, config.primary, messages, memory);
     if (!upstream.ok && config.backup && shouldRetryUpstream(upstream.status)) {
       await upstream.body?.cancel().catch(() => undefined);
       console.error("[xiaomei] upstream retry", upstream.status);
-      upstream = await requestXiaomeiUpstream(config, config.backup, messages);
+      upstream = await requestXiaomeiUpstream(config, config.backup, messages, memory);
     }
     if (!upstream.ok || !upstream.body) {
       await upstream.body?.cancel().catch(() => undefined);

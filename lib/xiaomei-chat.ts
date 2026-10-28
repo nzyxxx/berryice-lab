@@ -6,7 +6,8 @@
 export const XIAOMEI_MAX_TURNS = 8;
 export const XIAOMEI_MAX_CHARS = 400;
 export const XIAOMEI_MAX_BODY_BYTES = 24_000;
-export const XIAOMEI_MAX_OUTPUT_TOKENS = 180;
+/** 口语一到三句，够接住一句记得的事，又压住小作文。 */
+export const XIAOMEI_MAX_OUTPUT_TOKENS = 160;
 export const XIAOMEI_RATE_LIMIT = 20;
 export const XIAOMEI_RATE_WINDOW_MS = 60_000;
 export const XIAOMEI_DAILY_LIMIT = 100;
