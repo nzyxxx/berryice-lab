@@ -99,14 +99,23 @@ export function SupportButton() {
       </button>
       <DialogContent
         showCloseButton={false}
-        style={compact ? undefined : { top: anchor.top, left: anchor.left }}
-        className={cn(
-          glassSurfaceClass("overflow-y-auto"),
-          "max-h-[min(36rem,calc(100dvh-1.5rem))] max-w-none gap-0 rounded-3xl p-0 text-lab-ink ring-0 sm:max-w-none",
-          "translate-x-0 translate-y-0",
+        style={
           compact
-            ? "top-auto right-4 bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-4 w-auto"
-            : "w-[min(26rem,calc(100vw-2rem))]",
+            ? {
+                position: "fixed",
+                top: "auto",
+                right: 16,
+                bottom: "max(0.75rem, env(safe-area-inset-bottom))",
+                left: 16,
+                width: "auto",
+              }
+            : { position: "fixed", top: anchor.top, left: anchor.left }
+        }
+        className={cn(
+          glassSurfaceClass(),
+          "fixed z-50 max-h-[min(36rem,calc(100dvh-1.5rem))] max-w-none gap-0 overflow-y-auto rounded-3xl p-0 text-lab-ink ring-0 sm:max-w-none",
+          "translate-x-0 translate-y-0",
+          compact ? "top-auto" : "w-[min(26rem,calc(100vw-2rem))]",
         )}
       >
         <div className="px-5 pt-4 pb-5">
