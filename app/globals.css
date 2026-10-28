@@ -619,3 +619,42 @@ html.home-motion [data-reveal].is-shown {
     transform: none;
   }
 }
+
+/* 小莓待机：只动 transform，不挂 rAF。气泡和拖拽在另一层，避免两套 transform 打架。 */
+@keyframes xiaomei-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -3px, 0);
+  }
+}
+
+.xiaomei-float {
+  animation: xiaomei-float 3.8s ease-in-out infinite;
+}
+
+@keyframes xiaomei-glance {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-7deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+.xiaomei-glance {
+  animation: xiaomei-glance 1.6s ease-in-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xiaomei-float,
+  .xiaomei-glance {
+    animation: none !important;
+  }
+}
