@@ -140,7 +140,7 @@ function drawStreak(
  */
 function buildRainTile(spec: LayerSpec): string {
   const size = spec.size;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
 
   const scratch = document.createElement("canvas");
   scratch.width = Math.ceil(size * 3 * dpr);
@@ -217,8 +217,9 @@ export function RainField({ density = "normal" }: { density?: Density }) {
       }
       const all = getRainTiles();
       if (small.matches) {
+        // 手机去掉最远那层（15–20px、alpha 0.16–0.3，窄屏上几乎看不见），留中景和近景。
         setLight(true);
-        setTiles(all.slice(0, 1));
+        setTiles(all.map((tile, index) => (index === 0 ? "" : tile)));
         setSplashes((current) => (current.length > 0 ? current.slice(0, 5) : Array.from({ length: 5 }, () => makeSplash(true))));
         return;
       }
@@ -240,7 +241,7 @@ export function RainField({ density = "normal" }: { density?: Density }) {
     };
   }, []);
 
-  const dim = light ? 0.42 : density === "low" ? 0.5 : 1;
+  const dim = light ? 0.8 : density === "low" ? 0.5 : 1;
 
   return (
     <>

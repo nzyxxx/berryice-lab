@@ -32,7 +32,6 @@ import { isXiaomeiHungry, readXiaomeiMemory, toneFromAffection } from "@/lib/xia
 import { XIAOMEI_METERS_KEY, readFeedClock } from "@/lib/xiaomei-meters";
 import { peekTransform } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
@@ -318,11 +317,6 @@ export function XiaomeiCompanion() {
         setMoodPin(null);
       }}
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-[18%] -z-10 size-16 -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_40%_35%,rgba(166,186,255,0.55),rgba(63,84,196,0.22)_42%,rgba(28,36,88,0)_72%)]"
-      />
-
       {menuOpen ? (
         <XiaomeiMenu
           muted={muted}
@@ -428,22 +422,6 @@ export function XiaomeiCompanion() {
             gesture === "glance" && !place.dragging ? "xiaomei-glance" : !place.dragging && "xiaomei-float",
           )}
         />
-      </button>
-
-      <button
-        type="button"
-        aria-label={`收起${XIAOMEI_NAME}`}
-        onPointerDown={(event) => event.stopPropagation()}
-        onClick={() => {
-          setChatOpen(false);
-          chat.stop();
-          place.hide();
-        }}
-        className="absolute -right-3 -top-3 z-10 flex size-11 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
-      >
-        <span className="flex size-5 items-center justify-center rounded-full border border-white/20 bg-lab-canvas/80 text-lab-ink-subtle backdrop-blur-md">
-          <X className="size-3" />
-        </span>
       </button>
     </div>
   );

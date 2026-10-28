@@ -267,12 +267,6 @@ export function HomeFront() {
         >
           {homeIntro}
         </p>
-        <Link
-          href="/delta-gun"
-          className="mt-8 inline-flex h-11 w-fit items-center self-start rounded-full bg-lab-primary px-5 text-sm font-medium text-[#04131c]"
-        >
-          进入实验室
-        </Link>
       </header>
 
       <section aria-label="栏目" className="pb-24">
