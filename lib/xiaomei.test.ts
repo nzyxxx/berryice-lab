@@ -111,12 +111,13 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     assert.ok(hanCount(line) > 0, line);
     assert.ok(hanCount(line) <= 24, `${line} (${hanCount(line)})`);
     assert.doesNotMatch(line, stiff, line);
+    assert.doesNotMatch(line, /蓝莓/, line);
   }
   assert.equal(hanCount(XIAOMEI_CATCHPHRASE), 11);
   for (const sample of [
     "哼，干嘛戳人家。",
-    "蓝莓才不是叫你随便点的按钮。",
-    "…今天的蓝莓味道还行。",
+    "这才不是叫你随便点的按钮。",
+    "…今天的点心味道还行。",
     "…谢、谢谢。不好吃我也没说能退。",
     "…肚子在抗议，不是人家在抗议。",
     "…我在听。",
@@ -299,7 +300,8 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   assert.match(neutral, /【状态】/);
   assert.match(neutral, /经典傲娇/);
   assert.match(neutral, /（还没有特别记住的事）/);
-  assert.match(neutral, /哼……蓝莓才不会随便甜给你/);
+  assert.match(neutral, /哼……人家才不会随便甜给你/);
+  assert.match(neutral, /不要自称或反复提「蓝莓」/);
   assert.match(neutral, /鲸鱼娘/);
   assert.match(neutral, /大肥鱼/);
   assert.doesNotMatch(neutral, /猫耳|狐耳/);

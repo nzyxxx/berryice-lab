@@ -17,7 +17,7 @@ export const XIAOMEI_NAME_CHARS = 8;
 export const XIAOMEI_TONE_GUARDED_BELOW = 20;
 export const XIAOMEI_TONE_WARM_AT = 50;
 export const XIAOMEI_TONE_CLOSE_AT = 80;
-/** 饱腹低于这个就算饿，想吃蓝莓点心。不盖过好感档。 */
+/** 饱腹低于这个就算饿，想吃点心。不盖过好感档。 */
 export const XIAOMEI_TONE_HUNGRY = 25;
 
 export const XIAOMEI_MEMORY_KINDS = ["preference", "event", "emotion", "nickname"] as const;
@@ -63,7 +63,7 @@ export function isXiaomeiHungry(fullness: number): boolean {
 }
 
 export function moodFromMeters(affection: number, fullness: number): string {
-  if (isXiaomeiHungry(fullness)) return "有点蔫，想吃蓝莓点心";
+  if (isXiaomeiHungry(fullness)) return "有点蔫，想吃点心";
   const tone = toneFromAffection(affection);
   if (tone === "close") return "嘴硬，但会小声关心";
   if (tone === "warm") return "别扭，想多问一句";

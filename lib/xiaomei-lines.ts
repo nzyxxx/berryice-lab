@@ -27,7 +27,7 @@ export type XiaomeiSpokenLine = {
 };
 
 /** 签过的格言。偶尔出现，不要每句都念。 */
-export const XIAOMEI_CATCHPHRASE = "哼……蓝莓才不会随便甜给你。";
+export const XIAOMEI_CATCHPHRASE = "哼……人家才不会随便甜给你。";
 
 /** 换图时把 v 加一，浏览器缓存才会失效。 */
 const XIAOMEI_SPRITE_VERSION = 3;
@@ -73,7 +73,7 @@ export const XIAOMEI_CLICK_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "annoyed", tone: "guarded", text: "…有事快说。" },
   { mood: "blank", tone: "guarded", text: "才、才没有在发呆。" },
   { mood: "annoyed", text: "围裙皱了啦，你赔。" },
-  { mood: "content", text: "蓝莓才不是叫你随便点的按钮。" },
+  { mood: "content", text: "这才不是叫你随便点的按钮。" },
   { mood: "happy", tone: "warm", text: "哼。才没有担心你。" },
   { mood: "content", tone: "warm", text: "要是累了…人家可以听一下。" },
   { mood: "happy", tone: "close", text: "…你还好吗。才不是特意问。" },
@@ -125,7 +125,7 @@ export const XIAOMEI_CLICK_LINES: readonly XiaomeiSpokenLine[] = [
 
 /** 菜单「让小莓妹说点什么」。她自己起头，不是被戳一下的反应。 */
 export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
-  { mood: "content", text: "…今天的蓝莓味道还行。" },
+  { mood: "content", text: "…今天的点心味道还行。" },
   { mood: "sad", tone: "guarded", text: "角落有点冷，才没有想被抱走。" },
   { mood: "annoyed", text: "哼，工作去啦，别盯着人家看。" },
   { mood: "blank", tone: "warm", text: "要是有点心就好了……我什么都没说。" },
@@ -163,7 +163,7 @@ export const XIAOMEI_RECALL_LINES: Record<XiaomeiTone, readonly string[]> = {
 /** 饱腹低时混进单击。 */
 export const XIAOMEI_HUNGRY_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "sad", text: "…肚子在抗议，不是人家在抗议。" },
-  { mood: "annoyed", text: "喂，蓝莓点心呢？" },
+  { mood: "annoyed", text: "喂，点心呢？" },
   { mood: "blank", text: "有点蔫。才不是因为饿。" },
 ];
 
