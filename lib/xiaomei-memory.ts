@@ -71,9 +71,12 @@ export function moodFromMeters(affection: number, fullness: number): string {
   return "防备，话很短";
 }
 
-export function sceneFromUser(text: string): "low" | "detail" | "chat" {
+export type XiaomeiScene = "low" | "detail" | "nav" | "chat";
+
+export function sceneFromUser(text: string): XiaomeiScene {
   if (/详细|展开讲|具体讲/.test(text)) return "detail";
   if (/难过|伤心|想哭|好累|难受|崩溃|不开心|心好累/.test(text)) return "low";
+  if (/怎么逛|怎么走|怎么进|入口在|页面在哪|知识库|枪码|改枪|三角洲|写作在|投喂/.test(text)) return "nav";
   return "chat";
 }
 

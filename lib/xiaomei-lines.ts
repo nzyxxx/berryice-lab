@@ -54,15 +54,19 @@ export const XIAOMEI_LINES: Record<XiaomeiMood, readonly string[]> = {
   sad: ["也不是很难过啦。你在就好。", "哼，我没事。你别走远。", "你别安慰。我自己缓一缓呀。"],
 };
 
-/** 指针靠近时说。比单击尖一点，但不是赶人。 */
-export const XIAOMEI_HOVER_LINES = [
-  "看什么看……我又没躲。",
-  "有事就说嘛，别只看着。",
-  "哼，靠近一点也没关系。",
-  "我又不会跑。你过来呀。",
-  "干嘛靠这么近。我、我没躲。",
-  "眼睛往哪看呢。哼。",
-] as const;
+/** 指针靠近时说。比单击尖一点，但不是赶人。脸跟这句话走。 */
+export const XIAOMEI_HOVER_LINES: readonly XiaomeiSpokenLine[] = [
+  { mood: "annoyed", text: "看什么看……我又没躲。" },
+  { mood: "content", text: "有事就说嘛，别只看着。" },
+  { mood: "content", text: "哼，靠近一点也没关系。" },
+  { mood: "happy", text: "我又不会跑。你过来呀。" },
+  { mood: "annoyed", text: "干嘛靠这么近。我、我没躲。" },
+  { mood: "annoyed", text: "眼睛往哪看呢。哼。" },
+  { mood: "content", text: "靠这么近，我耳朵会热。" },
+  { mood: "happy", text: "看够了没呀。我还在。" },
+  { mood: "annoyed", text: "哼，你的眼睛好直白。" },
+  { mood: "content", text: "过来就过来嘛。我没躲。" },
+];
 
 /**
  * 单击回复。随机抽，不按情绪排队。
@@ -121,6 +125,22 @@ export const XIAOMEI_CLICK_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "content", text: "围裙歪了一点。别盯着看嘛。" },
   { mood: "content", text: "才不是心软。就这一下哦。" },
   { mood: "annoyed", text: "要走跟我说一声嘛。哼。" },
+  { mood: "content", text: "戳一下就行啦。我又不会碎。" },
+  { mood: "happy", text: "哼，手凉凉的。你在外面吧。" },
+  { mood: "content", text: "我在听呀。你倒是出声。" },
+  { mood: "annoyed", text: "才不是想被你摸头。哼。" },
+  { mood: "content", text: "你今天来得有点晚。才没有数。" },
+  { mood: "blank", text: "雨声盖过脚步啦。我还在。" },
+  { mood: "content", text: "想说什么就说嘛。我没堵着。" },
+  { mood: "happy", text: "围裙口袋里没藏东西。真的。" },
+  { mood: "content", text: "你笑的话，我可以不鼓脸。" },
+  { mood: "happy", text: "嗯……这次算你找到我了。" },
+  { mood: "sad", text: "我把今天的话留了一点。哼。" },
+  { mood: "annoyed", text: "别戳发卡。会歪的。" },
+  { mood: "content", tone: "warm", text: "你今天还好吗。才不是关心。" },
+  { mood: "happy", tone: "warm", text: "哼。看见你，我把点心分一半。" },
+  { mood: "annoyed", tone: "guarded", text: "有事就说。别绕。" },
+  { mood: "happy", tone: "close", text: "你来了我就把脸松开一点。" },
 ];
 
 /** 菜单「让小莓妹说点什么」。她自己起头，不是被戳一下的反应。 */
@@ -150,6 +170,13 @@ export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "blank", text: "下一句我想想。才不是词穷。" },
   { mood: "content", text: "呆毛又翘了。不许碰哦。" },
   { mood: "happy", text: "我刚刚偷偷看了你一眼。哼。" },
+  { mood: "happy", text: "点心的甜还在嘴边。别问。" },
+  { mood: "content", text: "我刚刚把发卡扶正了。哼。" },
+  { mood: "blank", text: "角落的风停了一下哦。" },
+  { mood: "content", text: "才不是在排练要说的话。" },
+  { mood: "happy", text: "你要是忙，我就自己哼。" },
+  { mood: "content", text: "今天的雨比较轻。我喜欢。" },
+  { mood: "content", text: "你不在的时候，雨声比较响。" },
 ];
 
 /** 回来时如果记得上次聊过，用这句，不念具体内容。 */
@@ -165,6 +192,8 @@ export const XIAOMEI_HUNGRY_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "sad", text: "…肚子在抗议，不是人家在抗议。" },
   { mood: "annoyed", text: "喂，点心呢？" },
   { mood: "blank", text: "有点蔫。才不是因为饿。" },
+  { mood: "sad", text: "点心……你当我没说。" },
+  { mood: "annoyed", text: "肚子咕了一声。不许笑。" },
 ];
 
 /** 用户低落时的本地短句。聊天窗另有场景指令。 */
@@ -184,6 +213,8 @@ export const XIAOMEI_FEED_LINES = [
   "喂到啦。我记着的哦。",
   "嘴巴甜甜的。才没有开心呢。",
   "谢谢。才、才不是真心想说。",
+  "一口就饱了一点点。哼。",
+  "甜的。我才没有眯眼。",
 ] as const;
 
 export const XIAOMEI_FEED_SOFT_LINES = [
@@ -205,6 +236,17 @@ export const XIAOMEI_FEED_FULL_LINES = [
 ] as const;
 
 export const XIAOMEI_ABOUT = `我是${XIAOMEI_NAME}。嘴上不饶人，点心还是会分你。`;
+
+/** 第一次还没打开过菜单时，贴在身边。点一下仍然只听短句。 */
+export const XIAOMEI_HOLD_HINT = "长按跟我说话";
+
+/** 聊天窗还没开口时。短，不客服。 */
+export const XIAOMEI_CHAT_EMPTY = "想问路，或者随便说一句。我听着。";
+
+export const XIAOMEI_CHAT_STARTERS = [
+  { label: "这站怎么逛", text: "这站怎么逛呀" },
+  { label: "你还记得我吗", text: "你还记得我吗" },
+] as const;
 
 export const XIAOMEI_SPAM_LINES = [
   "再戳我就不理你了…才、才不是真的生气",

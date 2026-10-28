@@ -650,9 +650,26 @@ html.home-motion [data-reveal].is-shown {
   animation: xiaomei-glance 1.6s ease-in-out 1;
 }
 
+.xiaomei-caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  margin-left: 2px;
+  background: currentColor;
+  vertical-align: -0.12em;
+  animation: xiaomei-caret 1s steps(1) infinite;
+}
+
+@keyframes xiaomei-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .xiaomei-float,
-  .xiaomei-glance {
+  .xiaomei-glance,
+  .xiaomei-caret {
     animation: none !important;
   }
 }

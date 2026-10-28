@@ -8,6 +8,7 @@ import { useXiaomeiPlace } from "@/components/xiaomei/use-xiaomei-place";
 import {
   XIAOMEI_ABOUT,
   XIAOMEI_CATCHPHRASE,
+  XIAOMEI_HOLD_HINT,
   XIAOMEI_CLICK_LINES,
   XIAOMEI_FEED_FULL_LINES,
   XIAOMEI_FEED_LINES,
@@ -29,8 +30,8 @@ import {
   type XiaomeiSayDetail,
 } from "@/lib/xiaomei-lines";
 import { isXiaomeiHungry, readXiaomeiMemory, toneFromAffection } from "@/lib/xiaomei-memory";
-import { XIAOMEI_METERS_KEY, readFeedClock } from "@/lib/xiaomei-meters";
-import { peekTransform } from "@/lib/xiaomei-place";
+import { XIAOMEI_METERS_KEY, formatMeterDelta, readFeedClock } from "@/lib/xiaomei-meters";
+import { dockXiaomeiChat, peekTransform } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -39,11 +40,14 @@ type Speech = {
   text: string;
   mood: XiaomeiMood;
   source: "greet" | "hover" | "click" | "event" | "about" | "spam" | "mutter" | "feed";
+  delta: string | null;
 };
 type Gesture = "glance" | "smile";
 
 const MUTE_KEY = "berryice.xiaomei.muted";
 const MUTE_EVENT = "xiaomei-mute";
+const HINT_KEY = "berryice.xiaomei.chatHint";
+const HINT_EVENT = "xiaomei-hint";
 const SPAM_WINDOW_MS = 2400;
 
 function subscribeMute(onChange: () => void) {
@@ -76,10 +80,71 @@ function writeMuted(next: boolean) {
   window.dispatchEvent(new Event(MUTE_EVENT));
 }
 
+let hintCache: { raw: string | null; value: boolean } = { raw: null, value: false };
+
+function subscribeHint(onChange: () => void) {
+  window.addEventListener(HINT_EVENT, onChange);
+  return () => window.removeEventListener(HINT_EVENT, onChange);
+}
+
+function readHintSeen(): boolean {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(HINT_KEY);
+  } catch {
+    raw = null;
+  }
+  if (hintCache.raw === raw) return hintCache.value;
+  hintCache = { raw, value: raw === "1" };
+  return hintCache.value;
+}
+
+function markHintSeen() {
+  if (readHintSeen()) return;
+  const raw = "1";
+  try {
+    localStorage.setItem(HINT_KEY, raw);
+  } catch {
+    /* 记不住就下次再提示一次。 */
+  }
+  hintCache = { raw, value: true };
+  window.dispatchEvent(new Event(HINT_EVENT));
+}
+
+function useKeyboardFrame(active: boolean) {
+  const [frame, setFrame] = useState({ inset: 0, height: 0, offsetTop: 0 });
+  useEffect(() => {
+    if (!active) return;
+    const read = () => {
+      const viewport = window.visualViewport;
+      const height = viewport?.height ?? window.innerHeight;
+      const offsetTop = viewport?.offsetTop ?? 0;
+      const inset = Math.max(0, Math.round(window.innerHeight - height - offsetTop));
+      setFrame((prev) =>
+        prev.inset === inset && prev.height === height && prev.offsetTop === offsetTop
+          ? prev
+          : { inset, height, offsetTop },
+      );
+    };
+    read();
+    const viewport = window.visualViewport;
+    viewport?.addEventListener("resize", read);
+    viewport?.addEventListener("scroll", read);
+    window.addEventListener("resize", read);
+    return () => {
+      viewport?.removeEventListener("resize", read);
+      viewport?.removeEventListener("scroll", read);
+      window.removeEventListener("resize", read);
+      setFrame({ inset: 0, height: 0, offsetTop: 0 });
+    };
+  }, [active]);
+  return frame;
+}
+
 /**
  * 全站右下角的小莓妹。拖拽用指针事件，待机和左右看只用 CSS，不留 rAF。
  * z-40：低于弹层（门户 z-50）、回到顶部（z-60）和移动抽屉（z-70）。
- * 点击从本地池里随机回一句；和模型说话从菜单「对话」进。
+ * 点击从本地池里随机回一句；和模型说话从菜单「跟她说话」进。
  */
 export function XiaomeiCompanion() {
   const meters = useXiaomeiMeters();
@@ -87,6 +152,7 @@ export function XiaomeiCompanion() {
   metersRef.current = meters.meters;
   const warmRef = useRef(meters.warm);
   warmRef.current = meters.warm;
+  const hintSeen = useSyncExternalStore(subscribeHint, readHintSeen, () => true);
   const chat = useXiaomeiChat({
     getMeters: () => {
       let raw: string | null = null;
@@ -106,6 +172,7 @@ export function XiaomeiCompanion() {
     },
   });
   const [chatOpen, setChatOpen] = useState(false);
+  const keyboardFrame = useKeyboardFrame(chatOpen);
   const [menuOpen, setMenuOpen] = useState(false);
   const muted = useSyncExternalStore(subscribeMute, readMuted, () => false);
   const [speech, setSpeech] = useState<Speech | null>(null);
@@ -115,6 +182,7 @@ export function XiaomeiCompanion() {
 
   const chatOpenRef = useRef(false);
   const menuOpenRef = useRef(false);
+  const spriteRef = useRef<HTMLButtonElement>(null);
   const mutedRef = useRef(false);
   const speechRef = useRef<Speech | null>(null);
   const taps = useRef<number[]>([]);
@@ -127,17 +195,26 @@ export function XiaomeiCompanion() {
     speechRef.current = speech;
   });
 
-  const speak = useCallback((mood: XiaomeiMood, text: string, source: Speech["source"]) => {
-    pinSource.current = source;
-    setMoodPin(mood);
-    if (mutedRef.current) {
-      setSpeech(null);
-      return;
-    }
-    setSpeech({ text, mood, source });
-  }, []);
+  const speak = useCallback(
+    (mood: XiaomeiMood, text: string, source: Speech["source"], delta?: { fullness: number; affection: number }) => {
+      pinSource.current = source;
+      setMoodPin(mood);
+      if (mutedRef.current) {
+        setSpeech(null);
+        return;
+      }
+      setSpeech({
+        text,
+        mood,
+        source,
+        delta: delta ? formatMeterDelta(delta.fullness, delta.affection) : null,
+      });
+    },
+    [],
+  );
 
   const onTap = useCallback(() => {
+    if (chatOpenRef.current || menuOpenRef.current) return;
     const now = Date.now();
     taps.current = taps.current.filter((stamp) => now - stamp < SPAM_WINDOW_MS);
     taps.current.push(now);
@@ -154,6 +231,7 @@ export function XiaomeiCompanion() {
   }, [speak]);
 
   const openMenu = useCallback(() => {
+    markHintSeen();
     setMenuOpen(true);
   }, []);
 
@@ -173,11 +251,11 @@ export function XiaomeiCompanion() {
       if (remembered.topics.length > 0) {
         const mood: XiaomeiMood = tone === "guarded" ? "annoyed" : tone === "classic" ? "content" : "happy";
         const text = pickXiaomeiLine(XIAOMEI_RECALL_LINES[tone]);
-        setSpeech((current) => current ?? { text, mood, source: "greet" });
+        setSpeech((current) => current ?? { text, mood, source: "greet", delta: null });
         setMoodPin((current) => current ?? mood);
         return;
       }
-      setSpeech((current) => current ?? { text: XIAOMEI_CATCHPHRASE, mood: "content", source: "greet" });
+      setSpeech((current) => current ?? { text: XIAOMEI_CATCHPHRASE, mood: "content", source: "greet", delta: null });
       setMoodPin((current) => current ?? "content");
     }, 900);
     return () => window.clearTimeout(id);
@@ -240,9 +318,27 @@ export function XiaomeiCompanion() {
     setChatOpen(false);
     chat.stop();
     chat.resetFace();
+    spriteRef.current?.focus({ preventScroll: true });
   }, [chat]);
 
+  useEffect(() => {
+    if (!menuOpen && !chatOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      if (chatOpenRef.current) {
+        closeChat();
+        return;
+      }
+      setMenuOpen(false);
+      spriteRef.current?.focus({ preventScroll: true });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [chatOpen, closeChat, menuOpen]);
+
   const openChat = useCallback(() => {
+    markHintSeen();
     setMenuOpen(false);
     setSpeech(null);
     place.clearPeek();
@@ -289,16 +385,26 @@ export function XiaomeiCompanion() {
   const roomAbove = place.pos.y - 64;
   const roomBelow =
     (typeof window === "undefined" ? 800 : window.innerHeight) - place.pos.y - place.box.height - 96;
-  const maxHeight = Math.max(160, Math.min(260, placement === "up" ? roomAbove : roomBelow));
+  const dock = dockXiaomeiChat({
+    y: place.pos.y,
+    boxHeight: place.box.height,
+    placement,
+    roomAbove,
+    roomBelow,
+    keyboardInset: chatOpen ? keyboardFrame.inset : 0,
+    visibleTop: keyboardFrame.offsetTop,
+    visibleHeight: keyboardFrame.height,
+  });
+  const showHint = !hintSeen && !chatOpen && !menuOpen && !muted && !showSpeech;
 
   return (
     <div
       className="fixed z-40"
       style={{
         left: place.pos.x,
-        top: place.pos.y,
         width: place.box.width,
         height: place.box.height,
+        ...(dock.lift ? { top: "auto", bottom: keyboardFrame.inset + 8 } : { top: place.pos.y }),
         transform: chatOpen || menuOpen ? "translate3d(0, 0, 0)" : peekTransform(place.peek),
         transition: place.dragging ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
       }}
@@ -306,7 +412,8 @@ export function XiaomeiCompanion() {
         setHover(true);
         place.onEnter();
         if (!chatOpenRef.current && !menuOpenRef.current && !speechRef.current) {
-          speak("annoyed", pickXiaomeiLine(XIAOMEI_HOVER_LINES), "hover");
+          const line = pickTaggedLine(XIAOMEI_HOVER_LINES, speechRef.current?.text);
+          speak(line.mood, line.text, "hover");
         }
       }}
       onPointerLeave={() => {
@@ -332,6 +439,7 @@ export function XiaomeiCompanion() {
             speak(line.mood, line.text, "mutter");
           }}
           onFeed={() => {
+            const before = metersRef.current;
             const result = meters.feed();
             if (!result) return;
             setMenuOpen(false);
@@ -343,7 +451,10 @@ export function XiaomeiCompanion() {
                   ? XIAOMEI_FEED_SOFT_LINES
                   : XIAOMEI_FEED_LINES;
             const mood = result.tooMuch || result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
-            speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed");
+            speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed", {
+              fullness: result.meters.fullness - before.fullness,
+              affection: result.meters.affection - before.affection,
+            });
           }}
           onMute={toggleMute}
           onCorner={() => {
@@ -368,9 +479,10 @@ export function XiaomeiCompanion() {
           messages={chat.messages}
           pending={chat.pending}
           align={align}
-          placement={placement}
-          maxHeight={maxHeight}
+          placement={dock.placement}
+          maxHeight={dock.maxHeight}
           onSend={chat.send}
+          onRetry={chat.retry}
           onClose={closeChat}
         />
       ) : null}
@@ -386,6 +498,9 @@ export function XiaomeiCompanion() {
           )}
         >
           {speech.text}
+          {speech.delta ? (
+            <span className="mt-1 block text-[11px] tabular-nums text-lab-ink-subtle">{speech.delta}</span>
+          ) : null}
           <span
             aria-hidden
             className={cn(
@@ -397,9 +512,22 @@ export function XiaomeiCompanion() {
         </div>
       ) : null}
 
+      {showHint ? (
+        <p
+          className={cn(
+            "pointer-events-none absolute z-10 w-max rounded-full border border-white/15 bg-lab-canvas/80 px-3 py-1.5 text-xs text-lab-ink backdrop-blur-md",
+            align === "right" ? "right-0" : "left-0",
+            placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
+          )}
+        >
+          {XIAOMEI_HOLD_HINT}
+        </p>
+      ) : null}
+
       <button
+        ref={spriteRef}
         type="button"
-        aria-label={XIAOMEI_NAME}
+        aria-label={`${XIAOMEI_NAME}。点一下听她说，长按打开菜单`}
         aria-expanded={chatOpen || menuOpen}
         aria-haspopup="menu"
         aria-controls={chatOpen ? "xiaomei-chat" : undefined}
@@ -407,7 +535,7 @@ export function XiaomeiCompanion() {
         {...place.spriteHandlers}
         onContextMenu={(event) => {
           event.preventDefault();
-          setMenuOpen(true);
+          openMenu();
         }}
       >
         <Image

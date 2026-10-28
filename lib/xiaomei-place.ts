@@ -114,6 +114,50 @@ export function nearestPeek(
   return best;
 }
 
+function pickDockSide(prefer: "up" | "down", roomAbove: number, roomBelow: number): "up" | "down" {
+  if (prefer === "up" && roomAbove >= 140) return "up";
+  if (prefer === "down" && roomBelow >= 140) return "down";
+  return roomAbove >= roomBelow ? "up" : "down";
+}
+
+/**
+ * 键盘收起时，气泡高度跟立绘走。
+ * 键盘盖住立绘时把她抬到可视区底边上方，避免输入框被盖住。
+ * 小于 120 的落差多半是浏览器顶栏，不当成键盘。
+ */
+export function dockXiaomeiChat(input: {
+  y: number;
+  boxHeight: number;
+  placement: "up" | "down";
+  roomAbove: number;
+  roomBelow: number;
+  keyboardInset: number;
+  visibleTop: number;
+  visibleHeight: number;
+}): { lift: boolean; placement: "up" | "down"; maxHeight: number } {
+  const keyboard = input.keyboardInset > 120 && input.visibleHeight > 0;
+  if (!keyboard) {
+    const room = input.placement === "up" ? input.roomAbove : input.roomBelow;
+    return {
+      lift: false,
+      placement: input.placement,
+      maxHeight: Math.max(160, Math.min(260, room)),
+    };
+  }
+  const visibleBottom = input.visibleTop + input.visibleHeight;
+  const lift = input.y + input.boxHeight > visibleBottom - 8;
+  const top = lift ? Math.max(XIAOMEI_HEADER_INSET, visibleBottom - input.boxHeight - 8) : input.y;
+  const roomAbove = Math.max(0, top - input.visibleTop - 12);
+  const roomBelow = Math.max(0, visibleBottom - top - input.boxHeight - 12);
+  const placement = pickDockSide(input.placement, roomAbove, roomBelow);
+  const room = placement === "up" ? roomAbove : roomBelow;
+  return {
+    lift,
+    placement,
+    maxHeight: Math.max(140, Math.min(240, room)),
+  };
+}
+
 export function peekTransform(peek: XiaomeiPeek | null): string {
   switch (peek) {
     case "left":
