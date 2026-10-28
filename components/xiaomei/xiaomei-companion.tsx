@@ -3,16 +3,23 @@
 import { XiaomeiChatSheet } from "@/components/xiaomei/xiaomei-chat-sheet";
 import { XiaomeiMenu } from "@/components/xiaomei/xiaomei-menu";
 import { useXiaomeiChat } from "@/components/xiaomei/use-xiaomei-chat";
+import { useXiaomeiMeters } from "@/components/xiaomei/use-xiaomei-meters";
 import { useXiaomeiPlace } from "@/components/xiaomei/use-xiaomei-place";
 import {
   XIAOMEI_ABOUT,
   XIAOMEI_CATCHPHRASE,
+  XIAOMEI_CLICK_LINES,
+  XIAOMEI_FEED_FULL_LINES,
+  XIAOMEI_FEED_LINES,
+  XIAOMEI_FEED_SOFT_LINES,
   XIAOMEI_HOVER_LINES,
   XIAOMEI_LINES,
+  XIAOMEI_MUTTER_LINES,
   XIAOMEI_SAY_EVENT,
   XIAOMEI_SPAM_LINES,
   XIAOMEI_SPRITE,
   isXiaomeiMood,
+  pickTaggedLine,
   pickXiaomeiLine,
   type XiaomeiMood,
   type XiaomeiSayDetail,
@@ -23,13 +30,16 @@ import { X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-type Speech = { text: string; mood: XiaomeiMood; source: "greet" | "hover" | "click" | "event" | "about" | "spam" };
+type Speech = {
+  text: string;
+  mood: XiaomeiMood;
+  source: "greet" | "hover" | "click" | "event" | "about" | "spam" | "mutter" | "feed";
+};
 type Gesture = "glance" | "smile";
 
 const MUTE_KEY = "berryice.xiaomei.muted";
 const MUTE_EVENT = "xiaomei-mute";
 const SPAM_WINDOW_MS = 2400;
-const CLICK_MOODS: XiaomeiMood[] = ["annoyed", "content", "happy"];
 
 function subscribeMute(onChange: () => void) {
   window.addEventListener(MUTE_EVENT, onChange);
@@ -64,10 +74,11 @@ function writeMuted(next: boolean) {
 /**
  * 全站右下角的小莓。拖拽用指针事件，待机和左右看只用 CSS，不留 rAF。
  * z-40：低于弹层（门户 z-50）、回到顶部（z-60）和移动抽屉（z-70）。
- * 点击只回一句本地台词；和模型说话从菜单「对话」进。
+ * 点击从本地池里随机回一句；和模型说话从菜单「对话」进。
  */
 export function XiaomeiCompanion() {
   const chat = useXiaomeiChat();
+  const meters = useXiaomeiMeters();
   const [chatOpen, setChatOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const muted = useSyncExternalStore(subscribeMute, readMuted, () => false);
@@ -81,7 +92,6 @@ export function XiaomeiCompanion() {
   const mutedRef = useRef(false);
   const speechRef = useRef<Speech | null>(null);
   const taps = useRef<number[]>([]);
-  const clickCursor = useRef(0);
   const pinSource = useRef<Speech["source"] | null>(null);
 
   useEffect(() => {
@@ -109,10 +119,8 @@ export function XiaomeiCompanion() {
       speak("annoyed", pickXiaomeiLine(XIAOMEI_SPAM_LINES, speechRef.current?.text), "spam");
       return;
     }
-    const mood = CLICK_MOODS[clickCursor.current % CLICK_MOODS.length] ?? "annoyed";
-    clickCursor.current += 1;
-    const pool = mood === "annoyed" ? XIAOMEI_HOVER_LINES : XIAOMEI_LINES[mood];
-    speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "click");
+    const line = pickTaggedLine(XIAOMEI_CLICK_LINES, speechRef.current?.text);
+    speak(line.mood, line.text, "click");
   }, [speak]);
 
   const openMenu = useCallback(() => {
@@ -280,7 +288,27 @@ export function XiaomeiCompanion() {
           muted={muted}
           align={align}
           placement={placement}
+          fullness={meters.meters.fullness}
+          affection={meters.meters.affection}
           onTalk={openChat}
+          onMutter={() => {
+            setMenuOpen(false);
+            const line = pickTaggedLine(XIAOMEI_MUTTER_LINES, speechRef.current?.text);
+            speak(line.mood, line.text, "mutter");
+          }}
+          onFeed={() => {
+            const result = meters.feed();
+            if (!result) return;
+            setMenuOpen(false);
+            const pool =
+              result.kind === "full"
+                ? XIAOMEI_FEED_FULL_LINES
+                : result.kind === "soft"
+                  ? XIAOMEI_FEED_SOFT_LINES
+                  : XIAOMEI_FEED_LINES;
+            const mood = result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
+            speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed");
+          }}
           onMute={toggleMute}
           onCorner={() => {
             place.resetCorner();

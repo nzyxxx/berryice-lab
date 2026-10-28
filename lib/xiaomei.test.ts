@@ -22,12 +22,24 @@ import {
   XIAOMEI_RATE_LIMIT,
 } from "./xiaomei-chat.ts";
 import {
+  feedXiaomei,
+  metersFromStored,
+  XIAOMEI_METER_DEFAULT,
+  XIAOMEI_METER_MAX,
+} from "./xiaomei-meters.ts";
+import {
   XIAOMEI_ABOUT,
   XIAOMEI_CATCHPHRASE,
+  XIAOMEI_CLICK_LINES,
+  XIAOMEI_FEED_FULL_LINES,
+  XIAOMEI_FEED_LINES,
+  XIAOMEI_FEED_SOFT_LINES,
   XIAOMEI_HOVER_LINES,
   XIAOMEI_LINES,
+  XIAOMEI_MUTTER_LINES,
   XIAOMEI_SPAM_LINES,
   hanCount,
+  pickTaggedLine,
   pickXiaomeiLine,
 } from "./xiaomei-lines.ts";
 import {
@@ -45,6 +57,11 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     ...Object.values(XIAOMEI_LINES).flat(),
     ...XIAOMEI_HOVER_LINES,
     ...XIAOMEI_SPAM_LINES,
+    ...XIAOMEI_CLICK_LINES.map((line) => line.text),
+    ...XIAOMEI_MUTTER_LINES.map((line) => line.text),
+    ...XIAOMEI_FEED_LINES,
+    ...XIAOMEI_FEED_SOFT_LINES,
+    ...XIAOMEI_FEED_FULL_LINES,
     XIAOMEI_ABOUT,
   ];
   for (const line of pools) {
@@ -56,6 +73,80 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
   assert.equal(again, "只有一句");
   const avoided = pickXiaomeiLine(["甲", "乙"], "甲");
   assert.equal(avoided, "乙");
+});
+
+test("单击台词随机换句，不按情绪轮转", () => {
+  assert.ok(XIAOMEI_CLICK_LINES.length >= 24);
+  const texts = XIAOMEI_CLICK_LINES.map((line) => line.text);
+  assert.equal(new Set(texts).size, texts.length);
+  const moods = new Set(XIAOMEI_CLICK_LINES.map((line) => line.mood));
+  assert.ok(moods.size >= 4);
+  const cold = /请问|有什么可以帮|主人|鲸鱼|大肥鱼|猫耳|狐耳|好的呢|为您/;
+  for (const line of [...texts, ...XIAOMEI_MUTTER_LINES.map((item) => item.text)]) {
+    assert.doesNotMatch(line, cold, line);
+  }
+  const sample = "哼，戳我干嘛。我在的。";
+  for (let i = 0; i < 12; i += 1) {
+    const next = pickTaggedLine(XIAOMEI_CLICK_LINES, sample);
+    assert.notEqual(next.text, sample);
+    assert.equal(
+      XIAOMEI_CLICK_LINES.find((line) => line.text === next.text)?.mood,
+      next.mood,
+    );
+  }
+});
+
+test("喂食只在本地把饱腹和好感往上抬一点，到顶就停", () => {
+  const bite = feedXiaomei({ fullness: 46, affection: 22 });
+  assert.equal(bite.kind, "bite");
+  assert.deepEqual(bite.meters, { fullness: 53, affection: 26 });
+  const capped = feedXiaomei({ fullness: 98, affection: 99 });
+  assert.equal(capped.kind, "bite");
+  assert.deepEqual(capped.meters, { fullness: XIAOMEI_METER_MAX, affection: XIAOMEI_METER_MAX });
+  const soft = feedXiaomei({ fullness: 100, affection: 40 });
+  assert.equal(soft.kind, "soft");
+  assert.deepEqual(soft.meters, { fullness: 100, affection: 43 });
+  const full = feedXiaomei({ fullness: 100, affection: 100 });
+  assert.equal(full.kind, "full");
+  assert.deepEqual(full.meters, { fullness: 100, affection: 100 });
+  assert.deepEqual(metersFromStored(null), { ...XIAOMEI_METER_DEFAULT });
+  assert.deepEqual(metersFromStored("nope"), { ...XIAOMEI_METER_DEFAULT });
+  assert.deepEqual(metersFromStored(JSON.stringify({ fullness: 10 })), { ...XIAOMEI_METER_DEFAULT });
+  assert.deepEqual(metersFromStored(JSON.stringify({ fullness: 140, affection: -3 })), {
+    fullness: 100,
+    affection: 0,
+  });
+});
+
+test("菜单和投喂不把钥匙或别人的形象带进客户端", async () => {
+  const files = [
+    "../components/xiaomei/xiaomei-companion.tsx",
+    "../components/xiaomei/xiaomei-menu.tsx",
+    "../components/xiaomei/use-xiaomei-meters.ts",
+    "../components/lab/support-button.tsx",
+    "./xiaomei-lines.ts",
+    "./xiaomei-meters.ts",
+  ];
+  for (const file of files) {
+    const source = await readFile(new URL(file, import.meta.url), "utf8");
+    assert.equal(source.includes("DEEPSEEK"), false, file);
+    assert.equal(source.includes("API_KEY"), false, file);
+    assert.doesNotMatch(source, /鲸鱼|大肥鱼|猫耳|狐耳/);
+  }
+  const companion = await readFile(new URL("../components/xiaomei/xiaomei-companion.tsx", import.meta.url), "utf8");
+  assert.match(companion, /pickTaggedLine\(XIAOMEI_CLICK_LINES/);
+  assert.doesNotMatch(companion, /CLICK_MOODS/);
+  assert.match(companion, /\/api\/xiaomei\/chat|useXiaomeiChat/);
+  const menu = await readFile(new URL("../components/xiaomei/xiaomei-menu.tsx", import.meta.url), "utf8");
+  assert.match(menu, /让小莓说点什么/);
+  assert.match(menu, /喂食/);
+  assert.match(menu, /饱腹/);
+  assert.match(menu, /好感/);
+  assert.match(menu, /对话/);
+  const support = await readFile(new URL("../components/lab/support-button.tsx", import.meta.url), "utf8");
+  assert.match(support, /\/support\/wechat\.png/);
+  assert.match(support, /\/support\/alipay\.png/);
+  assert.match(support, /码还在路上/);
 });
 
 test("位置夹在视口里，贴边才探出，默认让开回到顶部", () => {
