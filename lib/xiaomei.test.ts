@@ -189,6 +189,14 @@ test("没配主钥匙时不上游，状态里没有钥匙原文", async () => {
     ),
     true,
   );
+  assert.equal(
+    isXiaomeiSameOrigin(
+      new Request("http://10.0.0.8/api/xiaomei/chat", {
+        headers: { origin: "http://localhost:3000", host: "127.0.0.1:3000" },
+      }),
+    ),
+    true,
+  );
   const dual = createDualRateLimiter(2, XIAOMEI_DAILY_LIMIT);
   assert.equal(dual.allow("ip", 1_000), "ok");
   assert.equal(dual.allow("ip", 1_000), "ok");
@@ -197,4 +205,32 @@ test("没配主钥匙时不上游，状态里没有钥匙原文", async () => {
   assert.equal(day.allow("ip", 1_000), "ok");
   assert.equal(day.allow("ip", 70_000), "ok");
   assert.equal(day.allow("ip", 140_000), "day");
+});
+
+test("反代 Host 带默认端口时仍算本站，别的源不行", () => {
+  // 线上 Next 把 request.url 改成环回，Host 才是反代写的 berryice.cn:443。
+  // 请求地址若写成公网，旧逻辑会靠 request.url 放行，盖住这个 bug。
+  const behindProxy = (origin: string, host: string) =>
+    new Request("http://127.0.0.1:3000/api/xiaomei/chat", { headers: { origin, host } });
+
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn", "berryice.cn:443")), true);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn", "berryice.cn")), true);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn", "BerryIce.CN:443")), true);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn:443", "berryice.cn:443")), true);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("http://berryice.cn", "berryice.cn:80")), true);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://evil.example", "berryice.cn")), false);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://evil.example", "berryice.cn:443")), false);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn", "berryice.cn:80")), false);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn", "berryice.cn:8443")), false);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn:8443", "berryice.cn")), false);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn.evil.example", "berryice.cn:443")), false);
+  assert.equal(isXiaomeiSameOrigin(behindProxy("https://berryice.cn@evil.example", "berryice.cn:443")), false);
+  assert.equal(
+    isXiaomeiSameOrigin(
+      new Request("http://localhost:3000/api/xiaomei/chat", {
+        headers: { origin: "http://127.0.0.1:3000", host: "127.0.0.1:3000" },
+      }),
+    ),
+    true,
+  );
 });
