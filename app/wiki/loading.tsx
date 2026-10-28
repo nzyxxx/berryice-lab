@@ -5,7 +5,7 @@ import { WikiListSkeleton } from "@/components/wiki/wiki-skeleton";
 export default function WikiLoading() {
   return (
     <PageShell>
-      <PageContainer className="max-w-[40rem]">
+      <PageContainer className="max-w-6xl">
         <WikiListSkeleton />
       </PageContainer>
     </PageShell>
