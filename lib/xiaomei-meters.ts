@@ -82,6 +82,15 @@ export function feedXiaomei(current: XiaomeiMeters): XiaomeiFeedResult {
   };
 }
 
+/** 喂食气泡下面的一行数字。没变化就别画，避免「+0」把满了的口误说成又吃了。 */
+export function formatMeterDelta(fullness: number, affection: number): string | null {
+  const parts: string[] = [];
+  if (fullness !== 0) parts.push(`饱腹 ${fullness > 0 ? `+${fullness}` : fullness}`);
+  if (affection !== 0) parts.push(`好感 ${affection > 0 ? `+${affection}` : affection}`);
+  if (parts.length === 0) return null;
+  return parts.join(" · ");
+}
+
 /** 一轮说完的对话，好感加一点。饱腹不动。到顶就停。 */
 export function warmXiaomei(current: XiaomeiMeters): XiaomeiMeters {
   return {

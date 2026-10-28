@@ -54,7 +54,7 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     abortRef.current?.abort();
   }, []);
 
-  const send = useCallback(async (text: string) => {
+  const begin = useCallback(async (text: string) => {
     const content = text.trim();
     if (!content || lock.current) return false;
     pullStored();
@@ -155,5 +155,26 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     }
   }, [pullStored]);
 
-  return { messages, pending, status, replyMood, send, stop, resetFace };
+  const send = useCallback((text: string) => begin(text), [begin]);
+
+  const retry = useCallback(() => {
+    if (lock.current) return Promise.resolve(false);
+    const thread = messagesRef.current;
+    const last = thread[thread.length - 1];
+    if (!last?.failed) return Promise.resolve(false);
+    let userIndex = -1;
+    for (let index = thread.length - 2; index >= 0; index -= 1) {
+      if (thread[index]?.role === "user") {
+        userIndex = index;
+        break;
+      }
+    }
+    const content = userIndex >= 0 ? thread[userIndex]?.content ?? "" : "";
+    if (!content) return Promise.resolve(false);
+    messagesRef.current = thread.slice(0, userIndex);
+    setMessages(messagesRef.current);
+    return begin(content);
+  }, [begin]);
+
+  return { messages, pending, status, replyMood, send, retry, stop, resetFace };
 }

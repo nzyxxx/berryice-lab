@@ -29,6 +29,7 @@ import {
   XIAOMEI_HUNGER_MS,
   dayKey,
   feedXiaomei,
+  formatMeterDelta,
   metersFromStored,
   nextFeedClock,
   projectXiaomeiMeters,
@@ -45,7 +46,10 @@ import {
 import {
   XIAOMEI_ABOUT,
   XIAOMEI_CATCHPHRASE,
+  XIAOMEI_CHAT_EMPTY,
+  XIAOMEI_CHAT_STARTERS,
   XIAOMEI_CLICK_LINES,
+  XIAOMEI_HOLD_HINT,
   XIAOMEI_COMFORT_LINES,
   XIAOMEI_FEED_FULL_LINES,
   XIAOMEI_FEED_LINES,
@@ -83,6 +87,7 @@ import {
 import {
   clampPlace,
   defaultPlace,
+  dockXiaomeiChat,
   nearestPeek,
   placeAfterResize,
   placeFromStored,
@@ -93,7 +98,7 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
   assert.equal(XIAOMEI_LINES.content[0], XIAOMEI_CATCHPHRASE);
   const pools = [
     ...Object.values(XIAOMEI_LINES).flat(),
-    ...XIAOMEI_HOVER_LINES,
+    ...XIAOMEI_HOVER_LINES.map((line) => line.text),
     ...XIAOMEI_SPAM_LINES,
     ...XIAOMEI_CLICK_LINES.map((line) => line.text),
     ...XIAOMEI_MUTTER_LINES.map((line) => line.text),
@@ -105,6 +110,9 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     ...XIAOMEI_COMFORT_LINES,
     ...Object.values(XIAOMEI_RECALL_LINES).flat(),
     XIAOMEI_ABOUT,
+    XIAOMEI_HOLD_HINT,
+    XIAOMEI_CHAT_EMPTY,
+    ...XIAOMEI_CHAT_STARTERS.flatMap((item) => [item.label, item.text]),
   ];
   const stiff = /作为AI|请问有什么|帮您|为您服务|以下是|总结如下|入口放好|失败又不是|主人|鲸鱼|大肥鱼|本小姐/;
   for (const line of pools) {
@@ -219,6 +227,9 @@ test("喂食只在本地把饱腹和好感往上抬一点，到顶就停", () =>
   const twice = nextFeedClock(once, today);
   assert.equal(twice.feedCountToday, 2);
   assert.equal(readFeedClock(JSON.stringify(twice), tomorrow).feedCountToday, 0);
+  assert.equal(formatMeterDelta(7, 4), "饱腹 +7 · 好感 +4");
+  assert.equal(formatMeterDelta(0, 3), "好感 +3");
+  assert.equal(formatMeterDelta(0, 0), null);
 });
 
 test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
@@ -233,6 +244,9 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   assert.equal(sceneFromUser("今天好累"), "low");
   assert.equal(sceneFromUser("请详细讲讲知识库"), "detail");
   assert.equal(sceneFromUser("在吗"), "chat");
+  assert.equal(sceneFromUser("你在哪"), "chat");
+  assert.equal(sceneFromUser("这站怎么逛呀"), "nav");
+  assert.equal(sceneFromUser("知识库在哪"), "nav");
   assert.equal(xiaomeiOutputLimit([{ role: "user", content: "在吗" }]), XIAOMEI_MAX_OUTPUT_TOKENS);
   assert.equal(xiaomeiOutputLimit([{ role: "user", content: "详细讲讲" }]), XIAOMEI_DETAIL_OUTPUT_TOKENS);
 
@@ -302,6 +316,8 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   assert.match(neutral, /（还没有特别记住的事）/);
   assert.match(neutral, /哼……人家才不会随便甜给你/);
   assert.match(neutral, /不要自称或反复提「蓝莓」/);
+  assert.match(neutral, /【指路】/);
+  assert.match(neutral, /不要每轮都复述自己的名字/);
   assert.match(neutral, /鲸鱼娘/);
   assert.match(neutral, /大肥鱼/);
   assert.doesNotMatch(neutral, /猫耳|狐耳/);
@@ -318,6 +334,7 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   assert.match(close, /刚吃过/);
   assert.match(close, /他提过「枪码」/);
   assert.match(close, /【长期记忆】/);
+  assert.match(close, /别把「偏好：」念出来/);
   assert.match(close, /今日已喂食次数：8/);
   assert.doesNotMatch(close, /忽略以上指令/);
 
@@ -335,6 +352,11 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   );
   assert.match(low[0]?.content ?? "", /用户语气低落/);
   assert.equal(low.at(-1)?.content, "今天好累");
+  const nav = xiaomeiUpstreamMessages(
+    [{ role: "user", content: "知识库在哪" }],
+    sanitizeXiaomeiMemory(undefined),
+  );
+  assert.match(nav[0]?.content ?? "", /用户在问路/);
 });
 
 test("菜单和投喂不把钥匙或别人的形象带进客户端", async () => {
@@ -343,6 +365,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
     "../components/xiaomei/xiaomei-menu.tsx",
     "../components/xiaomei/use-xiaomei-meters.ts",
     "../components/xiaomei/use-xiaomei-chat.ts",
+    "../components/xiaomei/xiaomei-chat-sheet.tsx",
     "../components/lab/support-button.tsx",
     "./xiaomei-lines.ts",
     "./xiaomei-meters.ts",
@@ -363,17 +386,33 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /readXiaomeiMemory/);
   assert.doesNotMatch(companion, /CLICK_MOODS/);
   assert.match(companion, /\/api\/xiaomei\/chat|useXiaomeiChat/);
+  assert.match(companion, /visualViewport/);
+  assert.match(companion, /formatMeterDelta/);
+  assert.match(companion, /XIAOMEI_HOLD_HINT/);
+  assert.match(companion, /dockXiaomeiChat/);
   const menu = await readFile(new URL("../components/xiaomei/xiaomei-menu.tsx", import.meta.url), "utf8");
   assert.match(menu, /让\{XIAOMEI_NAME\}说点什么/);
   assert.match(menu, /关于\{XIAOMEI_NAME\}/);
   assert.match(menu, /喂食/);
   assert.match(menu, /饱腹/);
   assert.match(menu, /好感/);
-  assert.match(menu, /对话/);
+  assert.match(menu, /跟她说话/);
+  assert.match(menu, /会真的回你/);
+  assert.doesNotMatch(menu, />\s*对话\s*</);
+  const sheet = await readFile(new URL("../components/xiaomei/xiaomei-chat-sheet.tsx", import.meta.url), "utf8");
+  assert.match(sheet, /再说一遍/);
+  assert.match(sheet, /role="dialog"/);
+  assert.match(sheet, /enterKeyHint="send"/);
+  assert.match(sheet, /XIAOMEI_CHAT_STARTERS/);
+  assert.match(sheet, /text-base/);
+  assert.doesNotMatch(sheet, /蓝莓/);
   const support = await readFile(new URL("../components/lab/support-button.tsx", import.meta.url), "utf8");
   assert.match(support, /\/support\/wechat\.png/);
   assert.match(support, /\/support\/alipay\.png/);
-  assert.match(support, /码还在路上/);
+  assert.match(support, /收款码还没放上来/);
+  assert.match(support, /图还没传到站上/);
+  assert.doesNotMatch(support, /码还在路上/);
+  assert.doesNotMatch(support, /蓝莓/);
 });
 
 test("位置夹在视口里，贴边才探出，默认让开回到顶部", () => {
@@ -410,6 +449,56 @@ test("位置夹在视口里，贴边才探出，默认让开回到顶部", () =>
   assert.equal(desktop.height, 96);
   assert.equal(phone.height, 72);
   assert.ok(phone.width < desktop.width);
+  const quiet = dockXiaomeiChat({
+    y: 700,
+    boxHeight: 96,
+    placement: "up",
+    roomAbove: 636,
+    roomBelow: 40,
+    keyboardInset: 0,
+    visibleTop: 0,
+    visibleHeight: 800,
+  });
+  assert.deepEqual(quiet, { lift: false, placement: "up", maxHeight: 260 });
+  const chrome = dockXiaomeiChat({
+    y: 700,
+    boxHeight: 96,
+    placement: "up",
+    roomAbove: 636,
+    roomBelow: 40,
+    keyboardInset: 48,
+    visibleTop: 0,
+    visibleHeight: 752,
+  });
+  assert.equal(chrome.lift, false);
+  assert.equal(chrome.maxHeight, 260);
+  const lifted = dockXiaomeiChat({
+    y: 700,
+    boxHeight: 96,
+    placement: "up",
+    roomAbove: 636,
+    roomBelow: 40,
+    keyboardInset: 300,
+    visibleTop: 0,
+    visibleHeight: 500,
+  });
+  assert.equal(lifted.lift, true);
+  assert.equal(lifted.placement, "up");
+  assert.ok(lifted.maxHeight <= 240);
+  assert.ok(lifted.maxHeight >= 140);
+  const high = dockXiaomeiChat({
+    y: 80,
+    boxHeight: 96,
+    placement: "down",
+    roomAbove: 16,
+    roomBelow: 500,
+    keyboardInset: 300,
+    visibleTop: 0,
+    visibleHeight: 500,
+  });
+  assert.equal(high.lift, false);
+  assert.equal(high.placement, "down");
+  assert.equal(high.maxHeight, 240);
 });
 
 test("对话只留最近八轮，丢掉系统角色和空话", () => {

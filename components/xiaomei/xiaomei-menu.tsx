@@ -1,8 +1,10 @@
 "use client";
 
+import { trapTab } from "@/components/xiaomei/trap-tab";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef } from "react";
 
 const ITEM =
   "flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm text-lab-ink hover:bg-white/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40";
@@ -50,8 +52,20 @@ export function XiaomeiMenu({
   onAbout: () => void;
   onHide: () => void;
 }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    root.querySelector<HTMLElement>("[role='menuitem']")?.focus({ preventScroll: true });
+    const onKey = (event: KeyboardEvent) => trapTab(event, root);
+    root.addEventListener("keydown", onKey);
+    return () => root.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div
+      ref={rootRef}
       role="menu"
       aria-label={XIAOMEI_NAME}
       className={cn(
@@ -64,7 +78,10 @@ export function XiaomeiMenu({
       onPointerDown={(event) => event.stopPropagation()}
     >
       <button type="button" role="menuitem" className={ITEM} onClick={onTalk}>
-        对话
+        <span className="flex flex-col items-start py-1">
+          <span>跟她说话</span>
+          <span className="text-[11px] leading-4 text-lab-ink-subtle">会真的回你</span>
+        </span>
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onMutter}>
         让{XIAOMEI_NAME}说点什么

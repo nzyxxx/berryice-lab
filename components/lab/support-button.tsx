@@ -50,14 +50,17 @@ function QrSlot({ src, label, active }: { src: string; label: string; active: bo
           </span>
         ) : null}
         {ok === false ? (
-          <p className="px-3 text-center text-sm text-lab-ink dark:text-lab-canvas">码还在路上</p>
+          <p className="px-3 text-center text-sm leading-relaxed text-lab-ink dark:text-lab-canvas">
+            收款码还没放上来
+            <span className="mt-1 block text-xs">图还没传到站上</span>
+          </p>
         ) : null}
       </div>
     </figure>
   );
 }
 
-/** 顶栏的投喂。码图放在 /public/support/，缺文件就写「码还在路上」。 */
+/** 顶栏的投喂。码图放在 /public/support/，缺文件就写明还没传上来，不放假图。 */
 export function SupportButton() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
