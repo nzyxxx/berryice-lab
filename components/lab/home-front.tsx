@@ -1,17 +1,18 @@
 "use client";
 
 import { HalftoneMark } from "@/components/lab/halftone-mark";
+import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { homeIntro, homeModules, type HomeModule } from "@/lib/content/home-modules";
 import { articles } from "@/lib/content/writing";
 import { profileConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 const spanClass: Record<string, string> = {
-  writing: "sm:col-span-7",
-  about: "sm:col-span-5",
+  writing: "sm:col-span-6",
+  about: "sm:col-span-6",
   lab: "sm:col-span-12",
 };
 
@@ -101,97 +102,110 @@ function usePressLift() {
   };
 }
 
+function EntryArrow() {
+  return (
+    <ArrowUpRight
+      className="home-arrow size-4 shrink-0 text-lab-ink-tertiary"
+      strokeWidth={1.5}
+      aria-hidden
+    />
+  );
+}
+
+/** 标题在上，一行说明紧跟。箭头只出现在真正能点的那一侧。 */
+function CardHeading({
+  title,
+  blurb,
+  trailing,
+}: {
+  title: string;
+  blurb: string;
+  trailing?: ReactNode;
+}) {
+  return (
+    <div className="relative z-[1] flex items-start justify-between gap-5">
+      <div className="min-w-0">
+        <h2 className="text-[1.65rem] font-semibold leading-none tracking-[-0.035em] text-lab-ink sm:text-[1.85rem]">
+          {title}
+        </h2>
+        {blurb ? (
+          <p className="mt-3 max-w-[38ch] text-[15px] leading-relaxed text-lab-ink-muted">{blurb}</p>
+        ) : null}
+      </div>
+      {trailing ? (
+        <span className="mt-0.5 flex size-11 shrink-0 items-center justify-center">{trailing}</span>
+      ) : null}
+    </div>
+  );
+}
+
+function tileMotion(lift: ReturnType<typeof usePressLift>) {
+  return {
+    ref: lift.setRef as (node: HTMLElement | null) => void,
+    onPointerEnter: lift.onPointerEnter,
+    onPointerLeave: lift.onPointerLeave,
+    onPointerDown: lift.onPointerDown,
+    onPointerUp: lift.onPointerUp,
+    onPointerCancel: lift.onPointerUp,
+  };
+}
+
+function moduleBlurb(module: HomeModule) {
+  if (module.id === "writing" && articles[0]?.title) return articles[0].title;
+  return module.description ?? "";
+}
+
 function ModuleCard({ module, index }: { module: HomeModule; index: number }) {
   const reveal = { ["--i" as string]: index + 2 };
   const lift = usePressLift();
+  const blurb = moduleBlurb(module);
+  const shell = glassSurfaceClass(
+    "home-tile flex h-full flex-col rounded-3xl px-7 py-7 sm:px-8 sm:py-8"
+  );
+  const linkShell = cn(
+    shell,
+    "group outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lab-primary"
+  );
 
   if (module.id === "lab") {
     const rows = module.entries?.filter((entry) => entry.href) ?? [];
     return (
       <li data-reveal style={reveal} className={cn("h-full", spanClass.lab)}>
-        <article
-          ref={lift.setRef}
-          onPointerEnter={lift.onPointerEnter}
-          onPointerLeave={lift.onPointerLeave}
-          onPointerDown={lift.onPointerDown}
-          onPointerUp={lift.onPointerUp}
-          onPointerCancel={lift.onPointerUp}
-          className="home-tile flex h-full flex-col rounded-3xl px-8 py-8 sm:px-10 sm:py-9"
-        >
+        <article {...tileMotion(lift)} className={shell}>
           <span className="home-tile-ring" aria-hidden />
-          <span className="relative z-[1] text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
-            {module.title}
-          </span>
-          <span className="relative z-[1] mt-3 block text-base leading-relaxed text-lab-ink">
-            在做的实验。
-          </span>
-          <ul className="relative z-[1] mt-10 space-y-1">
-            {rows.map((entry) => (
-              <li key={entry.title}>
-                <Link
-                  href={entry.href ?? "/"}
-                  className="group/row flex min-h-12 items-center justify-between gap-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-                >
-                  <span className="min-w-0">
-                    <span className="text-sm font-medium text-white">{entry.title}</span>
-                    {entry.description ? (
-                      <span className="ml-3 text-base text-lab-ink">{entry.description}</span>
-                    ) : null}
-                  </span>
-                  <ArrowUpRight className="home-arrow size-4 shrink-0 text-white/35" strokeWidth={1.5} aria-hidden />
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <CardHeading title={module.title} blurb={blurb} />
+          {rows.length > 0 ? (
+            <ul className="relative z-[1] mt-6 divide-y divide-lab-hairline border-t border-lab-hairline">
+              {rows.map((entry) => (
+                <li key={entry.title}>
+                  <Link
+                    href={entry.href ?? "/"}
+                    className="group/row flex min-h-11 items-center gap-4 py-3.5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-lab-primary"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="text-[15px] font-medium tracking-tight text-lab-ink">{entry.title}</span>
+                      {entry.description ? (
+                        <span className="mt-0.5 block text-sm leading-relaxed text-lab-ink-subtle sm:ml-3 sm:mt-0 sm:inline">
+                          {entry.description}
+                        </span>
+                      ) : null}
+                    </span>
+                    <EntryArrow />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </article>
       </li>
     );
   }
 
-  const href = module.href ?? "/";
-  const line =
-    module.id === "writing"
-      ? articles[0]?.title ?? "写完的长文和随记。"
-      : "现在在做什么，以及怎么找到我。";
-  const writing = module.id === "writing";
-
   return (
     <li data-reveal style={reveal} className={cn("h-full", spanClass[module.id])}>
-      <Link
-        ref={lift.setRef}
-        href={href}
-        onPointerEnter={lift.onPointerEnter}
-        onPointerLeave={lift.onPointerLeave}
-        onPointerDown={lift.onPointerDown}
-        onPointerUp={lift.onPointerUp}
-        onPointerCancel={lift.onPointerUp}
-        className={cn(
-          "home-tile group flex h-full min-h-64 rounded-3xl px-8 py-8 outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:min-h-72 sm:px-10 sm:py-10",
-          writing ? "flex-col justify-between sm:flex-row sm:items-end sm:gap-8" : "flex-col justify-end pt-16 sm:pt-24"
-        )}
-      >
+      <Link {...tileMotion(lift)} href={module.href ?? "/"} className={linkShell}>
         <span className="home-tile-ring" aria-hidden />
-        {writing ? (
-          <>
-            <span className="relative z-[1] block text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
-              {module.title}
-            </span>
-            <span className="relative z-[1] mt-4 block max-w-xs text-base leading-relaxed text-lab-ink sm:mt-0 sm:text-right">
-              {line}
-              <ArrowUpRight className="home-arrow ml-2 inline size-4 text-white/70" strokeWidth={1.5} aria-hidden />
-            </span>
-          </>
-        ) : (
-          <span className="relative z-[1] block">
-            <span className="block text-base leading-relaxed text-lab-ink">{line}</span>
-            <span className="mt-6 flex items-end justify-between gap-4">
-              <span className="block text-[1.75rem] font-semibold leading-none tracking-[-0.035em] text-white sm:text-4xl">
-                {module.title}
-              </span>
-              <ArrowUpRight className="home-arrow size-4 shrink-0 text-white/70" strokeWidth={1.5} aria-hidden />
-            </span>
-          </span>
-        )}
+        <CardHeading title={module.title} blurb={blurb} trailing={<EntryArrow />} />
       </Link>
     </li>
   );
