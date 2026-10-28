@@ -34,6 +34,8 @@ import {
   clampPlace,
   defaultPlace,
   nearestPeek,
+  placeAfterResize,
+  placeFromStored,
   xiaomeiSpriteBox,
 } from "./xiaomei-place.ts";
 
@@ -67,6 +69,24 @@ test("位置夹在视口里，贴边才探出，默认让开回到顶部", () =>
   assert.equal(nearestPeek(330, 400, 400, 800, 70, 96), "right");
   assert.equal(nearestPeek(160, 400, 400, 800, 70, 96), null);
   assert.equal(nearestPeek(0, 800 - 96, 400, 800, 70, 96), "bottom");
+  const recovered = placeFromStored({ x: 1200, y: 500 }, 390, 700, 53, 72);
+  assert.deepEqual(recovered, defaultPlace(390, 700, 53, 72));
+  const resized = placeAfterResize(
+    { x: 1190, y: 600 },
+    { width: 70, height: 96 },
+    { width: 53, height: 72 },
+    1280,
+    800,
+    390,
+    700,
+  );
+  assert.ok(resized);
+  assert.ok(resized.x > 250);
+  assert.ok(resized.y > 400);
+  assert.equal(
+    placeAfterResize({ x: 0, y: 0 }, { width: 70, height: 96 }, { width: 53, height: 72 }, 10, 10, 390, 700),
+    null,
+  );
   const desktop = xiaomeiSpriteBox(false);
   const phone = xiaomeiSpriteBox(true);
   assert.equal(desktop.height, 96);
@@ -160,6 +180,14 @@ test("没配主钥匙时不上游，状态里没有钥匙原文", async () => {
   assert.equal(
     isXiaomeiSameOrigin(new Request("https://berryice.cn/api/xiaomei/chat", { headers: { origin: "https://evil.example" } })),
     false,
+  );
+  assert.equal(
+    isXiaomeiSameOrigin(
+      new Request("http://localhost:3000/api/xiaomei/chat", {
+        headers: { origin: "http://127.0.0.1:3000", host: "127.0.0.1:3000" },
+      }),
+    ),
+    true,
   );
   const dual = createDualRateLimiter(2, XIAOMEI_DAILY_LIMIT);
   assert.equal(dual.allow("ip", 1_000), "ok");

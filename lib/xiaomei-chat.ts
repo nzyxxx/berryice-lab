@@ -61,15 +61,42 @@ export function hasClientKeyField(payload: unknown): boolean {
   return Object.keys(payload as Record<string, unknown>).some((field) => CLIENT_KEY_FIELD.test(field));
 }
 
-/** 没带 Origin 的同源请求放行。带了别的站就拒绝，响应里也不加 CORS 头。 */
+function isLoopbackHost(host: string): boolean {
+  const name = host.replace(/:\d+$/, "");
+  return name === "localhost" || name === "127.0.0.1" || name === "[::1]";
+}
+
+/**
+ * 没带 Origin 的请求放行（curl、服务端）。
+ * 浏览器的 POST 会带 Origin。Next 有时把 request.url 改成另一侧的 localhost，
+ * 所以先对 Host 头，环回地址只比端口。
+ * 响应里不加 CORS 头。
+ */
 export function isXiaomeiSameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
-  if (!origin || origin === "null") return origin !== "null";
+  if (!origin) return true;
+  if (origin === "null") return false;
+  let originHost = "";
   try {
-    return new URL(origin).host === new URL(request.url).host;
+    originHost = new URL(origin).host;
   } catch {
     return false;
   }
+  const hostHeader = request.headers.get("host")?.trim() ?? "";
+  if (hostHeader && originHost === hostHeader) return true;
+  let urlHost = "";
+  try {
+    urlHost = new URL(request.url).host;
+  } catch {
+    urlHost = "";
+  }
+  if (urlHost && originHost === urlHost) return true;
+  if (hostHeader && isLoopbackHost(originHost) && isLoopbackHost(hostHeader)) {
+    const originPort = originHost.split(":").at(-1);
+    const hostPort = hostHeader.split(":").at(-1);
+    return originPort === hostPort;
+  }
+  return false;
 }
 
 export function clientAddress(request: Request): string {

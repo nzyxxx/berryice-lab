@@ -4,6 +4,8 @@ import {
   clampPlace,
   defaultPlace,
   nearestPeek,
+  placeAfterResize,
+  placeFromStored,
   xiaomeiSpriteBox,
   type XiaomeiPeek,
   type XiaomeiPoint,
@@ -76,7 +78,7 @@ function bootPlace(): LivePlace {
   const { vw, vh } = viewport();
   const stored = readStored();
   const pos = stored
-    ? clampPlace(stored.x, stored.y, vw, vh, box.width, box.height)
+    ? placeFromStored(stored, vw, vh, box.width, box.height)
     : defaultPlace(vw, vh, box.width, box.height);
   return { compact, hidden: stored?.hidden ?? false, pos, peek: stored?.peek ?? null };
 }
@@ -144,19 +146,24 @@ export function useXiaomeiPlace(options: {
 
   useEffect(() => {
     if (!ready) return;
+    const viewRef = { vw: window.innerWidth, vh: window.innerHeight };
     const onResize = () => {
       const nextCompact = window.matchMedia("(max-width: 639px)").matches;
       const prevBox = xiaomeiSpriteBox(compactRef.current);
       const nextBox = xiaomeiSpriteBox(nextCompact);
       const { vw, vh } = viewport();
-      const anchored = clampPlace(
-        posRef.current.x + prevBox.width - nextBox.width,
-        posRef.current.y + prevBox.height - nextBox.height,
+      const anchored = placeAfterResize(
+        posRef.current,
+        prevBox,
+        nextBox,
+        viewRef.vw,
+        viewRef.vh,
         vw,
         vh,
-        nextBox.width,
-        nextBox.height,
       );
+      if (!anchored) return;
+      viewRef.vw = vw;
+      viewRef.vh = vh;
       posRef.current = anchored;
       setPos(anchored);
       setCompact(nextCompact);

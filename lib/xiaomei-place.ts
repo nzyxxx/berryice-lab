@@ -50,6 +50,43 @@ export function defaultPlace(vw: number, vh: number, width: number, height: numb
   );
 }
 
+/** 旧坐标落在新视口外面时回到右下角，避免缩窗口后粘在左上角盖住标题。 */
+export function placeFromStored(
+  stored: XiaomeiPoint,
+  vw: number,
+  vh: number,
+  width: number,
+  height: number,
+): XiaomeiPoint {
+  if (stored.x < 0 || stored.y < 0 || stored.x > vw - width / 2 || stored.y > vh - height / 2) {
+    return defaultPlace(vw, vh, width, height);
+  }
+  return clampPlace(stored.x, stored.y, vw, vh, width, height);
+}
+
+/** 按离右、离下的边距跟着窗口走。视口太小的中间态直接忽略。 */
+export function placeAfterResize(
+  prev: XiaomeiPoint,
+  prevBox: { width: number; height: number },
+  nextBox: { width: number; height: number },
+  prevVw: number,
+  prevVh: number,
+  vw: number,
+  vh: number,
+): XiaomeiPoint | null {
+  if (vw < 240 || vh < 320 || prevVw < 240 || prevVh < 320) return null;
+  const right = prevVw - (prev.x + prevBox.width);
+  const bottom = prevVh - (prev.y + prevBox.height);
+  return clampPlace(
+    vw - nextBox.width - right,
+    vh - nextBox.height - bottom,
+    vw,
+    vh,
+    nextBox.width,
+    nextBox.height,
+  );
+}
+
 /** 松手时贴边才探出半个身位。角落只选更近的一边，避免整个人滑进夹角。 */
 export function nearestPeek(
   x: number,
