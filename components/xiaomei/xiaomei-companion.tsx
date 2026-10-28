@@ -12,9 +12,13 @@ import {
   XIAOMEI_FEED_FULL_LINES,
   XIAOMEI_FEED_LINES,
   XIAOMEI_FEED_SOFT_LINES,
+  XIAOMEI_FEED_TOO_MUCH_LINES,
+  XIAOMEI_HUNGRY_LINES,
   XIAOMEI_HOVER_LINES,
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
+  XIAOMEI_NAME,
+  XIAOMEI_RECALL_LINES,
   XIAOMEI_SAY_EVENT,
   XIAOMEI_SPAM_LINES,
   XIAOMEI_SPRITE,
@@ -24,6 +28,8 @@ import {
   type XiaomeiMood,
   type XiaomeiSayDetail,
 } from "@/lib/xiaomei-lines";
+import { isXiaomeiHungry, readXiaomeiMemory, toneFromAffection } from "@/lib/xiaomei-memory";
+import { XIAOMEI_METERS_KEY, readFeedClock } from "@/lib/xiaomei-meters";
 import { peekTransform } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
@@ -72,13 +78,34 @@ function writeMuted(next: boolean) {
 }
 
 /**
- * 全站右下角的小莓。拖拽用指针事件，待机和左右看只用 CSS，不留 rAF。
+ * 全站右下角的小莓妹。拖拽用指针事件，待机和左右看只用 CSS，不留 rAF。
  * z-40：低于弹层（门户 z-50）、回到顶部（z-60）和移动抽屉（z-70）。
  * 点击从本地池里随机回一句；和模型说话从菜单「对话」进。
  */
 export function XiaomeiCompanion() {
-  const chat = useXiaomeiChat();
   const meters = useXiaomeiMeters();
+  const metersRef = useRef(meters.meters);
+  metersRef.current = meters.meters;
+  const warmRef = useRef(meters.warm);
+  warmRef.current = meters.warm;
+  const chat = useXiaomeiChat({
+    getMeters: () => {
+      let raw: string | null = null;
+      try {
+        raw = localStorage.getItem(XIAOMEI_METERS_KEY);
+      } catch {
+        raw = null;
+      }
+      return {
+        affection: metersRef.current.affection,
+        fullness: metersRef.current.fullness,
+        feedCountToday: readFeedClock(raw, new Date()).feedCountToday,
+      };
+    },
+    onReplied: () => {
+      warmRef.current();
+    },
+  });
   const [chatOpen, setChatOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const muted = useSyncExternalStore(subscribeMute, readMuted, () => false);
@@ -119,7 +146,11 @@ export function XiaomeiCompanion() {
       speak("annoyed", pickXiaomeiLine(XIAOMEI_SPAM_LINES, speechRef.current?.text), "spam");
       return;
     }
-    const line = pickTaggedLine(XIAOMEI_CLICK_LINES, speechRef.current?.text);
+    const tone = toneFromAffection(metersRef.current.affection);
+    const pool = isXiaomeiHungry(metersRef.current.fullness)
+      ? [...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_CLICK_LINES]
+      : XIAOMEI_CLICK_LINES;
+    const line = pickTaggedLine(pool, speechRef.current?.text, tone);
     speak(line.mood, line.text, "click");
   }, [speak]);
 
@@ -138,6 +169,15 @@ export function XiaomeiCompanion() {
     if (!place.ready || place.hidden || muted) return;
     const id = window.setTimeout(() => {
       if (chatOpenRef.current || mutedRef.current) return;
+      const remembered = readXiaomeiMemory();
+      const tone = toneFromAffection(metersRef.current.affection);
+      if (remembered.topics.length > 0) {
+        const mood: XiaomeiMood = tone === "guarded" ? "annoyed" : tone === "classic" ? "content" : "happy";
+        const text = pickXiaomeiLine(XIAOMEI_RECALL_LINES[tone]);
+        setSpeech((current) => current ?? { text, mood, source: "greet" });
+        setMoodPin((current) => current ?? mood);
+        return;
+      }
       setSpeech((current) => current ?? { text: XIAOMEI_CATCHPHRASE, mood: "content", source: "greet" });
       setMoodPin((current) => current ?? "content");
     }, 900);
@@ -223,7 +263,7 @@ export function XiaomeiCompanion() {
     return (
       <button
         type="button"
-        aria-label="请小莓回来"
+        aria-label={`请${XIAOMEI_NAME}回来`}
         onClick={place.restore}
         className="fixed bottom-24 right-3 z-40 flex size-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
       >
@@ -293,20 +333,22 @@ export function XiaomeiCompanion() {
           onTalk={openChat}
           onMutter={() => {
             setMenuOpen(false);
-            const line = pickTaggedLine(XIAOMEI_MUTTER_LINES, speechRef.current?.text);
+            const tone = toneFromAffection(metersRef.current.affection);
+            const line = pickTaggedLine(XIAOMEI_MUTTER_LINES, speechRef.current?.text, tone);
             speak(line.mood, line.text, "mutter");
           }}
           onFeed={() => {
             const result = meters.feed();
             if (!result) return;
             setMenuOpen(false);
-            const pool =
-              result.kind === "full"
+            const pool = result.tooMuch
+              ? XIAOMEI_FEED_TOO_MUCH_LINES
+              : result.kind === "full"
                 ? XIAOMEI_FEED_FULL_LINES
                 : result.kind === "soft"
                   ? XIAOMEI_FEED_SOFT_LINES
                   : XIAOMEI_FEED_LINES;
-            const mood = result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
+            const mood = result.tooMuch || result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
             speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed");
           }}
           onMute={toggleMute}
@@ -363,7 +405,7 @@ export function XiaomeiCompanion() {
 
       <button
         type="button"
-        aria-label="小莓"
+        aria-label={XIAOMEI_NAME}
         aria-expanded={chatOpen || menuOpen}
         aria-haspopup="menu"
         aria-controls={chatOpen ? "xiaomei-chat" : undefined}
@@ -389,7 +431,7 @@ export function XiaomeiCompanion() {
 
       <button
         type="button"
-        aria-label="收起小莓"
+        aria-label={`收起${XIAOMEI_NAME}`}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={() => {
           setChatOpen(false);

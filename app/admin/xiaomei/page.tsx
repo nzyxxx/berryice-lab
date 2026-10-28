@@ -1,5 +1,6 @@
 import { isAdminRequest } from "@/lib/api/admin-auth";
 import { xiaomeiPublicStatus } from "@/lib/xiaomei-chat-server";
+import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { isWikiAdminAuthorized } from "@/lib/content/wiki-auth";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -7,7 +8,7 @@ import { headers } from "next/headers";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "小莓状态",
+  title: `${XIAOMEI_NAME}状态`,
   robots: { index: false, follow: false },
 };
 
@@ -29,7 +30,7 @@ export default async function XiaomeiStatusPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-md px-6 py-16 text-lab-ink">
-      <h1 className="text-2xl font-semibold tracking-tight">小莓</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{XIAOMEI_NAME}</h1>
       <p className="mt-2 text-sm leading-relaxed text-lab-ink-subtle">
         钥匙只放在服务器的环境变量里。这一页不能填，也不会显示。
       </p>

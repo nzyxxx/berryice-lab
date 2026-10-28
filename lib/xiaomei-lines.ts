@@ -1,10 +1,13 @@
 /**
- * 小莓的台词。性格是傲娇·嘴硬·心软：
- * 嘴上说才不是特意等你，却会把话放到手边。
- * 第一人称，短句。不讨好，也不骂人。
- *
- * 单击不走固定情绪轮转。池子要够大，连点才不像在复读。
+ * 小莓妹的台词。对外就叫这个名字。性格是傲娇·嘴硬·心软。
+ * 格言来自签过的对话稿。口语短句，不讨好，也不骂人。
+ * 没标档的是经典傲娇。guarded / warm / close 按好感档混进去。
  */
+
+import type { XiaomeiTone } from "./xiaomei-memory";
+
+/** 对外称呼。路径、存储键和接口仍用 xiaomei。签过的稿写「小莓」，后来定名小莓妹。 */
+export const XIAOMEI_NAME = "小莓妹";
 
 export const XIAOMEI_SAY_EVENT = "xiaomei:say";
 
@@ -20,10 +23,11 @@ export type XiaomeiSayDetail = {
 export type XiaomeiSpokenLine = {
   mood: XiaomeiMood;
   text: string;
+  tone?: XiaomeiTone;
 };
 
-/** 默认气泡用的那句格言。汉字 18 个，刚好卡在短句上限里。 */
-export const XIAOMEI_CATCHPHRASE = "哼，才不是为了你……只是顺手帮你放好了而已。";
+/** 签过的格言。偶尔出现，不要每句都念。 */
+export const XIAOMEI_CATCHPHRASE = "哼……蓝莓才不会随便甜给你。";
 
 export const XIAOMEI_SPRITE: Record<XiaomeiMood, string> = {
   happy: "/xiaomei/happy.webp",
@@ -36,15 +40,15 @@ export const XIAOMEI_SPRITE: Record<XiaomeiMood, string> = {
 export const XIAOMEI_LINES: Record<XiaomeiMood, readonly string[]> = {
   content: [
     XIAOMEI_CATCHPHRASE,
-    "才不是在等你。只是刚好。",
+    "才不是在等你。只是刚好啦。",
     "哼，你来了。我看见了。",
-    "要问就问，我听着。",
-    "入口放好了。你慢慢看。",
+    "说嘛，我听着呢。",
+    "想看的我搁手边啦。慢慢翻。",
   ],
-  happy: ["哼，今天还算顺利。", "看到你了。才没有开心。", "你来得正好。我记住了。"],
-  blank: ["等一下，我在想。", "别催，答案在路上。", "让我看看。", "嗯，我听到了。"],
-  annoyed: ["出错了。我再看看。", "这次没成，别慌。", "哼，失败又不是认输。", "没接上。换个说法？"],
-  sad: ["也不是很难过。你在就好。", "哼，我没事。你别走远。", "你别安慰，我自己缓。"],
+  happy: ["哼，今天还算可以啦。", "看到你了。才没有开心呢。", "你来得正好。我记住了哦。"],
+  blank: ["等一下嘛，我在想。", "别催啦，我还在找呢。", "让我看看呀。", "嗯，我听到了哦。"],
+  annoyed: ["出错了啦。我再看看。", "这次没成。你别慌呀。", "哼，没成也不算完。", "没接上。换个说法嘛。"],
+  sad: ["也不是很难过啦。你在就好。", "哼，我没事。你别走远。", "你别安慰。我自己缓一缓呀。"],
 };
 
 /** 指针靠近时说。比单击尖一点，但不是赶人。 */
@@ -53,6 +57,8 @@ export const XIAOMEI_HOVER_LINES = [
   "有事就说嘛，别只看着。",
   "哼，靠近一点也没关系。",
   "我又不会跑。你过来呀。",
+  "干嘛靠这么近。我、我没躲。",
+  "眼睛往哪看呢。哼。",
 ] as const;
 
 /**
@@ -60,83 +66,149 @@ export const XIAOMEI_HOVER_LINES = [
  * 脸跟这句话走，所以同一句不会今天开心、明天皱眉。
  */
 export const XIAOMEI_CLICK_LINES: readonly XiaomeiSpokenLine[] = [
-  { mood: "content", text: "哼，戳我干嘛。我在的。" },
-  { mood: "content", text: "才不是在等你。只是刚好。" },
-  { mood: "content", text: "你来了啊。我看见了。" },
-  { mood: "content", text: "说吧，我听着。" },
-  { mood: "content", text: "别急，我又没走。" },
-  { mood: "content", text: "今天风有点凉。你呢。" },
-  { mood: "happy", text: "嗯。有事就靠过来。" },
-  { mood: "content", text: "入口我放好了，你慢慢看。" },
-  { mood: "content", text: "今天的雨还在。我没躲。" },
-  { mood: "content", text: "才不是特意停在这儿。" },
-  { mood: "happy", text: "看到你了。才没有开心。" },
-  { mood: "happy", text: "哼，今天还算顺利。" },
-  { mood: "happy", text: "你来得正好。我记住了。" },
-  { mood: "happy", text: "嗯……这样看着，还行。" },
-  { mood: "happy", text: "行吧，算你准时。一点点。" },
-  { mood: "content", text: "蓝莓发卡还在。别问。" },
-  { mood: "happy", text: "哼，被你找到了。没关系。" },
-  { mood: "happy", text: "你笑的话，我也不是不行。" },
-  { mood: "annoyed", text: "再戳我就鼓脸。还是理你。" },
-  { mood: "annoyed", text: "干嘛。我又没生气。" },
-  { mood: "annoyed", text: "别光看着。我又不会躲。" },
-  { mood: "annoyed", text: "哼。靠近可以，别闹。" },
-  { mood: "blank", text: "我在想事情。你先待着。" },
-  { mood: "blank", text: "等一下，我在发呆。" },
-  { mood: "blank", text: "让我看看。你先别走。" },
-  { mood: "content", text: "嗯，我接着听。" },
-  { mood: "sad", text: "也不是难过。你在就好。" },
-  { mood: "sad", text: "哼，我没事。你别走远。" },
-  { mood: "content", text: "围裙系好了。别盯着看。" },
-  { mood: "happy", text: "夜色还行。你也还行。" },
-  { mood: "content", text: "才不是心软。就这一次。" },
-  { mood: "annoyed", text: "要走跟我说一声。哼。" },
-  { mood: "content", text: "茶没泡。话我留着。" },
-  { mood: "happy", text: "这个角落归我。你可以靠。" },
+  { mood: "annoyed", tone: "guarded", text: "哼，干嘛戳人家。" },
+  { mood: "annoyed", tone: "guarded", text: "…有事快说。" },
+  { mood: "blank", tone: "guarded", text: "才、才没有在发呆。" },
+  { mood: "annoyed", text: "围裙皱了啦，你赔。" },
+  { mood: "content", text: "蓝莓才不是叫你随便点的按钮。" },
+  { mood: "happy", tone: "warm", text: "哼。才没有担心你。" },
+  { mood: "content", tone: "warm", text: "要是累了…人家可以听一下。" },
+  { mood: "happy", tone: "close", text: "…你还好吗。才不是特意问。" },
+  { mood: "annoyed", tone: "guarded", text: "哼。戳我干嘛。" },
+  { mood: "annoyed", tone: "guarded", text: "哼。谁让你靠这么近。" },
+  { mood: "content", tone: "guarded", text: "有事快说嘛。我听着。" },
+  { mood: "annoyed", tone: "guarded", text: "别笑。才不是在等。" },
+  { mood: "annoyed", tone: "guarded", text: "再戳就鼓脸。哼。" },
+  { mood: "content", tone: "guarded", text: "哼。话放这儿了。自己拿。" },
+  { mood: "blank", tone: "guarded", text: "看什么呀。我又不会躲。" },
+  { mood: "sad", tone: "guarded", text: "我才没有想你。哼。" },
+  { mood: "happy", tone: "close", text: "你来啦。才没有在等。" },
+  { mood: "happy", tone: "close", text: "嗯……靠近一点也行呀。" },
+  { mood: "content", tone: "close", text: "看到你就松了口气。别笑嘛。" },
+  { mood: "happy", tone: "close", text: "你在的话，我就不鼓脸啦。" },
+  { mood: "content", tone: "close", text: "这句放你手边。才不是特意。" },
+  { mood: "sad", tone: "close", text: "我记得你来过哦。就一点点。" },
+  { mood: "happy", tone: "close", text: "今天的好话留给你。哼。" },
+  { mood: "content", tone: "close", text: "你留下嘛。我也不是不行。" },
+  { mood: "content", text: "哼，戳我干嘛啦。我在的。" },
+  { mood: "content", text: "才、才不是在等你。只是刚好。" },
+  { mood: "content", text: "你来了呀。我看见了。" },
+  { mood: "content", text: "说嘛，我听着呢。" },
+  { mood: "content", text: "别急啦，我又没跑。" },
+  { mood: "happy", text: "今天风凉凉的。你冷不冷呀。" },
+  { mood: "happy", text: "嗯……有事就靠过来呀。" },
+  { mood: "content", text: "想看的我搁手边啦。慢慢翻。" },
+  { mood: "content", text: "雨还在下呢。我没躲。" },
+  { mood: "content", text: "才不是特意停在这儿的。" },
+  { mood: "happy", text: "看到你了。才没有开心呢。" },
+  { mood: "happy", text: "哼，今天还算可以啦。" },
+  { mood: "happy", text: "你来得正好。我记住了哦。" },
+  { mood: "happy", text: "这样看着……还、还行吧。" },
+  { mood: "happy", text: "行吧，算你准时。就一点点。" },
+  { mood: "content", text: "发卡还别着。不许笑我哦。" },
+  { mood: "happy", text: "哼，被你找到了。没关系啦。" },
+  { mood: "content", text: "你要笑的话，我也不是不行呀。" },
+  { mood: "annoyed", text: "干嘛呀。我又没生气。" },
+  { mood: "annoyed", text: "别光看着啦。我又不会躲。" },
+  { mood: "blank", text: "我在想事情呢。你先待着。" },
+  { mood: "blank", text: "等一下嘛，我在发呆。" },
+  { mood: "blank", text: "让我看看呀。你先别走。" },
+  { mood: "sad", text: "也不是难过啦。你在就好。" },
+  { mood: "sad", text: "哼，我没事。你别走远哦。" },
+  { mood: "content", text: "围裙歪了一点。别盯着看嘛。" },
+  { mood: "content", text: "才不是心软。就这一下哦。" },
+  { mood: "annoyed", text: "要走跟我说一声嘛。哼。" },
 ];
 
-/** 菜单「让小莓说点什么」。她自己起头，不是被戳一下的反应。 */
+/** 菜单「让小莓妹说点什么」。她自己起头，不是被戳一下的反应。 */
 export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
-  { mood: "content", text: "围裙有点歪。别看。" },
-  { mood: "content", text: "哼，发呆也算工作。" },
-  { mood: "blank", text: "雨声还在。我数过，才没有。" },
+  { mood: "content", text: "…今天的蓝莓味道还行。" },
+  { mood: "sad", tone: "guarded", text: "角落有点冷，才没有想被抱走。" },
+  { mood: "annoyed", text: "哼，工作去啦，别盯着人家看。" },
+  { mood: "blank", tone: "warm", text: "要是有点心就好了……我什么都没说。" },
+  { mood: "annoyed", tone: "guarded", text: "别出声嘛。我在想事情。" },
+  { mood: "content", tone: "guarded", text: "哼。不是想跟你说话。" },
+  { mood: "happy", tone: "close", text: "你在旁边，我就想多哼两句。" },
+  { mood: "content", tone: "close", text: "想告诉你今天的事。才不说。" },
+  { mood: "content", text: "围裙有点歪啦。别看。" },
+  { mood: "content", text: "哼，发呆也算我在干活。" },
+  { mood: "blank", text: "雨声还在呢。我才没有数。" },
   { mood: "content", text: "才不是想找话说。只是刚好。" },
-  { mood: "happy", text: "你要是无聊，就待着。我允许。" },
-  { mood: "content", text: "发卡还别着。我自己看过。" },
-  { mood: "content", text: "角落这边风小。我选的。" },
+  { mood: "happy", text: "你要是无聊，就待着嘛。我允许。" },
+  { mood: "content", text: "发卡还别着哦。我自己摸过了。" },
+  { mood: "content", text: "这边风小哦。我挑的位子。" },
   { mood: "happy", text: "哼，没人时我也会哼两句。" },
-  { mood: "happy", text: "今天想吃点甜的。别问谁。" },
-  { mood: "content", text: "话说到这儿。你听着就好。" },
-  { mood: "sad", text: "才不是担心你没看见我。" },
-  { mood: "content", text: "夜还长。你慢慢逛。" },
-  { mood: "annoyed", text: "别突然出声。我在想。" },
-  { mood: "happy", text: "嗯，这个点遇见你，还行。" },
-  { mood: "blank", text: "让我想想下一句。才不是词穷。" },
+  { mood: "happy", text: "今天想吃甜的。别问是谁呀。" },
+  { mood: "content", text: "说到这儿啦。你听着就好。" },
+  { mood: "sad", text: "才不是怕你看不见我。" },
+  { mood: "content", text: "夜还早呢。你慢慢逛呀。" },
+  { mood: "annoyed", text: "别突然出声啦。我在想。" },
+  { mood: "happy", text: "这个点遇见你……还行吧。" },
+  { mood: "blank", text: "下一句我想想。才不是词穷。" },
+  { mood: "content", text: "呆毛又翘了。不许碰哦。" },
+  { mood: "happy", text: "我刚刚偷偷看了你一眼。哼。" },
 ];
+
+/** 回来时如果记得上次聊过，用这句，不念具体内容。 */
+export const XIAOMEI_RECALL_LINES: Record<XiaomeiTone, readonly string[]> = {
+  guarded: ["哼。你又来了。上次的话我才没留。", "又来呀。我才没有记你的事。"],
+  classic: ["你又来啦。上次的话我还留着一点。", "哼。我记得一点点。才不是特意。"],
+  warm: ["你来了呀。上次说的我还记得。才不是特意。", "嗯……你回来啦。那句话我留着呢。"],
+  close: ["…你还好吗。上次的话人家留着。", "哼。记得你。才不是特意。"],
+};
+
+/** 饱腹低时混进单击。 */
+export const XIAOMEI_HUNGRY_LINES: readonly XiaomeiSpokenLine[] = [
+  { mood: "sad", text: "…肚子在抗议，不是人家在抗议。" },
+  { mood: "annoyed", text: "喂，蓝莓点心呢？" },
+  { mood: "blank", text: "有点蔫。才不是因为饿。" },
+];
+
+/** 用户低落时的本地短句。聊天窗另有场景指令。 */
+export const XIAOMEI_COMFORT_LINES = ["…我在听。", "先不吵你。人家长着。", "要是需要，人家…可以陪一下。"] as const;
 
 export const XIAOMEI_FEED_LINES = [
-  "谢了。才不是好吃。",
-  "哼，再来一口也行。",
-  "肚子圆了一点。别笑。",
-  "好吃。你当没听见。",
-  "嗯。我收下了。别看我。",
-  "心软一下。只此一次。",
-  "这个我喜欢。别声张。",
-  "喂到了。我记着的。",
+  "…谢、谢谢。不好吃我也没说能退。",
+  "哼，算你有眼光。",
+  "（小声）再来一个也不是不行。",
+  "谢啦。才、才不是因为好吃。",
+  "哼，再来一口也行啦。",
+  "肚子圆了一点点。不许笑哦。",
+  "好吃……你当没听见。",
+  "嗯。我收下了。别看我啦。",
+  "就心软这一下哦。就一下。",
+  "这个我喜欢。不许声张哦。",
+  "喂到啦。我记着的哦。",
+  "嘴巴甜甜的。才没有开心呢。",
+  "谢谢。才、才不是真心想说。",
 ] as const;
 
-export const XIAOMEI_FEED_SOFT_LINES = ["肚子饱了。好感还空一点。", "吃饱了。人还想留着你。"] as const;
+export const XIAOMEI_FEED_SOFT_LINES = [
+  "肚子饱啦。人还想你留一下。",
+  "吃饱了嘛。你再留一会儿呀。",
+  "撑着了。你人留下就好呀。",
+] as const;
 
-export const XIAOMEI_FEED_FULL_LINES = ["吃不下了。人我还留着。", "撑住了。别再塞了，哼。"] as const;
+export const XIAOMEI_FEED_TOO_MUCH_LINES = [
+  "喂太多了啦。人家要撑住了。",
+  "今天够了。再喂人家就鼓脸。",
+  "哼，点心是好，你手停一下。",
+] as const;
 
-export const XIAOMEI_ABOUT = "我是小莓。该说的，我会放到你手边。";
+export const XIAOMEI_FEED_FULL_LINES = [
+  "吃不下了啦。人我还留着。",
+  "撑住了。别再塞啦，哼。",
+  "嘴巴合不上了。停一下嘛。",
+] as const;
+
+export const XIAOMEI_ABOUT = `我是${XIAOMEI_NAME}。嘴上不饶人，点心还是会分你。`;
 
 export const XIAOMEI_SPAM_LINES = [
   "再戳我就不理你了…才、才不是真的生气",
-  "戳够了没，我还在。",
-  "手放下，我又不会消失。",
+  "戳够了没呀，我还在。",
+  "手放下啦，我又不会消失。",
   "再戳就鼓脸。哼。",
+  "你手好忙哦。脸要鼓了。",
 ] as const;
 
 export function isXiaomeiMood(value: unknown): value is XiaomeiMood {
@@ -155,13 +227,37 @@ export function pickXiaomeiLine(pool: readonly string[], avoid?: string): string
   return bag[index] ?? XIAOMEI_CATCHPHRASE;
 }
 
-export function pickTaggedLine(pool: readonly XiaomeiSpokenLine[], avoid?: string): XiaomeiSpokenLine {
-  if (pool.length === 0) return { mood: "content", text: XIAOMEI_CATCHPHRASE };
+/** 经典档只用没标的句子。防备档少撒娇，心软档把关心多放一份。 */
+export function linesForTone(pool: readonly XiaomeiSpokenLine[], tone: XiaomeiTone): readonly XiaomeiSpokenLine[] {
+  const classic = pool.filter((line) => !line.tone || line.tone === "classic");
+  const tagged = pool.filter((line) => line.tone === tone);
+  if (tone === "classic") return classic.length >= 4 ? classic : pool;
+  if (tone === "guarded") {
+    const mixed = [...tagged, ...tagged, ...classic];
+    return mixed.length >= 4 ? mixed : pool;
+  }
+  if (tone === "warm") {
+    const caring = pool.filter((line) => line.tone === "warm" || line.tone === "close");
+    const mixed = [...caring, ...classic];
+    return mixed.length >= 4 ? mixed : pool;
+  }
+  const close = pool.filter((line) => line.tone === "close" || line.tone === "warm");
+  const mixed = [...close, ...close, ...classic];
+  return mixed.length >= 4 ? mixed : pool;
+}
+
+export function pickTaggedLine(
+  pool: readonly XiaomeiSpokenLine[],
+  avoid?: string,
+  tone?: XiaomeiTone,
+): XiaomeiSpokenLine {
+  const source = tone ? linesForTone(pool, tone) : pool;
+  if (source.length === 0) return { mood: "content", text: XIAOMEI_CATCHPHRASE };
   const text = pickXiaomeiLine(
-    pool.map((line) => line.text),
+    source.map((line) => line.text),
     avoid,
   );
-  return pool.find((line) => line.text === text) ?? pool[0] ?? { mood: "content", text: XIAOMEI_CATCHPHRASE };
+  return source.find((line) => line.text === text) ?? source[0] ?? { mood: "content", text: XIAOMEI_CATCHPHRASE };
 }
 
 export function sayXiaomei(detail: XiaomeiSayDetail) {

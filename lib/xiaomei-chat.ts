@@ -6,7 +6,15 @@
 export const XIAOMEI_MAX_TURNS = 8;
 export const XIAOMEI_MAX_CHARS = 400;
 export const XIAOMEI_MAX_BODY_BYTES = 24_000;
-export const XIAOMEI_MAX_OUTPUT_TOKENS = 180;
+/** 聊天窗默认大约 80 字。对方明确要详细时再放宽。 */
+export const XIAOMEI_MAX_OUTPUT_TOKENS = 120;
+export const XIAOMEI_DETAIL_OUTPUT_TOKENS = 240;
+
+export function xiaomeiOutputLimit(messages: XiaomeiChatTurn[]): number {
+  const last = [...messages].reverse().find((turn) => turn.role === "user");
+  if (last && /详细|展开讲|具体讲/.test(last.content)) return XIAOMEI_DETAIL_OUTPUT_TOKENS;
+  return XIAOMEI_MAX_OUTPUT_TOKENS;
+}
 export const XIAOMEI_RATE_LIMIT = 20;
 export const XIAOMEI_RATE_WINDOW_MS = 60_000;
 export const XIAOMEI_DAILY_LIMIT = 100;

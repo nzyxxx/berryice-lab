@@ -1,6 +1,7 @@
 "use client";
 
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
+import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { cn } from "@/lib/utils";
 
 const ITEM =
@@ -52,7 +53,7 @@ export function XiaomeiMenu({
   return (
     <div
       role="menu"
-      aria-label="小莓"
+      aria-label={XIAOMEI_NAME}
       className={cn(
         glassSurfaceClass("overflow-y-auto"),
         "absolute z-20 w-52 rounded-2xl p-1.5",
@@ -66,7 +67,7 @@ export function XiaomeiMenu({
         对话
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onMutter}>
-        让小莓说点什么
+        让{XIAOMEI_NAME}说点什么
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onFeed}>
         喂食
@@ -82,7 +83,7 @@ export function XiaomeiMenu({
         回到角落
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onAbout}>
-        关于小莓
+        关于{XIAOMEI_NAME}
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onHide}>
         收起
