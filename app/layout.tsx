@@ -1,4 +1,5 @@
 import { SiteAtmosphere } from "@/components/atmosphere/site-atmosphere";
+import { XiaomeiCompanion } from "@/components/xiaomei/xiaomei-companion";
 import { ThemeProvider } from "@/components/lab/theme-provider";
 import { getSiteUrl, siteDescription } from "@/lib/site-config";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -79,6 +80,8 @@ export default function RootLayout({
           {/* 气候层放在 template 之外，跨路由不卸载，雨才是连续的 */}
           <SiteAtmosphere />
           {children}
+          {/* 挂在 template 外面，换页不卸载。z-40，低于门户出来的弹层。 */}
+          <XiaomeiCompanion />
         </ThemeProvider>
       </body>
     </html>
