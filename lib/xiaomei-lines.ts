@@ -375,7 +375,7 @@ export const XIAOMEI_PET_FULL_LINES = [
   "好啦，我已经很软了。",
 ] as const;
 
-export const XIAOMEI_ABOUT = `哼，人家是${XIAOMEI_NAME}。`;
+export const XIAOMEI_ABOUT = `哼，人家是女仆${XIAOMEI_NAME}。`;
 
 /** 第一次还没打开过菜单时，贴在身边。点一下仍然只听短句，长按是摸头。 */
 export const XIAOMEI_HOLD_HINT = "右键打开菜单";
