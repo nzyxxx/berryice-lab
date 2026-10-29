@@ -165,7 +165,7 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     assert.ok(pools.includes(sample), sample);
   }
   assert.equal(XIAOMEI_NAME, "小莓妹");
-  assert.match(XIAOMEI_ABOUT, /人家是小莓妹/);
+  assert.match(XIAOMEI_ABOUT, /人家是女仆小莓妹/);
   assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI|角标/);
   const again = pickXiaomeiLine(["只有一句"]);
   assert.equal(again, "只有一句");
@@ -531,6 +531,21 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   assert.match(neutral, /（还没有特别记住的事）/);
   assert.match(neutral, /哼……人家才不会随便甜给你/);
   assert.match(neutral, /不要自称或反复提「蓝莓」/);
+  assert.match(neutral, /【偏好】/);
+  assert.match(neutral, /水果爱蓝莓/);
+  assert.match(neutral, /小绵羊/);
+  assert.match(neutral, /下雨天/);
+  assert.match(neutral, /爱看动漫/);
+  assert.match(neutral, /喜欢唱歌/);
+  assert.match(neutral, /爱睡懒觉/);
+  assert.match(neutral, /偶尔会蹲下/);
+  assert.match(neutral, /看着外面的景色发呆/);
+  assert.match(neutral, /爱牛肉/);
+  assert.match(neutral, /不爱猪肉/);
+  assert.match(neutral, /偏内向/);
+  assert.match(neutral, /说话糯糯的/);
+  assert.match(neutral, /事能做妥/);
+  assert.match(neutral, /不要自我介绍「合格女仆」/);
   assert.match(neutral, /【指路】/);
   assert.match(neutral, /不要每轮都复述自己的名字/);
   assert.match(neutral, /鲸鱼娘/);
@@ -577,7 +592,7 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
 test("问你是谁时不念性格卡，也不撇清", () => {
   const prompt = buildXiaomeiSystemPrompt(sanitizeXiaomeiMemory(undefined));
   assert.match(prompt, /禁止把性格标签念出口/);
-  assert.match(prompt, /「傲娇」「嘴硬」「心软」/);
+  assert.match(prompt, /「傲娇」「嘴硬」「心软」「人设」「性格」「内向」「治愈」「合格」/);
   assert.match(prompt, /不是什么随便的AI/);
   assert.match(prompt, /尽管说吧/);
   assert.match(prompt, /对照句是尺子，不是口头禅/);
@@ -586,13 +601,19 @@ test("问你是谁时不念性格卡，也不撇清", () => {
   assert.doesNotMatch(prompt, /【性格三词】/);
   assert.doesNotMatch(prompt, /你不是客服机器人/);
   assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI|角标/);
-  assert.match(XIAOMEI_ABOUT, /人家是小莓妹/);
+  assert.match(XIAOMEI_ABOUT, /人家是女仆小莓妹/);
   assert.ok(hanCount(XIAOMEI_ABOUT) <= 16);
-  assert.match(prompt, /桌面角标伙伴/);
+  assert.match(prompt, /Q 版围裙女仆/);
+  assert.match(prompt, /女仆小妹/);
+  assert.match(prompt, /女仆装/);
+  assert.match(prompt, /样子可爱/);
+  assert.match(prompt, /可爱的声线/);
+  assert.doesNotMatch(prompt, /桌面角标伙伴|围裙少女/);
   const exit = prompt.slice(prompt.lastIndexOf("【出口】"));
   assert.match(exit, /不要说「角标」「伙伴」「网站角色」/);
   const who = prompt.slice(prompt.indexOf("用户问「你是谁」"), prompt.indexOf("用户说「你好」"));
   assert.match(who, /人家是小莓妹/);
+  assert.match(who, /围裙女仆/);
   assert.match(who, /别一上来就盘问/);
   assert.doesNotMatch(who, /角标/);
 });
