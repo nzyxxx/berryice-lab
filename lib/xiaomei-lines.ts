@@ -343,10 +343,42 @@ export const XIAOMEI_FEED_FULL_LINES = [
   "嘴巴合不上了。停一下嘛。",
 ] as const;
 
+/** 长按摸头。只用开心和满足这两张脸，不另画。 */
+export const XIAOMEI_PET_LINES: readonly XiaomeiSpokenLine[] = [
+  { mood: "happy", text: "摸头就这一下。哼。" },
+  { mood: "content", text: "手好暖。我没躲。" },
+  { mood: "happy", text: "耳朵热了。不许笑。" },
+  { mood: "content", text: "再摸一下也可以啦。" },
+  { mood: "happy", text: "发卡别摘。摸头可以。" },
+  { mood: "content", text: "嗯。这样还挺舒服。" },
+  { mood: "happy", text: "轻一点嘛。好啦。" },
+  { mood: "content", text: "我没低头。你摸到了。" },
+  { mood: "content", tone: "guarded", text: "手拿开。一下就够。" },
+  { mood: "content", tone: "guarded", text: "谁让你摸的。哼。" },
+  { mood: "happy", tone: "guarded", text: "别揉耳朵。真的。" },
+  { mood: "content", tone: "guarded", text: "摸到了。别得意。" },
+  { mood: "happy", tone: "warm", text: "你的手可以再留一下。" },
+  { mood: "content", tone: "warm", text: "靠近一点。我没躲。" },
+  { mood: "happy", tone: "close", text: "这样我会小声哼。" },
+  { mood: "content", tone: "close", text: "嗯，我在。摸吧。" },
+];
+
+export const XIAOMEI_PET_CAP_LINES = [
+  "今天摸够啦。明天再来。",
+  "手收回去。我记着了。",
+  "再摸就鼓脸。哼。",
+] as const;
+
+export const XIAOMEI_PET_FULL_LINES = [
+  "再摸也不会更高啦。",
+  "到顶了。人还在这儿。",
+  "好啦，我已经很软了。",
+] as const;
+
 export const XIAOMEI_ABOUT = `哼，人家是${XIAOMEI_NAME}。`;
 
-/** 第一次还没打开过菜单时，贴在身边。点一下仍然只听短句。 */
-export const XIAOMEI_HOLD_HINT = "长按跟我说话";
+/** 第一次还没打开过菜单时，贴在身边。点一下仍然只听短句，长按是摸头。 */
+export const XIAOMEI_HOLD_HINT = "右键打开菜单";
 
 /** 聊天窗还没开口时。短，不客服。 */
 export const XIAOMEI_CHAT_EMPTY = "想问路，或者随便说一句。我听着。";

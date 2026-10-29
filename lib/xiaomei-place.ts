@@ -1,5 +1,8 @@
 /** 小莓在视口里的位置。纯计算，不碰 DOM。 */
 
+/** 按住这么久、并且没拖动，算摸头。菜单走右键，不走这条计时。 */
+export const XIAOMEI_PET_HOLD_MS = 450;
+
 export const XIAOMEI_FRAME = { width: 256, height: 351 } as const;
 
 /** 顶栏大约 56px。再往上拖会被头挡住，点不到。 */

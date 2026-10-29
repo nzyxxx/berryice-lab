@@ -32,11 +32,16 @@ import {
   formatMeterDelta,
   metersFromStored,
   nextFeedClock,
+  petXiaomei,
   projectXiaomeiMeters,
   readFeedClock,
+  readPetClock,
+  serializeXiaomeiMeters,
   warmXiaomei,
+  XIAOMEI_FEED_DAILY_CAP,
   XIAOMEI_METER_DEFAULT,
   XIAOMEI_METER_MAX,
+  XIAOMEI_PET_DAILY_CAP,
 } from "./xiaomei-meters.ts";
 import {
   XIAOMEI_TEMPERATURE,
@@ -60,6 +65,9 @@ import {
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
   XIAOMEI_NAME,
+  XIAOMEI_PET_CAP_LINES,
+  XIAOMEI_PET_FULL_LINES,
+  XIAOMEI_PET_LINES,
   XIAOMEI_RECALL_LINES,
   XIAOMEI_SCENE_LINES,
   XIAOMEI_SCENE_PIN_MS,
@@ -82,8 +90,10 @@ import {
   XIAOMEI_TONE_WARM_AT,
   XIAOMEI_TOPIC_LIMIT,
   emptyXiaomeiMemory,
+  forgetXiaomeiNote,
   isXiaomeiHungry,
   memoryFromStored,
+  memoryNotesForDrawer,
   nicknameFromText,
   pushTopic,
   rememberThread,
@@ -102,6 +112,7 @@ import {
   placeAfterResize,
   placeFromStored,
   xiaomeiSpriteBox,
+  XIAOMEI_PET_HOLD_MS,
 } from "./xiaomei-place.ts";
 
 test("台词是短的第一人称，默认句就是那句格言", () => {
@@ -116,6 +127,9 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     ...XIAOMEI_FEED_SOFT_LINES,
     ...XIAOMEI_FEED_FULL_LINES,
     ...XIAOMEI_FEED_TOO_MUCH_LINES,
+    ...XIAOMEI_PET_LINES.map((line) => line.text),
+    ...XIAOMEI_PET_CAP_LINES,
+    ...XIAOMEI_PET_FULL_LINES,
     ...XIAOMEI_HUNGRY_LINES.map((line) => line.text),
     ...XIAOMEI_COMFORT_LINES,
     ...Object.values(XIAOMEI_RECALL_LINES).flat(),
@@ -290,6 +304,141 @@ test("喂食只在本地把饱腹和好感往上抬一点，到顶就停", () =>
   assert.equal(formatMeterDelta(7, 4), "饱腹 +7 · 好感 +4");
   assert.equal(formatMeterDelta(0, 3), "好感 +3");
   assert.equal(formatMeterDelta(0, 0), null);
+});
+
+test("摸头只加一点好感，一天次数用完就停，和喂食共用日键", () => {
+  assert.equal(XIAOMEI_PET_DAILY_CAP, XIAOMEI_FEED_DAILY_CAP);
+  assert.equal(XIAOMEI_PET_HOLD_MS, 450);
+  const today = new Date(2026, 9, 28, 12);
+  const tomorrow = new Date(2026, 9, 29, 1);
+  const stale = { petDay: "2026-10-27", petCountToday: 6 };
+  assert.equal(readPetClock(JSON.stringify(stale), today).petCountToday, 0);
+  assert.equal(readPetClock("nope", today).petCountToday, 0);
+  assert.equal(readPetClock(JSON.stringify({ feedDay: "2026-10-28", feedCountToday: 4 }), today).petCountToday, 0);
+
+  const first = petXiaomei({ fullness: 46, affection: 22 }, { petDay: "2026-10-28", petCountToday: 0 }, today, () => 0);
+  assert.equal(first.kind, "pet");
+  assert.equal(first.gain, 1);
+  assert.deepEqual(first.meters, { fullness: 46, affection: 23 });
+  assert.equal(first.clock.petCountToday, 1);
+  const bumped = petXiaomei(first.meters, first.clock, today, () => 0.5);
+  assert.equal(bumped.gain, 2);
+  assert.equal(bumped.meters.fullness, 46);
+  assert.equal(bumped.meters.affection, 25);
+
+  let meters = { fullness: 40, affection: 20 };
+  let clock = { petDay: dayKey(today), petCountToday: 0 };
+  for (let index = 0; index < XIAOMEI_PET_DAILY_CAP; index += 1) {
+    const outcome = petXiaomei(meters, clock, today, () => 0);
+    assert.equal(outcome.kind, "pet");
+    meters = outcome.meters;
+    clock = outcome.clock;
+  }
+  assert.equal(meters.affection, 20 + XIAOMEI_PET_DAILY_CAP);
+  assert.equal(meters.fullness, 40);
+  const stopped = petXiaomei(meters, clock, today, () => 0.9);
+  assert.equal(stopped.kind, "capped");
+  assert.equal(stopped.gain, 0);
+  assert.equal(stopped.meters.affection, meters.affection);
+  assert.equal(stopped.clock.petCountToday, XIAOMEI_PET_DAILY_CAP);
+
+  const nextDay = petXiaomei(stopped.meters, stopped.clock, tomorrow, () => 0);
+  assert.equal(nextDay.kind, "pet");
+  assert.equal(nextDay.gain, 1);
+  assert.equal(nextDay.clock.petDay, "2026-10-29");
+  assert.equal(nextDay.clock.petCountToday, 1);
+
+  const full = petXiaomei({ fullness: 12, affection: 100 }, { petDay: "2026-10-28", petCountToday: 1 }, today, () => 0);
+  assert.equal(full.kind, "full");
+  assert.equal(full.gain, 0);
+  assert.equal(full.meters.fullness, 12);
+  assert.equal(full.clock.petCountToday, 2);
+  const almost = petXiaomei({ fullness: 12, affection: 99 }, { petDay: "2026-10-28", petCountToday: 0 }, today, () => 0.9);
+  assert.equal(almost.kind, "pet");
+  assert.equal(almost.gain, 1);
+  assert.equal(almost.meters.affection, 100);
+
+  const raw = serializeXiaomeiMeters({
+    fullness: 50,
+    affection: 20,
+    touchedAt: 10,
+    feedDay: "2026-10-28",
+    feedCountToday: 2,
+    petDay: "2026-10-28",
+    petCountToday: 3,
+  });
+  assert.equal(readFeedClock(raw, today).feedCountToday, 2);
+  assert.equal(readPetClock(raw, today).petCountToday, 3);
+  assert.equal(metersFromStored(raw).affection, 20);
+  const hungry = projectXiaomeiMeters(raw, 10 + XIAOMEI_HUNGER_MS);
+  assert.equal(hungry.meters.fullness, 50 - XIAOMEI_HUNGER_DROP);
+  assert.equal(hungry.meters.affection, 20);
+
+  const banned = /鲸鱼|大肥鱼|呜鲸|小鲸鱼|本小姐|角标|伙伴|蓝莓|主人|傲娇/;
+  assert.ok(XIAOMEI_PET_LINES.length >= 8);
+  const texts = XIAOMEI_PET_LINES.map((line) => line.text);
+  assert.equal(new Set(texts).size, texts.length);
+  for (const line of XIAOMEI_PET_LINES) {
+    assert.ok(line.mood === "happy" || line.mood === "content", line.text);
+    assert.doesNotMatch(line.text, banned, line.text);
+  }
+  for (const line of [...XIAOMEI_PET_CAP_LINES, ...XIAOMEI_PET_FULL_LINES]) {
+    assert.doesNotMatch(line, banned, line);
+  }
+  const sweet = new Set(
+    XIAOMEI_PET_LINES.filter((line) => line.tone === "warm" || line.tone === "close").map((line) => line.text),
+  );
+  for (let index = 0; index < 16; index += 1) {
+    assert.equal(sweet.has(pickTaggedLine(XIAOMEI_PET_LINES, undefined, "guarded").text), false);
+  }
+});
+
+test("记忆抽屉列出事实和最近的事，忘掉一条不会把别的也清掉", () => {
+  const now = new Date(2026, 9, 28, 12).getTime();
+  const named = rememberThread(emptyXiaomeiMemory(), "叫我阿冰", "哼", new Date(now));
+  const withEvent = rememberThread(named, "今天去看了枪码呀", "顶栏", new Date(now + 1000));
+  const view = memoryNotesForDrawer(withEvent);
+  assert.equal(view.facts[0]?.summary, "想被叫作阿冰");
+  assert.equal(view.facts.some((item) => item.kind === "nickname"), true);
+  assert.equal(view.events[0]?.summary.includes("枪码"), true);
+  assert.equal(view.events.some((item) => item.kind === "nickname"), false);
+
+  const olderFirst = memoryNotesForDrawer({
+    userName: "",
+    topics: [
+      { kind: "event", summary: "旧闻", at: now - 5_000 },
+      { kind: "preference", summary: "偏好：喜欢雨夜", at: now - 4_000, permanent: true },
+      { kind: "event", summary: "新的雨", at: now - 1_000 },
+      { kind: "emotion", summary: "心情：有点累", at: now - 2_000 },
+    ],
+  });
+  assert.deepEqual(
+    olderFirst.facts.map((item) => item.summary),
+    ["偏好：喜欢雨夜"],
+  );
+  assert.deepEqual(
+    olderFirst.events.map((item) => item.summary),
+    ["新的雨", "心情：有点累", "旧闻"],
+  );
+
+  const injected = memoryNotesForDrawer({ userName: "阿冰", topics: [{ kind: "event", summary: "雨夜", at: now }] });
+  assert.equal(injected.facts[0]?.summary, "想被叫作阿冰");
+  const forgottenName = forgetXiaomeiNote(
+    { userName: "阿冰", topics: [{ kind: "event", summary: "雨夜", at: now }], turns: [{ role: "user", content: "在吗" }] },
+    "想被叫作阿冰",
+  );
+  assert.equal(forgottenName.userName, "");
+  assert.equal(forgottenName.topics.length, 1);
+  assert.equal(forgottenName.turns.length, 1);
+
+  const dropped = forgetXiaomeiNote(withEvent, withEvent.topics.find((item) => item.kind === "event")?.summary ?? "");
+  assert.equal(dropped.userName, "阿冰");
+  assert.equal(dropped.topics.some((item) => item.kind === "nickname"), true);
+  assert.equal(dropped.topics.some((item) => item.kind === "event"), false);
+  assert.equal(dropped.turns.length, withEvent.turns.length);
+  assert.equal(dropped.memoryDay, withEvent.memoryDay);
+  assert.equal(forgetXiaomeiNote(dropped, "  ").topics.length, dropped.topics.length);
+  assert.equal(forgetXiaomeiNote(dropped, "没有这条").topics.length, dropped.topics.length);
 });
 
 test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
@@ -588,7 +737,9 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   const files = [
     "../components/xiaomei/xiaomei-companion.tsx",
     "../components/xiaomei/xiaomei-menu.tsx",
+    "../components/xiaomei/xiaomei-memory-sheet.tsx",
     "../components/xiaomei/use-xiaomei-meters.ts",
+    "../components/xiaomei/use-xiaomei-place.ts",
     "../components/xiaomei/use-xiaomei-chat.ts",
     "../components/xiaomei/xiaomei-chat-sheet.tsx",
     "../components/lab/support-button.tsx",
@@ -616,6 +767,12 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /visualViewport/);
   assert.match(companion, /formatMeterDelta/);
   assert.match(companion, /XIAOMEI_HOLD_HINT/);
+  assert.match(companion, /XIAOMEI_PET_LINES/);
+  assert.match(companion, /onHold: onPet/);
+  assert.match(companion, /forgetXiaomeiNote/);
+  assert.match(companion, /XiaomeiMemorySheet/);
+  assert.match(companion, /长按是摸头/);
+  assert.doesNotMatch(companion, /长按打开菜单/);
   assert.match(companion, /dockXiaomeiChat/);
   const menu = await readFile(new URL("../components/xiaomei/xiaomei-menu.tsx", import.meta.url), "utf8");
   assert.match(menu, /让\{XIAOMEI_NAME\}说点什么/);
@@ -625,7 +782,19 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(menu, /好感/);
   assert.match(menu, /跟她说话/);
   assert.match(menu, /会真的回你/);
+  assert.match(menu, /她记住了什么/);
   assert.doesNotMatch(menu, />\s*对话\s*</);
+  const memorySheet = await readFile(new URL("../components/xiaomei/xiaomei-memory-sheet.tsx", import.meta.url), "utf8");
+  assert.match(memorySheet, /一直记得/);
+  assert.match(memorySheet, /最近的事/);
+  assert.match(memorySheet, /忘记/);
+  assert.match(memorySheet, /role="dialog"/);
+  assert.doesNotMatch(memorySheet, /localStorage/);
+  const metersHook = await readFile(new URL("../components/xiaomei/use-xiaomei-meters.ts", import.meta.url), "utf8");
+  assert.match(metersHook, /petXiaomei/);
+  assert.match(metersHook, /readPetClock/);
+  const placeHook = await readFile(new URL("../components/xiaomei/use-xiaomei-place.ts", import.meta.url), "utf8");
+  assert.match(placeHook, /XIAOMEI_PET_HOLD_MS/);
   const chatHook = await readFile(new URL("../components/xiaomei/use-xiaomei-chat.ts", import.meta.url), "utf8");
   assert.match(chatHook, /XIAOMEI_SCENE_LINES/);
   assert.match(chatHook, /XIAOMEI_SCENE_PIN_MS/);

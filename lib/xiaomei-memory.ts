@@ -448,6 +448,41 @@ export function selectMemoriesForPrompt(
   };
 }
 
+/**
+ * 抽屉里看到的全部笔记，不是送进提示词的那一小截。
+ * 称呼若只写在 userName 上、话题里还没有，补一条出来，删的时候才能对上。
+ */
+export function memoryNotesForDrawer(record: Pick<XiaomeiMemoryRecord, "userName" | "topics">): {
+  facts: XiaomeiMemoryNote[];
+  events: XiaomeiMemoryNote[];
+} {
+  const facts = record.topics.filter((note) => isXiaomeiFact(note));
+  const name = record.userName.trim();
+  const named = name.length > 0 && facts.some((note) => note.kind === "nickname" && note.summary.includes(name));
+  const withName =
+    name && !named ? [{ kind: "nickname" as const, summary: `想被叫作${name}`, permanent: true as const }, ...facts] : facts;
+  const byRecent = (a: XiaomeiMemoryNote, b: XiaomeiMemoryNote) => (b.at ?? 0) - (a.at ?? 0);
+  return {
+    facts: [
+      ...withName.filter((note) => note.kind === "nickname").sort(byRecent),
+      ...withName.filter((note) => note.kind !== "nickname").sort(byRecent),
+    ],
+    events: record.topics.filter((note) => !isXiaomeiFact(note)).slice().sort(byRecent),
+  };
+}
+
+/** 忘掉一条。对话轮次还留着。删掉当前称呼时，把名字一起清掉，避免下一轮又补回来。 */
+export function forgetXiaomeiNote(record: XiaomeiMemoryRecord, summary: string): XiaomeiMemoryRecord {
+  const trimmed = summary.trim();
+  if (!trimmed) return record;
+  const name = record.userName.trim();
+  return {
+    ...record,
+    userName: name.length > 0 && trimmed === `想被叫作${name}` ? "" : record.userName,
+    topics: record.topics.filter((note) => note.summary !== trimmed),
+  };
+}
+
 export function writeXiaomeiMemory(record: XiaomeiMemoryRecord) {
   if (typeof window === "undefined") return;
   try {
