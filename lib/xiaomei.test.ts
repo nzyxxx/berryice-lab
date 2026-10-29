@@ -135,6 +135,7 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
   }
   assert.equal(XIAOMEI_NAME, "小莓妹");
   assert.match(XIAOMEI_ABOUT, /我是小莓妹/);
+  assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI/);
   const again = pickXiaomeiLine(["只有一句"]);
   assert.equal(again, "只有一句");
   const avoided = pickXiaomeiLine(["甲", "乙"], "甲");
@@ -357,6 +358,22 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
     sanitizeXiaomeiMemory(undefined),
   );
   assert.match(nav[0]?.content ?? "", /用户在问路/);
+});
+
+test("问你是谁时不念性格卡，也不撇清", () => {
+  const prompt = buildXiaomeiSystemPrompt(sanitizeXiaomeiMemory(undefined));
+  assert.match(prompt, /禁止把性格标签念出口/);
+  assert.match(prompt, /「傲娇」「嘴硬」「心软」/);
+  assert.match(prompt, /不是什么随便的AI/);
+  assert.match(prompt, /尽管说吧/);
+  assert.match(prompt, /对照句是尺子，不是口头禅/);
+  assert.match(prompt, /【出口】/);
+  assert.ok(prompt.includes("绝对不要说：哼，我才不是什么随便的AI"));
+  assert.doesNotMatch(prompt, /【性格三词】/);
+  assert.doesNotMatch(prompt, /你不是客服机器人/);
+  assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI/);
+  assert.match(XIAOMEI_ABOUT, /角标那个/);
+  assert.ok(hanCount(XIAOMEI_ABOUT) <= 16);
 });
 
 test("菜单和投喂不把钥匙或别人的形象带进客户端", async () => {
