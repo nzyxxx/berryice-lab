@@ -7,12 +7,13 @@ import { parseWikiMarkdown, resolveWikiFile, type ParsedWiki } from "./wiki-pars
 export const WIKI_MARKDOWN_MAX_CHARS = 200_000;
 
 export class WikiStoreError extends Error {
-  constructor(
-    readonly code: "invalid-slug" | "too-large" | "empty" | "io",
-    message: string
-  ) {
+  /** 写在类体上。构造参数上的 `readonly` 会让单测的类型剥离直接失败。 */
+  readonly code: "invalid-slug" | "too-large" | "empty" | "io";
+
+  constructor(code: "invalid-slug" | "too-large" | "empty" | "io", message: string) {
     super(message);
     this.name = "WikiStoreError";
+    this.code = code;
   }
 }
 
