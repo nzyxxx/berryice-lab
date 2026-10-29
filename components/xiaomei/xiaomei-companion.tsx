@@ -3,6 +3,7 @@
 import { XiaomeiChatSheet } from "@/components/xiaomei/xiaomei-chat-sheet";
 import { XiaomeiMemorySheet } from "@/components/xiaomei/xiaomei-memory-sheet";
 import { XiaomeiMenu } from "@/components/xiaomei/xiaomei-menu";
+import { xiaomeiWhisperClass } from "@/components/xiaomei/xiaomei-surface";
 import { XiaomeiStage } from "@/components/xiaomei/xiaomei-stage";
 import { useXiaomeiChat } from "@/components/xiaomei/use-xiaomei-chat";
 import { useXiaomeiMeters } from "@/components/xiaomei/use-xiaomei-meters";
@@ -662,8 +663,9 @@ export function XiaomeiCompanion() {
         <div
           role="status"
           className={cn(
-            "pointer-events-none absolute z-10 w-max max-w-[15rem] text-[13px] leading-relaxed text-lab-ink",
-            "[text-shadow:0_1px_2px_rgba(0,0,0,0.92),0_0_16px_rgba(8,9,13,0.96)]",
+            xiaomeiWhisperClass(
+              "pointer-events-none absolute z-10 w-max max-w-[15rem] rounded-2xl px-3 py-2 text-[13px] leading-relaxed",
+            ),
             align === "right" ? "right-0" : "left-0",
             placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}
@@ -676,8 +678,9 @@ export function XiaomeiCompanion() {
       {showHint ? (
         <p
           className={cn(
-            "pointer-events-none absolute z-10 w-max text-xs leading-relaxed text-lab-ink-muted",
-            "[text-shadow:0_1px_2px_rgba(0,0,0,0.92),0_0_14px_rgba(8,9,13,0.96)]",
+            xiaomeiWhisperClass(
+              "pointer-events-none absolute z-10 w-max rounded-2xl px-2.5 py-1 text-xs leading-relaxed",
+            ),
             align === "right" ? "right-0" : "left-0",
             placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}

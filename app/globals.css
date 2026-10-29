@@ -619,36 +619,52 @@ html.home-motion [data-reveal].is-shown {
 }
 
 /* 小莓待机：只动 transform / opacity，不挂 rAF。气泡和拖拽在另一层，避免两套 transform 打架。
-   人只轻轻浮一点。脚下是固定的接触阴影，不跟着一亮一灭。 */
+   呼吸很慢。人浮起时脚下的影子略收，是接触，不是发光垫。 */
 @keyframes xiaomei-float {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(0, -4px, 0) scale(1.018);
+    transform: translate3d(0, -3px, 0) scale(1.012);
   }
 }
 
 .xiaomei-float {
-  animation: xiaomei-float 3.8s ease-in-out infinite;
+  animation: xiaomei-float 4.6s ease-in-out infinite;
 }
 
 .xiaomei-ground {
   position: absolute;
   z-index: 0;
   left: 50%;
-  bottom: 2px;
-  width: 42%;
-  height: 7px;
+  bottom: 0;
+  width: 72%;
+  height: 9px;
   border-radius: 999px;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 72%);
+  background: radial-gradient(ellipse at center, rgba(214, 224, 238, 0.42) 0%, rgba(214, 224, 238, 0.12) 46%, rgba(214, 224, 238, 0) 74%);
+  filter: blur(1px);
   transform: translate3d(-50%, 0, 0);
   pointer-events: none;
+  animation: xiaomei-ground 4.6s ease-in-out infinite;
 }
 
 .xiaomei-ground-still {
-  opacity: 0.35;
+  animation: none;
+  opacity: 0.55;
+  transform: translate3d(-50%, 0, 0) scaleX(0.92);
+}
+
+@keyframes xiaomei-ground {
+  0%,
+  100% {
+    transform: translate3d(-50%, 0, 0) scaleX(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate3d(-50%, 1px, 0) scaleX(0.9);
+    opacity: 0.62;
+  }
 }
 
 @keyframes xiaomei-glance {
@@ -767,10 +783,11 @@ html.home-motion [data-reveal].is-shown {
   animation: xiaomei-walk 2.4s ease-in-out 1;
 }
 
-/* 立绘大约 96px。道具贴在身上，不比人还大，也不描一圈白边。 */
+/* 杯子、点心、伞的 SVG 贴纸先藏起来。拍还在，只剩身体的轻动作。 */
 .xiaomei-prop {
   position: absolute;
   z-index: 2;
+  display: none;
   pointer-events: none;
   opacity: 0;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
@@ -1018,6 +1035,7 @@ html.home-motion [data-reveal].is-shown {
 .xiaomei-cue-stretch {
   top: -18px;
   left: 8%;
+  display: none;
   width: 84%;
   height: 36px;
   animation: xiaomei-stretch-arms 1.8s ease-in-out 1 both;
@@ -1039,6 +1057,7 @@ html.home-motion [data-reveal].is-shown {
 .xiaomei-cue-note {
   top: 16%;
   right: 8%;
+  display: none;
   width: 16px;
   height: 16px;
   animation: xiaomei-note-float 1.5s ease-out 1 both;
@@ -1063,6 +1082,7 @@ html.home-motion [data-reveal].is-shown {
 .xiaomei-cue-cheer {
   top: 6%;
   left: 8%;
+  display: none;
   width: 84%;
   height: 22px;
 }

@@ -243,7 +243,11 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   assert.match(css, /\.xiaomei-umbrella\s*\{[^}]*animation:\s*xiaomei-umbrella 2\.2s/);
   assert.match(css, /\.xiaomei-spin\s*\{[^}]*animation:\s*xiaomei-spin 2s/);
   assert.match(css, /\.xiaomei-walk\s*\{[^}]*animation:\s*xiaomei-walk 2\.4s/);
-  assert.doesNotMatch(css, /\.xiaomei-ground\s*\{[^}]*animation:/);
+  assert.match(css, /\.xiaomei-float\s*\{[^}]*animation:\s*xiaomei-float 4\.6s/);
+  assert.match(css, /\.xiaomei-ground\s*\{[^}]*animation:\s*xiaomei-ground 4\.6s/);
+  assert.doesNotMatch(css, /rgba\(198,\s*214,\s*255/);
+  assert.match(css, /\.xiaomei-prop\s*\{[^}]*display:\s*none/);
+  assert.match(css, /\.xiaomei-cue-note\s*\{[^}]*display:\s*none/);
   assert.match(css, /@keyframes xiaomei-cup/);
   assert.match(css, /@keyframes xiaomei-snack-prop/);
   assert.match(css, /@keyframes xiaomei-umbrella-prop/);

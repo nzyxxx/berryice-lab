@@ -33,7 +33,7 @@ export function XiaomeiStage({
         unoptimized
         draggable={false}
         className={cn(
-          "pointer-events-none relative z-[1] h-full w-full object-contain object-bottom [filter:drop-shadow(0_8px_6px_rgba(0,0,0,0.28))]",
+          "pointer-events-none relative z-[1] h-full w-full object-contain object-bottom [filter:drop-shadow(0_0_1px_rgba(244,246,251,0.2))_drop-shadow(0_6px_5px_rgba(0,0,0,0.45))]",
           motionClass,
         )}
       />
