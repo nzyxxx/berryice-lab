@@ -30,7 +30,7 @@ export type XiaomeiSpokenLine = {
 export const XIAOMEI_CATCHPHRASE = "哼……人家才不会随便甜给你。";
 
 /** 换图时把 v 加一，浏览器缓存才会失效。 */
-const XIAOMEI_SPRITE_VERSION = 3;
+const XIAOMEI_SPRITE_VERSION = 4;
 
 export const XIAOMEI_SPRITE: Record<XiaomeiMood, string> = {
   happy: `/xiaomei/happy.webp?v=${XIAOMEI_SPRITE_VERSION}`,

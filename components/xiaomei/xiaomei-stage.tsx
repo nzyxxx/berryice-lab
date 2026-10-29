@@ -4,6 +4,7 @@ import { XiaomeiCue } from "@/components/xiaomei/xiaomei-cue";
 import { XiaomeiProp } from "@/components/xiaomei/xiaomei-prop";
 import type { XiaomeiCueKind, XiaomeiPropKind } from "@/lib/xiaomei-actions";
 import { XIAOMEI_SPRITE, type XiaomeiMood } from "@/lib/xiaomei-lines";
+import { XIAOMEI_FRAME } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -27,8 +28,8 @@ export function XiaomeiStage({
       <Image
         src={XIAOMEI_SPRITE[mood]}
         alt=""
-        width={256}
-        height={351}
+        width={XIAOMEI_FRAME.width}
+        height={XIAOMEI_FRAME.height}
         unoptimized
         draggable={false}
         className={cn(
