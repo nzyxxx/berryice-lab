@@ -4,6 +4,7 @@
  * 喝水两张是新姿势，不能再叠一只杯子。
  * Batch B 十张站姿同样全身换 src：歪头、招手、鞠躬、偷看。
  * Batch C 九张活动也是全身：哈欠、伸懒腰、转圈三帧、左右迈步。
+ * Batch D 点心和伞也是全身。菜单图标用 png，不再叠第二只。
  * 五张线上情绪仍由 xiaomei-lines 的 XiaomeiMood 管台词。
  */
 
@@ -36,6 +37,9 @@ export const XIAOMEI_ACTIVITY_POSES = [
   "pose_walk_r_2",
 ] as const;
 
+/** Batch D。点心先捧着再咬，伞是撑开的一把。 */
+export const XIAOMEI_ITEM_POSES = ["pose_snack_hold", "pose_snack_bite", "pose_umbrella_hold"] as const;
+
 export const XIAOMEI_A1_FACES = [
   "blink_open",
   "blink_half",
@@ -56,6 +60,7 @@ export const XIAOMEI_A1_FACES = [
   "pose_drink_sip",
   ...XIAOMEI_STAND_POSES,
   ...XIAOMEI_ACTIVITY_POSES,
+  ...XIAOMEI_ITEM_POSES,
 ] as const;
 
 export type XiaomeiA1Face = (typeof XIAOMEI_A1_FACES)[number];
@@ -68,6 +73,8 @@ export type XiaomeiStandPose = (typeof XIAOMEI_STAND_POSES)[number];
 
 export type XiaomeiActivityPose = (typeof XIAOMEI_ACTIVITY_POSES)[number];
 
+export type XiaomeiItemPose = (typeof XIAOMEI_ITEM_POSES)[number];
+
 const A1_FACE_SET: ReadonlySet<string> = new Set(XIAOMEI_A1_FACES);
 
 export function isXiaomeiA1Face(value: string): value is XiaomeiA1Face {
@@ -76,6 +83,12 @@ export function isXiaomeiA1Face(value: string): value is XiaomeiA1Face {
 
 /** 菜单上的杯子。喝水姿势里已经端着杯，不再浮第二只。 */
 export const XIAOMEI_CUP_SRC = `/xiaomei/prop_cup.png?v=${XIAOMEI_SPRITE_VERSION}`;
+
+/** 菜单上的点心。咬的姿势里已经拿着，不再浮第二块。 */
+export const XIAOMEI_SNACK_SRC = `/xiaomei/prop_snack.png?v=${XIAOMEI_SPRITE_VERSION}`;
+
+/** 伞的图标。撑伞姿势里已经举着，不再浮第二把。 */
+export const XIAOMEI_UMBRELLA_SRC = `/xiaomei/prop_umbrella.png?v=${XIAOMEI_SPRITE_VERSION}`;
 
 export function xiaomeiFaceSrc(face: XiaomeiFace): string {
   return `/xiaomei/${face}.webp?v=${XIAOMEI_SPRITE_VERSION}`;

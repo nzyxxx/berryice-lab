@@ -4,6 +4,7 @@
  * 喝水是端杯再抿，不再用跳动的 SVG 杯子。点心、伞仍是道具。
  * 站姿微动作也换全身图：歪头、偷看、鞠躬、比心，不再靠转图层假装。
  * 哈欠和伸懒腰换整张。转圈按三帧换，不再压扁翻转。散步先往左迈再往右迈，左右是两套画。
+ * 点心是先捧着再咬。伞是撑开拿着。都不再叠跳动的贴纸。
  * 菜单关上、没有台词时，十秒里大约三拍，几乎每拍都在动。
  * 间隔长过最长的一拍。同一种动作或微表情不连播。
  */
@@ -12,6 +13,7 @@ import {
   type XiaomeiActivityPose,
   type XiaomeiDrinkPose,
   type XiaomeiFace,
+  type XiaomeiItemPose,
   type XiaomeiStandPose,
 } from "./xiaomei-faces";
 import { type XiaomeiMood } from "./xiaomei-lines";
@@ -196,6 +198,22 @@ export function drinkFaceAt(elapsedMs: number): XiaomeiDrinkPose | null {
   return null;
 }
 
+/** 先看清点心，再咬一口。两段加起来等于这一拍，之后回到原来的表情。 */
+export const XIAOMEI_SNACK_HOLD_MS = 1000;
+
+export function snackFaceAt(elapsedMs: number): Extract<XiaomeiItemPose, "pose_snack_hold" | "pose_snack_bite"> | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_snack_hold";
+  if (elapsedMs < XIAOMEI_SNACK_HOLD_MS) return "pose_snack_hold";
+  if (elapsedMs < XIAOMEI_BEAT_MS.snack) return "pose_snack_bite";
+  return null;
+}
+
+export function umbrellaFaceAt(elapsedMs: number): Extract<XiaomeiItemPose, "pose_umbrella_hold"> | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_umbrella_hold";
+  if (elapsedMs < XIAOMEI_BEAT_MS.umbrella) return "pose_umbrella_hold";
+  return null;
+}
+
 export function greetFaceAt(elapsedMs: number): Extract<XiaomeiStandPose, "pose_wave" | "pose_bow"> | null {
   if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_wave";
   if (elapsedMs < XIAOMEI_GREET_WAVE_MS) return "pose_wave";
@@ -336,8 +354,8 @@ export function expressionTrail(
   if (context === "wipe") return ["mood_puff", "content"];
   if (context === "hum") return ["mood_soft", "happy"];
   if (context === "sway") return ["mood_cool", "happy"];
-  if (context === "snack") return ["mood_eager", "happy"];
-  if (context === "umbrella") return ["mood_cool", "content"];
+  if (context === "snack") return ["pose_snack_hold", "pose_snack_bite"];
+  if (context === "umbrella") return ["pose_umbrella_hold", "pose_umbrella_hold"];
   if (context === "spin") return ["pose_spin_1", "pose_spin_2"];
   if (context === "walk") return ["pose_walk_l_1", "pose_walk_r_1"];
   return [REACTION_LEAD[context][settled], settled];
@@ -346,7 +364,17 @@ export function expressionTrail(
 export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boolean): string | null {
   if (dragging) return null;
   if (beat === "blink" || beat === "blink2" || beat === "slowblink") return "xiaomei-float";
-  if (beat === "drink" || beat === "sip" || beat === "hold" || beat === "spin" || beat === "walk") return null;
+  if (
+    beat === "drink" ||
+    beat === "sip" ||
+    beat === "hold" ||
+    beat === "snack" ||
+    beat === "umbrella" ||
+    beat === "spin" ||
+    beat === "walk"
+  ) {
+    return null;
+  }
   // 这些姿势已经画在图里。再压扁、翻转或滑步会和画面抢。哈欠和伸懒腰仍轻轻呼吸。
   if (beat === "yawn" || beat === "stretch" || beat === "peek" || beat === "tilt") return "xiaomei-float";
   if (beat === "nod") return "xiaomei-nod";
@@ -355,10 +383,8 @@ export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boole
   if (beat === "cheer") return "xiaomei-cheer";
   if (beat === "sigh") return "xiaomei-sigh";
   if (beat === "wipe") return "xiaomei-wipe";
-  if (beat === "snack") return "xiaomei-snack";
   if (beat === "hum") return "xiaomei-hum";
   if (beat === "sway") return "xiaomei-sway";
-  if (beat === "umbrella") return "xiaomei-umbrella";
   if (beat === "glance") return "xiaomei-glance";
   return "xiaomei-float";
 }
@@ -382,15 +408,15 @@ export function xiaomeiChatCue(
   return null;
 }
 
+/** 喝水、点心、伞都画在全身里，不再浮第二只。 */
 export function xiaomeiPropKind(beat: XiaomeiIdleBeat | null): XiaomeiPropKind | null {
-  if (beat === "snack") return "snack";
-  if (beat === "umbrella") return "umbrella";
+  void beat;
   return null;
 }
 
-/** 点心怎么拿。喝水改全身姿势，不再叠杯子。 */
+/** 道具姿势留给旧贴纸。全身换帧之后这里为空。 */
 export function xiaomeiPropPose(beat: XiaomeiIdleBeat | null): XiaomeiPropPose | null {
-  if (beat === "snack") return "bite";
+  void beat;
   return null;
 }
 

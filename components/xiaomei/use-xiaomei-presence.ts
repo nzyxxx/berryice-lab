@@ -7,11 +7,14 @@ import {
   XIAOMEI_DRINK_HOLD_MS,
   XIAOMEI_GREET_MS,
   XIAOMEI_GREET_WAVE_MS,
+  XIAOMEI_SNACK_HOLD_MS,
   XIAOMEI_SPIN_AT_MS,
   XIAOMEI_TRAIL_MS,
   XIAOMEI_WALK_AT_MS,
   expressionTrail,
+  snackFaceAt,
   spinFaceAt,
+  umbrellaFaceAt,
   walkFaceAt,
   idleGapMs,
   nextIdleBeat,
@@ -27,6 +30,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * 聊天、菜单、记忆打开时停掉下一拍。台词还在时不新开一拍，但喝水姿势可以盖过台词。
  * 进场招呼先招手再鞠躬，盖过这句的脸，短于台词。喝水和喂食进行中不打断。
  * 转圈三帧、散步左右换步都走姿势脸。不压扁，也不把右脚镜像成左脚。
+ * 点心先捧着再咬，伞撑开拿着。贴纸不再叠第二只。咬完回到这句原来的表情。
  * 喂食和喝水的动作在关菜单的同一轮排上，菜单合上后接着播，不会被清掉。
  */
 export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean; paused: () => boolean }) {
@@ -163,6 +167,54 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     );
   }, [clearBeatTimers, clearBlink, clearLeadTimer]);
 
+  const startSnack = useCallback(() => {
+    clearBlink();
+    clearBeatTimers();
+    clearLeadTimer();
+    activeRef.current = true;
+    forcedRef.current = true;
+    lastRef.current = "snack";
+    setLead(null);
+    setBeat("snack");
+    setBeatMood(null);
+    setPoseFace(snackFaceAt(0));
+    beatTimers.current.push(
+      window.setTimeout(() => {
+        setPoseFace(snackFaceAt(XIAOMEI_SNACK_HOLD_MS));
+      }, XIAOMEI_SNACK_HOLD_MS),
+    );
+    beatTimers.current.push(
+      window.setTimeout(() => {
+        activeRef.current = false;
+        forcedRef.current = false;
+        setBeat(null);
+        setBeatMood(null);
+        setPoseFace(null);
+      }, XIAOMEI_BEAT_MS.snack),
+    );
+  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
+
+  const startUmbrella = useCallback(() => {
+    clearBlink();
+    clearBeatTimers();
+    clearLeadTimer();
+    activeRef.current = true;
+    forcedRef.current = false;
+    lastRef.current = "umbrella";
+    setLead(null);
+    setBeat("umbrella");
+    setBeatMood(null);
+    setPoseFace(umbrellaFaceAt(0));
+    beatTimers.current.push(
+      window.setTimeout(() => {
+        activeRef.current = false;
+        setBeat(null);
+        setBeatMood(null);
+        setPoseFace(null);
+      }, XIAOMEI_BEAT_MS.umbrella),
+    );
+  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
+
   const startDrink = useCallback(() => {
     clearBlink();
     clearBeatTimers();
@@ -195,6 +247,14 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
       clearBlink();
       if (next === "drink") {
         startDrink();
+        return;
+      }
+      if (next === "snack") {
+        startSnack();
+        return;
+      }
+      if (next === "umbrella") {
+        startUmbrella();
         return;
       }
       if (next === "spin" || next === "walk") {
@@ -240,7 +300,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         }, XIAOMEI_BEAT_MS[next]),
       );
     },
-    [clearBeatTimers, clearBlink, clearLeadTimer, startActivity, startBlink, startDrink],
+    [clearBeatTimers, clearBlink, clearLeadTimer, startActivity, startBlink, startDrink, startSnack, startUmbrella],
   );
 
   const flashClick = useCallback(
@@ -260,31 +320,9 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     [clearBeatTimers, clearBlink, clearLeadTimer],
   );
 
-  const playFeed = useCallback(
-    (settled: XiaomeiMood) => {
-      const trail = expressionTrail("feed", settled);
-      clearBlink();
-      clearBeatTimers();
-      clearLeadTimer();
-      activeRef.current = true;
-      forcedRef.current = true;
-      lastRef.current = "snack";
-      setBeat("snack");
-      setBeatMood(null);
-      setPoseFace(null);
-      setLead(trail[0]);
-      leadTimer.current = window.setTimeout(() => setLead(null), XIAOMEI_TRAIL_MS);
-      beatTimers.current.push(
-        window.setTimeout(() => {
-          activeRef.current = false;
-          forcedRef.current = false;
-          setBeat(null);
-          setBeatMood(null);
-        }, XIAOMEI_BEAT_MS.snack),
-      );
-    },
-    [clearBeatTimers, clearBlink, clearLeadTimer],
-  );
+  const playFeed = useCallback((_settled: XiaomeiMood) => {
+    startSnack();
+  }, [startSnack]);
 
   useEffect(() => {
     hungryRef.current = options.hungry;
