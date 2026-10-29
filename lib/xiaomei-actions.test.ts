@@ -35,6 +35,8 @@ const NO_REPEAT = [
   "hold",
   "wipe",
   "snack",
+  "hum",
+  "sway",
   "umbrella",
   "spin",
   "walk",
@@ -59,6 +61,8 @@ const IDLE: readonly XiaomeiIdleBeat[] = [
   "hold",
   "wipe",
   "snack",
+  "hum",
+  "sway",
   "umbrella",
   "spin",
   "walk",
@@ -82,7 +86,7 @@ test("短动作都是短拍，间隔比旧的九秒密，也不会两拍叠上",
 });
 
 test("待机下一拍：十秒里很忙，饿了点心更多，同一种动作不连播", () => {
-  assert.ok(IDLE.length >= 22);
+  assert.ok(IDLE.length >= 24);
   assert.equal(nextIdleBeat(0, null, false), "blink");
   assert.equal(nextIdleBeat(0.05, null, false), "blink2");
   assert.equal(nextIdleBeat(0.09, null, false), "slowblink");
@@ -95,13 +99,13 @@ test("待机下一拍：十秒里很忙，饿了点心更多，同一种动作�
   assert.equal(nextIdleBeat(0.45, null, false), "smile");
   assert.equal(nextIdleBeat(0.51, null, false), "pout");
   assert.equal(nextIdleBeat(0.56, null, false), "sigh");
-  assert.equal(nextIdleBeat(0.66, null, false), "sip");
-  assert.equal(nextIdleBeat(0.71, null, false), "drink");
+  assert.equal(nextIdleBeat(0.66, null, false), "hum");
+  assert.equal(nextIdleBeat(0.71, null, false), "sip");
   assert.equal(nextIdleBeat(0.77, null, false), "hold");
   assert.equal(nextIdleBeat(0.82, null, false), "wipe");
   assert.equal(nextIdleBeat(0.86, null, false), "snack");
-  assert.equal(nextIdleBeat(0.9, null, false), "umbrella");
-  assert.equal(nextIdleBeat(0.93, null, false), "spin");
+  assert.equal(nextIdleBeat(0.9, null, false), "sway");
+  assert.equal(nextIdleBeat(0.93, null, false), "umbrella");
   assert.equal(nextIdleBeat(0.96, null, false), "walk");
   assert.equal(nextIdleBeat(1, null, false), "walk");
   assert.equal(nextIdleBeat(Number.NaN, null, false), "blink");
@@ -110,7 +114,7 @@ test("待机下一拍：十秒里很忙，饿了点心更多，同一种动作�
   assert.equal(nextIdleBeat(0.08, null, true), "yawn");
   assert.equal(nextIdleBeat(0.3, null, true), "snack");
   assert.equal(nextIdleBeat(0.58, null, true), "drink");
-  assert.equal(nextIdleBeat(0.84, null, true), "walk");
+  assert.equal(nextIdleBeat(0.84, null, true), "umbrella");
   assert.equal(nextIdleBeat(1, null, true), "spin");
 
   assert.equal(nextIdleBeat(0.48, null, false), "smile");
@@ -118,9 +122,9 @@ test("待机下一拍：十秒里很忙，饿了点心更多，同一种动作�
 
   assert.equal(nextIdleBeat(0.01, "blink", false), "blink2");
   assert.equal(nextIdleBeat(0.74, "drink", false), "sip");
-  assert.equal(nextIdleBeat(0.87, "snack", false), "umbrella");
-  assert.equal(nextIdleBeat(0.91, "umbrella", false), "spin");
-  assert.equal(nextIdleBeat(0.94, "spin", false), "walk");
+  assert.equal(nextIdleBeat(0.87, "snack", false), "hum");
+  assert.equal(nextIdleBeat(0.91, "umbrella", false), "sway");
+  assert.equal(nextIdleBeat(0.94, "spin", false), "umbrella");
   assert.equal(nextIdleBeat(0.97, "walk", false), "drink");
   assert.equal(nextIdleBeat(0.48, "smile", false), "smile");
   assert.equal(nextIdleBeat(0.3, "glance", false), "glance");
@@ -172,6 +176,8 @@ test("表情轨迹两帧，待机不切难过，点击和投喂落到这句的�
   assert.deepEqual(expressionTrail("sip", "happy"), ["blank", "content"]);
   assert.deepEqual(expressionTrail("hold", "annoyed"), ["content", "happy"]);
   assert.deepEqual(expressionTrail("wipe", "happy"), ["annoyed", "content"]);
+  assert.deepEqual(expressionTrail("hum", "blank"), ["content", "happy"]);
+  assert.deepEqual(expressionTrail("sway", "content"), ["blank", "happy"]);
   assert.deepEqual(expressionTrail("yawn", "happy"), ["blank", "content"]);
   assert.deepEqual(expressionTrail("stretch", "blank"), ["content", "happy"]);
   assert.deepEqual(expressionTrail("note", "annoyed"), ["blank", "content"]);
@@ -209,6 +215,8 @@ test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () =>
   assert.equal(xiaomeiMotionClass("sip", false), "xiaomei-sip");
   assert.equal(xiaomeiMotionClass("hold", false), "xiaomei-hold");
   assert.equal(xiaomeiMotionClass("wipe", false), "xiaomei-wipe");
+  assert.equal(xiaomeiMotionClass("hum", false), "xiaomei-hum");
+  assert.equal(xiaomeiMotionClass("sway", false), "xiaomei-sway");
   assert.equal(xiaomeiMotionClass("yawn", false), "xiaomei-yawn");
   assert.equal(xiaomeiMotionClass("stretch", false), "xiaomei-stretch");
   assert.equal(xiaomeiMotionClass("note", false), "xiaomei-note");
@@ -295,6 +303,12 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   assert.match(css, /\.xiaomei-sip\s*\{[^}]*animation:\s*xiaomei-sip 1\.6s/);
   assert.match(css, /\.xiaomei-hold\s*\{[^}]*animation:\s*xiaomei-hold 2s/);
   assert.match(css, /\.xiaomei-blink2\s*\{[^}]*animation:\s*xiaomei-blink2 1\.1s/);
+  assert.match(css, /\.xiaomei-hum\s*\{[^}]*animation:\s*xiaomei-hum 1\.8s/);
+  assert.match(css, /\.xiaomei-sway\s*\{[^}]*animation:\s*xiaomei-sway 2\.2s/);
+  assert.match(css, /\.xiaomei-cue-hum\s*\{[^}]*animation:\s*xiaomei-hum-mark 1\.8s/);
+  const humMark = css.match(/@keyframes xiaomei-hum-mark\s*\{([^}]*)\}/);
+  assert.ok(humMark);
+  assert.doesNotMatch(humMark[1], /scale\(/);
   assert.match(css, /@keyframes xiaomei-cup/);
   assert.match(css, /@keyframes xiaomei-snack-prop/);
   assert.match(css, /@keyframes xiaomei-umbrella-prop/);

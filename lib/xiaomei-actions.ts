@@ -29,6 +29,8 @@ export const XIAOMEI_IDLE_BEATS = [
   "hold",
   "wipe",
   "snack",
+  "hum",
+  "sway",
   "umbrella",
   "spin",
   "walk",
@@ -37,7 +39,7 @@ export const XIAOMEI_IDLE_BEATS = [
 export type XiaomeiIdleBeat = (typeof XIAOMEI_IDLE_BEATS)[number];
 
 /** 带道具或整段身体位移的拍。转圈和散步只动身体。 */
-export const XIAOMEI_ACTION_BEATS = ["drink", "sip", "hold", "wipe", "snack", "umbrella", "spin", "walk"] as const;
+export const XIAOMEI_ACTION_BEATS = ["drink", "sip", "hold", "wipe", "snack", "hum", "sway", "umbrella", "spin", "walk"] as const;
 
 export type XiaomeiActionBeat = (typeof XIAOMEI_ACTION_BEATS)[number];
 
@@ -58,7 +60,7 @@ export const XIAOMEI_MICRO_BEATS = [
 ] as const;
 
 /** 叠在现有脸上的记号。音符和欢呼仍先藏着，不拿来连播。 */
-export const XIAOMEI_CUE_BEATS = ["blink", "blink2", "slowblink", "yawn", "stretch", "note", "cheer", "sigh"] as const;
+export const XIAOMEI_CUE_BEATS = ["blink", "blink2", "slowblink", "yawn", "stretch", "note", "hum", "cheer", "sigh"] as const;
 
 export type XiaomeiCueKind = (typeof XIAOMEI_CUE_BEATS)[number];
 
@@ -88,6 +90,8 @@ export const XIAOMEI_BEAT_MS = {
   hold: 2000,
   wipe: 1500,
   snack: 2100,
+  hum: 1800,
+  sway: 2200,
   umbrella: 2200,
   spin: 2000,
   walk: 2400,
@@ -114,13 +118,15 @@ const REST_CUTS: readonly { beat: XiaomeiIdleBeat; until: number }[] = [
   { beat: "pout", until: 0.56 },
   { beat: "sigh", until: 0.6 },
   { beat: "note", until: 0.63 },
-  { beat: "cheer", until: 0.66 },
-  { beat: "sip", until: 0.71 },
+  { beat: "cheer", until: 0.64 },
+  { beat: "hum", until: 0.68 },
+  { beat: "sip", until: 0.72 },
   { beat: "drink", until: 0.77 },
   { beat: "hold", until: 0.82 },
   { beat: "wipe", until: 0.86 },
   { beat: "snack", until: 0.9 },
-  { beat: "umbrella", until: 0.93 },
+  { beat: "sway", until: 0.93 },
+  { beat: "umbrella", until: 0.95 },
   { beat: "spin", until: 0.96 },
   { beat: "walk", until: 1 },
 ];
@@ -136,10 +142,12 @@ const HUNGRY_CUTS: readonly { beat: XiaomeiIdleBeat; until: number }[] = [
   { beat: "snack", until: 0.5 },
   { beat: "sip", until: 0.58 },
   { beat: "drink", until: 0.66 },
-  { beat: "hold", until: 0.72 },
-  { beat: "wipe", until: 0.78 },
-  { beat: "umbrella", until: 0.84 },
-  { beat: "walk", until: 0.92 },
+  { beat: "hold", until: 0.7 },
+  { beat: "hum", until: 0.74 },
+  { beat: "sway", until: 0.78 },
+  { beat: "wipe", until: 0.82 },
+  { beat: "umbrella", until: 0.86 },
+  { beat: "walk", until: 0.94 },
   { beat: "spin", until: 1 },
 ];
 
@@ -223,6 +231,8 @@ export function expressionTrail(
   if (context === "sip" || context === "drink") return ["blank", "content"];
   if (context === "hold") return ["content", "happy"];
   if (context === "wipe") return ["annoyed", "content"];
+  if (context === "hum") return ["content", "happy"];
+  if (context === "sway") return ["blank", "happy"];
   if (context === "snack") return ["content", "happy"];
   if (context === "umbrella") return ["content", "happy"];
   if (context === "spin") return ["blank", "happy"];
@@ -249,6 +259,8 @@ export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boole
   if (beat === "hold") return "xiaomei-hold";
   if (beat === "wipe") return "xiaomei-wipe";
   if (beat === "snack") return "xiaomei-snack";
+  if (beat === "hum") return "xiaomei-hum";
+  if (beat === "sway") return "xiaomei-sway";
   if (beat === "umbrella") return "xiaomei-umbrella";
   if (beat === "spin") return "xiaomei-spin";
   if (beat === "walk") return "xiaomei-walk";
@@ -264,6 +276,7 @@ export function xiaomeiCueKind(beat: XiaomeiIdleBeat | null): XiaomeiCueKind | n
     beat === "yawn" ||
     beat === "stretch" ||
     beat === "note" ||
+    beat === "hum" ||
     beat === "cheer" ||
     beat === "sigh"
   ) {
