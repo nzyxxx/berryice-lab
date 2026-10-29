@@ -61,9 +61,12 @@ import {
   XIAOMEI_MUTTER_LINES,
   XIAOMEI_NAME,
   XIAOMEI_RECALL_LINES,
+  XIAOMEI_SCENE_LINES,
+  XIAOMEI_SCENE_PIN_MS,
   XIAOMEI_SPAM_LINES,
   hanCount,
   linesForTone,
+  moodForChatStatus,
   pickTaggedLine,
   pickXiaomeiLine,
 } from "./xiaomei-lines.ts";
@@ -116,6 +119,7 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     ...XIAOMEI_HUNGRY_LINES.map((line) => line.text),
     ...XIAOMEI_COMFORT_LINES,
     ...Object.values(XIAOMEI_RECALL_LINES).flat(),
+    ...Object.values(XIAOMEI_SCENE_LINES).flat(),
     XIAOMEI_ABOUT,
     XIAOMEI_HOLD_HINT,
     XIAOMEI_CHAT_EMPTY,
@@ -185,6 +189,54 @@ test("单击台词随机换句，不按情绪轮转", () => {
     linesForTone(XIAOMEI_CLICK_LINES, "classic").some((line) => line.tone === "guarded" || line.tone === "close"),
     false,
   );
+});
+
+test("单击、悬浮、碎碎念按好感档混入口气", () => {
+  const tones = ["guarded", "warm", "close"] as const;
+  for (const pool of [XIAOMEI_CLICK_LINES, XIAOMEI_HOVER_LINES, XIAOMEI_MUTTER_LINES]) {
+    const texts = pool.map((line) => line.text);
+    assert.equal(new Set(texts).size, texts.length);
+    for (const tone of tones) {
+      assert.ok(pool.filter((line) => line.tone === tone).length >= 4, tone);
+      const mixed = linesForTone(pool, tone);
+      const heard =
+        tone === "guarded"
+          ? mixed.filter((line) => line.tone === "guarded").length
+          : mixed.filter((line) => line.tone === "warm" || line.tone === "close").length;
+      const classicHits = mixed.filter((line) => !line.tone || line.tone === "classic").length;
+      assert.ok(heard >= classicHits, tone);
+    }
+    const guarded = new Set(pool.filter((line) => line.tone === "guarded").map((line) => line.text));
+    const close = new Set(pool.filter((line) => line.tone === "close").map((line) => line.text));
+    for (let i = 0; i < 12; i += 1) {
+      assert.equal(close.has(pickTaggedLine(pool, undefined, "guarded").text), false);
+      assert.equal(guarded.has(pickTaggedLine(pool, undefined, "close").text), false);
+      const classic = pickTaggedLine(pool, undefined, "classic");
+      assert.equal(guarded.has(classic.text) || close.has(classic.text), false);
+    }
+  }
+});
+
+test("场景台词按聊天状态换脸，短句里不带别人的口头禅", () => {
+  const keys = ["idle", "thinking", "done", "error"] as const;
+  assert.deepEqual(Object.keys(XIAOMEI_SCENE_LINES), [...keys]);
+  const banned =
+    /鲸鱼|大肥鱼|呜鲸|小鲸鱼|本小姐|白饭|小鱼干|角标|伙伴|网站角色|傲娇|嘴硬|心软|人设|性格|作为AI|蓝莓|主人/;
+  for (const key of keys) {
+    const lines = XIAOMEI_SCENE_LINES[key];
+    assert.ok(lines.length >= 4 && lines.length <= 8, key);
+    assert.equal(new Set(lines).size, lines.length, key);
+    for (const line of lines) {
+      assert.ok(hanCount(line) > 0 && hanCount(line) <= 24, `${line} (${hanCount(line)})`);
+      assert.doesNotMatch(line, banned, line);
+    }
+  }
+  assert.equal(moodForChatStatus("thinking"), "blank");
+  assert.equal(moodForChatStatus("error"), "annoyed");
+  assert.equal(moodForChatStatus("done", "happy"), "happy");
+  assert.equal(moodForChatStatus("done", "annoyed"), "content");
+  assert.equal(moodForChatStatus("done", "content"), "content");
+  assert.ok(XIAOMEI_SCENE_PIN_MS >= 1200 && XIAOMEI_SCENE_PIN_MS <= 2400);
 });
 
 test("喂食只在本地把饱腹和好感往上抬一点，到顶就停", () => {
@@ -552,6 +604,8 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   }
   const companion = await readFile(new URL("../components/xiaomei/xiaomei-companion.tsx", import.meta.url), "utf8");
   assert.match(companion, /pickTaggedLine\(pool/);
+  assert.match(companion, /pickTaggedLine\(XIAOMEI_HOVER_LINES, speechRef\.current\?\.text, tone\)/);
+  assert.match(companion, /moodForChatStatus/);
   assert.match(companion, /XIAOMEI_CLICK_LINES/);
   assert.match(companion, /isXiaomeiHungry/);
   assert.match(companion, /XIAOMEI_FEED_TOO_MUCH_LINES/);
@@ -572,7 +626,15 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(menu, /跟她说话/);
   assert.match(menu, /会真的回你/);
   assert.doesNotMatch(menu, />\s*对话\s*</);
+  const chatHook = await readFile(new URL("../components/xiaomei/use-xiaomei-chat.ts", import.meta.url), "utf8");
+  assert.match(chatHook, /XIAOMEI_SCENE_LINES/);
+  assert.match(chatHook, /XIAOMEI_SCENE_PIN_MS/);
+  assert.match(chatHook, /pinStatus\("thinking"\)/);
+  assert.match(chatHook, /pinStatus\("done"\)/);
+  assert.match(chatHook, /pinStatus\("error"\)/);
+  assert.match(chatHook, /setStatus\("idle"\)/);
   const sheet = await readFile(new URL("../components/xiaomei/xiaomei-chat-sheet.tsx", import.meta.url), "utf8");
+  assert.match(sheet, /sceneLine/);
   assert.match(sheet, /再说一遍/);
   assert.match(sheet, /role="dialog"/);
   assert.match(sheet, /enterKeyHint="send"/);

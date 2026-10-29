@@ -54,6 +54,48 @@ export const XIAOMEI_LINES: Record<XiaomeiMood, readonly string[]> = {
   sad: ["也不是很难过啦。你在就好。", "哼，我没事。你别走远。", "你别安慰。我自己缓一缓呀。"],
 };
 
+/**
+ * 聊天状态的短反应，不是模型那句回复。
+ * thinking 钉空白，done 钉开心或满足，error 钉不高兴。停一下就回到待机。
+ */
+export const XIAOMEI_SCENE_LINES = {
+  idle: [
+    "我在这儿。你忙你的。",
+    "没叫你。只是看着。",
+    "风还在。我没躲。",
+    "想说了再来戳我。",
+    "哼，我又没走开。",
+    "角落还空着。你知道。",
+  ],
+  thinking: [
+    "等一下，我在想。",
+    "别催。我听见了。",
+    "嗯……让我想想。",
+    "先别走。还没想好。",
+    "卡了一下。不是不理你。",
+    "我在挑一句。你等着。",
+  ],
+  done: [
+    "想好啦。你看。",
+    "哼，说完了。还听吗。",
+    "就这些。才不是敷衍。",
+    "好啦，我讲完了。",
+    "嗯，这句给你。",
+    "说完啦。没懂再问。",
+  ],
+  error: [
+    "出错了啦。你再说一遍。",
+    "这次没接上。别慌。",
+    "哼，线断了。不是我不会。",
+    "没送出去。换个说法。",
+    "我卡住了。你等一下。",
+    "这次不算。再来呀。",
+  ],
+} as const;
+
+/** 完成或出错的脸只钉这么一会儿，然后回到待机。思考态一直钉到回复结束。 */
+export const XIAOMEI_SCENE_PIN_MS = 1800;
+
 /** 指针靠近时说。比单击尖一点，但不是赶人。脸跟这句话走。 */
 export const XIAOMEI_HOVER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "annoyed", text: "看什么看……我又没躲。" },
@@ -66,6 +108,27 @@ export const XIAOMEI_HOVER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "happy", text: "看够了没呀。我还在。" },
   { mood: "annoyed", text: "哼，你的眼睛好直白。" },
   { mood: "content", text: "过来就过来嘛。我没躲。" },
+  { mood: "content", text: "影子盖过来了。我没躲。" },
+  { mood: "blank", text: "近是近了。发呆被看见了。" },
+  { mood: "happy", text: "你停这儿。我没说不行。" },
+  { mood: "annoyed", tone: "guarded", text: "看什么看。没邀请你。" },
+  { mood: "annoyed", tone: "guarded", text: "哼。靠这么近干什么。" },
+  { mood: "blank", tone: "guarded", text: "有事就说。别只悬着。" },
+  { mood: "annoyed", tone: "guarded", text: "眼睛别停在我脸上。" },
+  { mood: "annoyed", tone: "guarded", text: "再看我就鼓一下。哼。" },
+  { mood: "content", tone: "guarded", text: "才不是摆给你看的。" },
+  { mood: "content", tone: "warm", text: "靠近就靠近。我没生气。" },
+  { mood: "sad", tone: "warm", text: "你今天看起来有点累。" },
+  { mood: "happy", tone: "warm", text: "要是冷，就再近一点。" },
+  { mood: "content", tone: "warm", text: "我没躲。你过来呀。" },
+  { mood: "happy", tone: "warm", text: "看见你，气就软一点。" },
+  { mood: "content", tone: "warm", text: "站一会儿也行。我看着。" },
+  { mood: "happy", tone: "close", text: "你来了，肩膀松一点。" },
+  { mood: "sad", tone: "close", text: "…想你了。就说一遍。" },
+  { mood: "content", tone: "close", text: "靠着吧。我允许这一下。" },
+  { mood: "happy", tone: "close", text: "看见你，就没那么冷。" },
+  { mood: "content", tone: "close", text: "你在，我就不转开脸。" },
+  { mood: "happy", tone: "close", text: "这点距离刚好。别远。" },
 ];
 
 /**
@@ -141,6 +204,30 @@ export const XIAOMEI_CLICK_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "happy", tone: "warm", text: "哼。看见你，我把点心分一半。" },
   { mood: "annoyed", tone: "guarded", text: "有事就说。别绕。" },
   { mood: "happy", tone: "close", text: "你来了我就把脸松开一点。" },
+  { mood: "annoyed", tone: "guarded", text: "少装熟。我还在看你。" },
+  { mood: "annoyed", tone: "guarded", text: "哼。今天不想被戳。" },
+  { mood: "blank", tone: "guarded", text: "手拿开一点。听得见。" },
+  { mood: "annoyed", tone: "guarded", text: "少绕。有事直说。" },
+  { mood: "content", tone: "guarded", text: "我没笑。你看错了。" },
+  { mood: "annoyed", tone: "guarded", text: "再近一点我就鼓脸。" },
+  { mood: "content", tone: "warm", text: "你要是难受，先待着。" },
+  { mood: "happy", tone: "warm", text: "哼。好听的话留了一句。" },
+  { mood: "content", tone: "warm", text: "累了就靠着。没赶你。" },
+  { mood: "happy", tone: "warm", text: "今天的你，我多看一眼。" },
+  { mood: "happy", tone: "warm", text: "点心我留着。你要吗。" },
+  { mood: "sad", tone: "warm", text: "别硬撑。我看出来了。" },
+  { mood: "happy", tone: "close", text: "你一来，鼓脸就没了。" },
+  { mood: "content", tone: "close", text: "想听你说话。就一下。" },
+  { mood: "content", tone: "close", text: "留下嘛。雨还没停。" },
+  { mood: "happy", tone: "close", text: "位置让你一点。哼。" },
+  { mood: "content", tone: "close", text: "嗯，这次我先开口。" },
+  { mood: "happy", tone: "close", text: "你笑一下，我就认了。" },
+  { mood: "content", text: "雨点打在檐上。我听见了。" },
+  { mood: "content", text: "发卡今天别得正。别夸。" },
+  { mood: "blank", text: "脚步很轻。我还是听见了。" },
+  { mood: "happy", text: "口袋里的糖还在。哼。" },
+  { mood: "content", text: "这个角落我占了。挤一下也行。" },
+  { mood: "blank", text: "没偷懒。只是在等一句。" },
 ];
 
 /** 菜单「让小莓妹说点什么」。她自己起头，不是被戳一下的反应。 */
@@ -177,6 +264,27 @@ export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "happy", text: "你要是忙，我就自己哼。" },
   { mood: "content", text: "今天的雨比较轻。我喜欢。" },
   { mood: "content", text: "你不在的时候，雨声比较响。" },
+  { mood: "content", text: "围裙口袋空空的。真的。" },
+  { mood: "blank", text: "我在数雨。数到哪儿了。" },
+  { mood: "happy", text: "糖纸我折好了。别看。" },
+  { mood: "annoyed", tone: "guarded", text: "别问我在想什么。" },
+  { mood: "content", tone: "guarded", text: "自言自语也要被听吗。" },
+  { mood: "annoyed", tone: "guarded", text: "我没叫你。你凑过来的。" },
+  { mood: "blank", tone: "guarded", text: "今天不想分享。真的。" },
+  { mood: "annoyed", tone: "guarded", text: "看别处。我在发呆。" },
+  { mood: "sad", tone: "guarded", text: "话在肚子里。不给你。" },
+  { mood: "content", tone: "warm", text: "你要是在，今天说一点。" },
+  { mood: "happy", tone: "warm", text: "点心分你。别声张。" },
+  { mood: "content", tone: "warm", text: "我哼的这句，你可以听。" },
+  { mood: "sad", tone: "warm", text: "累了就当我在旁边。" },
+  { mood: "content", tone: "warm", text: "雨小了。适合留一下。" },
+  { mood: "happy", tone: "warm", text: "担心放轻了一点。哼。" },
+  { mood: "happy", tone: "close", text: "你在，我想多说一句。" },
+  { mood: "content", tone: "close", text: "今天的事，只讲给你。" },
+  { mood: "happy", tone: "close", text: "人齐了，我才开口。" },
+  { mood: "content", tone: "close", text: "留下听完。就这一段。" },
+  { mood: "sad", tone: "close", text: "想你了，所以才出声。" },
+  { mood: "happy", tone: "close", text: "这句很轻。靠近才听得见。" },
 ];
 
 /** 回来时如果记得上次聊过，用这句，不念具体内容。 */
@@ -272,23 +380,41 @@ export function pickXiaomeiLine(pool: readonly string[], avoid?: string): string
   return bag[index] ?? XIAOMEI_CATCHPHRASE;
 }
 
+/**
+ * 把本档句子复制到不少于经典句，再和经典句放进同一个袋子。
+ * 只复制一两份时，经典池一长，好感就听不见。
+ */
+function weightToneLines(
+  toneLines: readonly XiaomeiSpokenLine[],
+  classicLines: readonly XiaomeiSpokenLine[],
+): readonly XiaomeiSpokenLine[] {
+  if (toneLines.length === 0) return classicLines;
+  const copies = Math.max(2, Math.ceil(classicLines.length / toneLines.length));
+  const weighted: XiaomeiSpokenLine[] = [];
+  for (let copy = 0; copy < copies; copy += 1) weighted.push(...toneLines);
+  return [...weighted, ...classicLines];
+}
+
 /** 经典档只用没标的句子。防备档少撒娇，心软档把关心多放一份。 */
 export function linesForTone(pool: readonly XiaomeiSpokenLine[], tone: XiaomeiTone): readonly XiaomeiSpokenLine[] {
   const classic = pool.filter((line) => !line.tone || line.tone === "classic");
-  const tagged = pool.filter((line) => line.tone === tone);
   if (tone === "classic") return classic.length >= 4 ? classic : pool;
-  if (tone === "guarded") {
-    const mixed = [...tagged, ...tagged, ...classic];
-    return mixed.length >= 4 ? mixed : pool;
-  }
-  if (tone === "warm") {
-    const caring = pool.filter((line) => line.tone === "warm" || line.tone === "close");
-    const mixed = [...caring, ...classic];
-    return mixed.length >= 4 ? mixed : pool;
-  }
-  const close = pool.filter((line) => line.tone === "close" || line.tone === "warm");
-  const mixed = [...close, ...close, ...classic];
+  const toneLines =
+    tone === "warm" || tone === "close"
+      ? pool.filter((line) => line.tone === "warm" || line.tone === "close")
+      : pool.filter((line) => line.tone === tone);
+  const mixed = weightToneLines(toneLines, classic);
   return mixed.length >= 4 ? mixed : pool;
+}
+
+/** 聊天状态钉住哪张脸。想的时候空白，说完是开心或满足，出错才不高兴。 */
+export function moodForChatStatus(
+  status: "thinking" | "done" | "error",
+  replyMood: "happy" | "annoyed" | "content" = "happy",
+): XiaomeiMood {
+  if (status === "thinking") return "blank";
+  if (status === "error") return "annoyed";
+  return replyMood === "happy" ? "happy" : "content";
 }
 
 export function pickTaggedLine(
