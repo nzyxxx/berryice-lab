@@ -3,12 +3,20 @@
  */
 
 import type { XiaomeiCueKind } from "@/lib/xiaomei-actions";
+import { cn } from "@/lib/utils";
 
 /** 只画这一拍的记号，不记状态。 */
 export function XiaomeiCue({ kind }: { kind: XiaomeiCueKind }) {
-  if (kind === "blink") {
+  if (kind === "blink" || kind === "blink2" || kind === "slowblink") {
     return (
-      <span className="xiaomei-cue xiaomei-cue-blink" aria-hidden>
+      <span
+        className={cn(
+          "xiaomei-cue xiaomei-cue-blink",
+          kind === "blink2" && "xiaomei-cue-blink2",
+          kind === "slowblink" && "xiaomei-cue-slowblink",
+        )}
+        aria-hidden
+      >
         <span />
         <span />
       </span>

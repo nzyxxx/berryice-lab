@@ -39,6 +39,7 @@ import {
   xiaomeiCueKind,
   xiaomeiMotionClass,
   xiaomeiPropKind,
+  xiaomeiPropPose,
 } from "@/lib/xiaomei-actions";
 import {
   forgetXiaomeiNote,
@@ -719,6 +720,7 @@ export function XiaomeiCompanion() {
               : xiaomeiMotionClass(presence.beat, place.dragging)
           }
           prop={xiaomeiPropKind(presence.beat)}
+          pose={xiaomeiPropPose(presence.beat)}
           cue={chatCue ?? xiaomeiCueKind(presence.beat)}
           liftShadow={!place.dragging}
         />

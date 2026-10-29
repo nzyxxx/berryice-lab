@@ -19,12 +19,21 @@ import { XIAOMEI_MOODS, type XiaomeiMood } from "./xiaomei-lines.ts";
 const PROP_ACTIONS = ["drink", "snack", "umbrella"] as const;
 const NO_REPEAT = [
   "blink",
+  "blink2",
+  "slowblink",
   "yawn",
   "stretch",
+  "peek",
+  "nod",
+  "tilt",
+  "pout",
   "note",
   "cheer",
   "sigh",
+  "sip",
   "drink",
+  "hold",
+  "wipe",
   "snack",
   "umbrella",
   "spin",
@@ -32,14 +41,23 @@ const NO_REPEAT = [
 ] as const;
 const IDLE: readonly XiaomeiIdleBeat[] = [
   "blink",
+  "blink2",
+  "slowblink",
   "yawn",
   "stretch",
+  "peek",
+  "nod",
+  "tilt",
+  "pout",
   "note",
   "cheer",
   "sigh",
   "glance",
   "smile",
+  "sip",
   "drink",
+  "hold",
+  "wipe",
   "snack",
   "umbrella",
   "spin",
@@ -64,42 +82,48 @@ test("短动作都是短拍，间隔比旧的九秒密，也不会两拍叠上",
 });
 
 test("待机下一拍：十秒里很忙，饿了点心更多，同一种动作不连播", () => {
+  assert.ok(IDLE.length >= 22);
   assert.equal(nextIdleBeat(0, null, false), "blink");
-  assert.equal(nextIdleBeat(0.099, null, false), "blink");
-  assert.equal(nextIdleBeat(0.1, null, false), "yawn");
-  assert.equal(nextIdleBeat(0.18, null, false), "stretch");
-  assert.equal(nextIdleBeat(0.26, null, false), "note");
-  assert.equal(nextIdleBeat(0.33, null, false), "cheer");
-  assert.equal(nextIdleBeat(0.4, null, false), "sigh");
-  assert.equal(nextIdleBeat(0.46, null, false), "glance");
-  assert.equal(nextIdleBeat(0.52, null, false), "smile");
-  assert.equal(nextIdleBeat(0.579, null, false), "smile");
-  assert.equal(nextIdleBeat(0.58, null, false), "drink");
-  assert.equal(nextIdleBeat(0.67, null, false), "snack");
-  assert.equal(nextIdleBeat(0.76, null, false), "umbrella");
-  assert.equal(nextIdleBeat(0.84, null, false), "spin");
-  assert.equal(nextIdleBeat(0.92, null, false), "walk");
+  assert.equal(nextIdleBeat(0.05, null, false), "blink2");
+  assert.equal(nextIdleBeat(0.09, null, false), "slowblink");
+  assert.equal(nextIdleBeat(0.14, null, false), "yawn");
+  assert.equal(nextIdleBeat(0.19, null, false), "stretch");
+  assert.equal(nextIdleBeat(0.24, null, false), "peek");
+  assert.equal(nextIdleBeat(0.29, null, false), "glance");
+  assert.equal(nextIdleBeat(0.34, null, false), "nod");
+  assert.equal(nextIdleBeat(0.39, null, false), "tilt");
+  assert.equal(nextIdleBeat(0.45, null, false), "smile");
+  assert.equal(nextIdleBeat(0.51, null, false), "pout");
+  assert.equal(nextIdleBeat(0.56, null, false), "sigh");
+  assert.equal(nextIdleBeat(0.66, null, false), "sip");
+  assert.equal(nextIdleBeat(0.71, null, false), "drink");
+  assert.equal(nextIdleBeat(0.77, null, false), "hold");
+  assert.equal(nextIdleBeat(0.82, null, false), "wipe");
+  assert.equal(nextIdleBeat(0.86, null, false), "snack");
+  assert.equal(nextIdleBeat(0.9, null, false), "umbrella");
+  assert.equal(nextIdleBeat(0.93, null, false), "spin");
+  assert.equal(nextIdleBeat(0.96, null, false), "walk");
   assert.equal(nextIdleBeat(1, null, false), "walk");
   assert.equal(nextIdleBeat(Number.NaN, null, false), "blink");
 
   assert.equal(nextIdleBeat(0, null, true), "blink");
   assert.equal(nextIdleBeat(0.08, null, true), "yawn");
-  assert.equal(nextIdleBeat(0.44, null, true), "snack");
-  assert.equal(nextIdleBeat(0.62, null, true), "drink");
-  assert.equal(nextIdleBeat(0.9, null, true), "spin");
+  assert.equal(nextIdleBeat(0.3, null, true), "snack");
+  assert.equal(nextIdleBeat(0.58, null, true), "drink");
+  assert.equal(nextIdleBeat(0.84, null, true), "walk");
   assert.equal(nextIdleBeat(1, null, true), "spin");
 
-  assert.equal(nextIdleBeat(0.5, null, false), "glance");
-  assert.equal(nextIdleBeat(0.5, null, true), "snack");
+  assert.equal(nextIdleBeat(0.48, null, false), "smile");
+  assert.equal(nextIdleBeat(0.4, null, true), "snack");
 
-  assert.equal(nextIdleBeat(0.05, "blink", false), "yawn");
-  assert.equal(nextIdleBeat(0.62, "drink", false), "snack");
-  assert.equal(nextIdleBeat(0.7, "snack", false), "umbrella");
-  assert.equal(nextIdleBeat(0.8, "umbrella", false), "spin");
-  assert.equal(nextIdleBeat(0.88, "spin", false), "walk");
-  assert.equal(nextIdleBeat(0.95, "walk", false), "drink");
-  assert.equal(nextIdleBeat(0.55, "smile", false), "smile");
-  assert.equal(nextIdleBeat(0.5, "glance", false), "glance");
+  assert.equal(nextIdleBeat(0.01, "blink", false), "blink2");
+  assert.equal(nextIdleBeat(0.74, "drink", false), "sip");
+  assert.equal(nextIdleBeat(0.87, "snack", false), "umbrella");
+  assert.equal(nextIdleBeat(0.91, "umbrella", false), "spin");
+  assert.equal(nextIdleBeat(0.94, "spin", false), "walk");
+  assert.equal(nextIdleBeat(0.97, "walk", false), "drink");
+  assert.equal(nextIdleBeat(0.48, "smile", false), "smile");
+  assert.equal(nextIdleBeat(0.3, "glance", false), "glance");
 
   let restQuiet = 0;
   let hungrySnacks = 0;
@@ -110,8 +134,8 @@ test("待机下一拍：十秒里很忙，饿了点心更多，同一种动作�
     if (rest === "smile" || rest === "glance") restQuiet += 1;
     if (hungry === "snack") hungrySnacks += 1;
   }
-  assert.equal(restQuiet, 12);
-  assert.equal(hungrySnacks, 18);
+  assert.equal(restQuiet, 11);
+  assert.equal(hungrySnacks, 20);
   const beatsInTenSeconds = Math.floor(10_000 / XIAOMEI_IDLE_GAP_MS.max);
   assert.ok(beatsInTenSeconds >= 3);
   assert.ok((restQuiet / 100) ** beatsInTenSeconds < 0.1);
@@ -139,6 +163,15 @@ test("表情轨迹两帧，待机不切难过，点击和投喂落到这句的�
     assert.ok(XIAOMEI_MOODS.includes(trail[1]));
   }
   assert.deepEqual(expressionTrail("blink", "content"), ["blank", "content"]);
+  assert.deepEqual(expressionTrail("blink2", "content"), ["blank", "content"]);
+  assert.deepEqual(expressionTrail("slowblink", "content"), ["blank", "content"]);
+  assert.deepEqual(expressionTrail("peek", "happy"), ["content", "blank"]);
+  assert.deepEqual(expressionTrail("nod", "blank"), ["content", "happy"]);
+  assert.deepEqual(expressionTrail("tilt", "happy"), ["blank", "content"]);
+  assert.deepEqual(expressionTrail("pout", "happy"), ["content", "annoyed"]);
+  assert.deepEqual(expressionTrail("sip", "happy"), ["blank", "content"]);
+  assert.deepEqual(expressionTrail("hold", "annoyed"), ["content", "happy"]);
+  assert.deepEqual(expressionTrail("wipe", "happy"), ["annoyed", "content"]);
   assert.deepEqual(expressionTrail("yawn", "happy"), ["blank", "content"]);
   assert.deepEqual(expressionTrail("stretch", "blank"), ["content", "happy"]);
   assert.deepEqual(expressionTrail("note", "annoyed"), ["blank", "content"]);
@@ -169,6 +202,13 @@ test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () =>
   assert.equal(xiaomeiMotionClass(null, false), "xiaomei-float");
   assert.equal(xiaomeiMotionClass("smile", false), "xiaomei-float");
   assert.equal(xiaomeiMotionClass("blink", false), "xiaomei-blink");
+  assert.equal(xiaomeiMotionClass("blink2", false), "xiaomei-blink2");
+  assert.equal(xiaomeiMotionClass("slowblink", false), "xiaomei-slowblink");
+  assert.equal(xiaomeiMotionClass("peek", false), "xiaomei-peek");
+  assert.equal(xiaomeiMotionClass("nod", false), "xiaomei-nod");
+  assert.equal(xiaomeiMotionClass("sip", false), "xiaomei-sip");
+  assert.equal(xiaomeiMotionClass("hold", false), "xiaomei-hold");
+  assert.equal(xiaomeiMotionClass("wipe", false), "xiaomei-wipe");
   assert.equal(xiaomeiMotionClass("yawn", false), "xiaomei-yawn");
   assert.equal(xiaomeiMotionClass("stretch", false), "xiaomei-stretch");
   assert.equal(xiaomeiMotionClass("note", false), "xiaomei-note");
@@ -187,6 +227,9 @@ test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () =>
   assert.equal(xiaomeiPropKind("spin"), null);
   assert.equal(xiaomeiPropKind("walk"), null);
   assert.equal(xiaomeiPropKind("drink"), "cup");
+  assert.equal(xiaomeiPropKind("sip"), "cup");
+  assert.equal(xiaomeiPropKind("hold"), "cup");
+  assert.equal(xiaomeiPropKind("wipe"), null);
   assert.equal(xiaomeiPropKind("snack"), "snack");
   assert.equal(xiaomeiPropKind("umbrella"), "umbrella");
   for (const action of PROP_ACTIONS) {
@@ -246,15 +289,19 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   assert.match(css, /\.xiaomei-float\s*\{[^}]*animation:\s*xiaomei-float 4\.6s/);
   assert.match(css, /\.xiaomei-ground\s*\{[^}]*animation:\s*xiaomei-ground 4\.6s/);
   assert.doesNotMatch(css, /rgba\(198,\s*214,\s*255/);
-  assert.match(css, /\.xiaomei-prop\s*\{[^}]*display:\s*none/);
+  assert.match(css, /\.xiaomei-prop-umbrella\s*\{[^}]*display:\s*none/);
   assert.match(css, /\.xiaomei-cue-note\s*\{[^}]*display:\s*none/);
+  assert.match(css, /\.xiaomei-pose-raise \.xiaomei-prop-object/);
+  assert.match(css, /\.xiaomei-sip\s*\{[^}]*animation:\s*xiaomei-sip 1\.6s/);
+  assert.match(css, /\.xiaomei-hold\s*\{[^}]*animation:\s*xiaomei-hold 2s/);
+  assert.match(css, /\.xiaomei-blink2\s*\{[^}]*animation:\s*xiaomei-blink2 1\.1s/);
   assert.match(css, /@keyframes xiaomei-cup/);
   assert.match(css, /@keyframes xiaomei-snack-prop/);
   assert.match(css, /@keyframes xiaomei-umbrella-prop/);
   assert.match(css, /scaleX\(-1\)/);
   assert.match(css, /scale\(1\.2\)/);
   assert.match(css, /translate3d\(-32px/);
-  assert.match(css, /\.xiaomei-prop-cup\s*\{[^}]*width:\s*20px/);
+  assert.match(css, /\.xiaomei-prop-cup\s*\{[^}]*width:\s*22px/);
   assert.match(css, /\.xiaomei-prop-snack\s*\{[^}]*width:\s*22px/);
   assert.match(css, /\.xiaomei-prop-umbrella\s*\{[^}]*width:\s*20px/);
   assert.equal(XIAOMEI_BEAT_MS.blink, 900);
