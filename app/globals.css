@@ -793,7 +793,7 @@ html.home-motion [data-reveal].is-shown {
   animation: xiaomei-walk 2.4s ease-in-out 1;
 }
 
-/* 半身像大约 96px。道具故意放大，雨夜里才看得清。不改立绘。 */
+/* 立绘大约 96px。道具故意放大，雨夜里才看得清。不改立绘。 */
 .xiaomei-prop {
   position: absolute;
   z-index: 2;

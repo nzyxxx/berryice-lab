@@ -115,6 +115,7 @@ import {
   placeXiaomeiPopover,
   xiaomeiSpriteBox,
   xiaomeiVisibleView,
+  XIAOMEI_FRAME,
   XIAOMEI_MENU_PANEL,
   XIAOMEI_PET_HOLD_MS,
   XIAOMEI_POPOVER_GAP,
@@ -889,11 +890,15 @@ test("位置夹在视口里，贴边才探出，默认让开回到顶部", () =>
     placeAfterResize({ x: 0, y: 0 }, { width: 70, height: 96 }, { width: 53, height: 72 }, 10, 10, 390, 700),
     null,
   );
+  assert.deepEqual(XIAOMEI_FRAME, { width: 256, height: 438 });
   const desktop = xiaomeiSpriteBox(false);
   const phone = xiaomeiSpriteBox(true);
-  assert.equal(desktop.height, 96);
-  assert.equal(phone.height, 72);
-  assert.ok(phone.width < desktop.width);
+  assert.deepEqual(desktop, { width: 56, height: 96 });
+  assert.deepEqual(phone, { width: 42, height: 72 });
+  const fitted = defaultPlace(390, 844, phone.width, phone.height);
+  assert.ok(fitted.x + phone.width <= 390);
+  assert.ok(fitted.y >= 56);
+  assert.ok(844 - (fitted.y + phone.height) >= 80);
   const quiet = dockXiaomeiChat({
     y: 700,
     boxHeight: 96,
@@ -944,6 +949,25 @@ test("位置夹在视口里，贴边才探出，默认让开回到顶部", () =>
   assert.equal(high.lift, false);
   assert.equal(high.placement, "down");
   assert.equal(high.maxHeight, 240);
+});
+
+test("五张表情 WebP 画布是全身 256×438，舞台读帧常量", async () => {
+  const names = ["blank", "content", "happy", "sad", "annoyed"] as const;
+  for (const name of names) {
+    const data = await readFile(new URL(`../public/xiaomei/${name}.webp`, import.meta.url));
+    assert.equal(data.subarray(0, 4).toString(), "RIFF", name);
+    assert.equal(data.subarray(8, 12).toString(), "WEBP", name);
+    assert.equal(data.subarray(12, 16).toString(), "VP8X", name);
+    const width = 1 + data.readUIntLE(24, 3);
+    const height = 1 + data.readUIntLE(27, 3);
+    assert.equal(width, XIAOMEI_FRAME.width, name);
+    assert.equal(height, XIAOMEI_FRAME.height, name);
+    assert.ok(data.includes(Buffer.from("ALPH")), name);
+  }
+  const stage = await readFile(new URL("../components/xiaomei/xiaomei-stage.tsx", import.meta.url), "utf8");
+  assert.match(stage, /width=\{XIAOMEI_FRAME\.width\}/);
+  assert.match(stage, /height=\{XIAOMEI_FRAME\.height\}/);
+  assert.doesNotMatch(stage, /\b351\b/);
 });
 
 function popoverRect(
