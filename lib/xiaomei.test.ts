@@ -108,11 +108,17 @@ import {
   clampPlace,
   defaultPlace,
   dockXiaomeiChat,
+  liveAnchorBox,
   nearestPeek,
   placeAfterResize,
   placeFromStored,
+  placeXiaomeiPopover,
   xiaomeiSpriteBox,
+  xiaomeiVisibleView,
+  XIAOMEI_MENU_PANEL,
   XIAOMEI_PET_HOLD_MS,
+  XIAOMEI_POPOVER_GAP,
+  XIAOMEI_POPOVER_PAD,
 } from "./xiaomei-place.ts";
 
 test("台词是短的第一人称，默认句就是那句格言", () => {
@@ -774,6 +780,10 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /长按是摸头/);
   assert.doesNotMatch(companion, /长按打开菜单/);
   assert.match(companion, /dockXiaomeiChat/);
+  assert.match(companion, /placeXiaomeiPopover/);
+  assert.match(companion, /liveAnchorBox/);
+  assert.doesNotMatch(companion, /pos\.x > 160/);
+  assert.doesNotMatch(companion, /pos\.y > 220/);
   const menu = await readFile(new URL("../components/xiaomei/xiaomei-menu.tsx", import.meta.url), "utf8");
   assert.match(menu, /让\{XIAOMEI_NAME\}说点什么/);
   assert.match(menu, /关于\{XIAOMEI_NAME\}/);
@@ -903,6 +913,106 @@ test("位置夹在视口里，贴边才探出，默认让开回到顶部", () =>
   assert.equal(high.lift, false);
   assert.equal(high.placement, "down");
   assert.equal(high.maxHeight, 240);
+});
+
+function popoverRect(
+  anchor: { x: number; y: number; width: number; height: number },
+  pop: { align: "left" | "right"; placement: "up" | "down"; shiftX: number; shiftY: number; maxHeight: number },
+  panel: { width: number },
+) {
+  const width = panel.width;
+  const height = pop.maxHeight;
+  const left = (pop.align === "left" ? anchor.x : anchor.x + anchor.width - width) + pop.shiftX;
+  const top =
+    (pop.placement === "up"
+      ? anchor.y - XIAOMEI_POPOVER_GAP - height
+      : anchor.y + anchor.height + XIAOMEI_POPOVER_GAP) + pop.shiftY;
+  return { left, top, right: left + width, bottom: top + height };
+}
+
+test("浮层按剩余空间翻面，贴边仍夹进可视区", () => {
+  const view = xiaomeiVisibleView({ innerWidth: 800, innerHeight: 800 });
+  const box = { width: 70, height: 96 };
+
+  const nearTop = placeXiaomeiPopover({
+    anchor: { x: 700, y: 56, ...box },
+    view,
+    panel: XIAOMEI_MENU_PANEL,
+  });
+  assert.equal(nearTop.placement, "down");
+  assert.equal(nearTop.align, "right");
+  assert.equal(nearTop.shiftY, 0);
+
+  const nearBottom = placeXiaomeiPopover({
+    anchor: { x: 700, y: 700, ...box },
+    view,
+    panel: XIAOMEI_MENU_PANEL,
+  });
+  assert.equal(nearBottom.placement, "up");
+  assert.equal(nearBottom.align, "right");
+
+  const nearLeft = placeXiaomeiPopover({
+    anchor: { x: 8, y: 400, ...box },
+    view,
+    panel: XIAOMEI_MENU_PANEL,
+  });
+  assert.equal(nearLeft.align, "left");
+  assert.equal(nearLeft.placement, "up");
+
+  const nearRight = placeXiaomeiPopover({
+    anchor: { x: 730, y: 400, ...box },
+    view,
+    panel: XIAOMEI_MENU_PANEL,
+  });
+  assert.equal(nearRight.align, "right");
+
+  const oldThreshold = placeXiaomeiPopover({
+    anchor: { x: 720, y: 230, ...box },
+    view,
+    panel: XIAOMEI_MENU_PANEL,
+  });
+  assert.equal(oldThreshold.placement, "down");
+  assert.equal(oldThreshold.align, "right");
+  assert.equal(oldThreshold.shiftY, 0);
+
+  const peeked = liveAnchorBox({ x: 720, y: 56 }, box, "top");
+  assert.equal(peeked.y, 8);
+  const peekedTop = placeXiaomeiPopover({
+    anchor: peeked,
+    view,
+    panel: XIAOMEI_MENU_PANEL,
+  });
+  assert.equal(peekedTop.placement, "down");
+
+  const tightView = xiaomeiVisibleView({ innerWidth: 400, innerHeight: 360 });
+  const tight = placeXiaomeiPopover({
+    anchor: { x: 100, y: 160, ...box },
+    view: tightView,
+    panel: XIAOMEI_MENU_PANEL,
+  });
+  assert.ok(tight.maxHeight <= 360 - XIAOMEI_POPOVER_PAD * 2);
+  assert.ok(tight.shiftY !== 0 || tight.maxHeight < XIAOMEI_MENU_PANEL.height);
+  const rect = popoverRect({ x: 100, y: 160, ...box }, tight, XIAOMEI_MENU_PANEL);
+  assert.ok(rect.top >= XIAOMEI_POPOVER_PAD - 0.5);
+  assert.ok(rect.bottom <= 360 - XIAOMEI_POPOVER_PAD + 0.5);
+  assert.ok(rect.left >= XIAOMEI_POPOVER_PAD - 0.5);
+  assert.ok(rect.right <= 400 - XIAOMEI_POPOVER_PAD + 0.5);
+
+  const visual = xiaomeiVisibleView({
+    innerWidth: 800,
+    innerHeight: 800,
+    visual: { offsetLeft: 0, offsetTop: 40, width: 800, height: 500 },
+    safe: { bottom: 20 },
+  });
+  assert.equal(visual.top, 40);
+  assert.equal(visual.height, 500);
+  assert.equal(visual.safeBottom, 20);
+  const visualTop = placeXiaomeiPopover({
+    anchor: { x: 700, y: 80, ...box },
+    view: visual,
+    panel: XIAOMEI_MENU_PANEL,
+  });
+  assert.equal(visualTop.placement, "down");
 });
 
 test("对话只留最近八轮，丢掉系统角色和空话", () => {

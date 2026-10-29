@@ -3,6 +3,7 @@
 import { trapTab } from "@/components/xiaomei/trap-tab";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
+import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 
@@ -29,6 +30,9 @@ export function XiaomeiMenu({
   muted,
   align,
   placement,
+  shiftX = 0,
+  shiftY = 0,
+  maxHeight,
   fullness,
   affection,
   onTalk,
@@ -43,6 +47,9 @@ export function XiaomeiMenu({
   muted: boolean;
   align: "left" | "right";
   placement: "up" | "down";
+  shiftX?: number;
+  shiftY?: number;
+  maxHeight?: number;
   fullness: number;
   affection: number;
   onTalk: () => void;
@@ -77,6 +84,7 @@ export function XiaomeiMenu({
         align === "right" ? "right-0" : "left-0",
         placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
       )}
+      style={xiaomeiPopoverOffsetStyle(shiftX, shiftY, maxHeight)}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <button type="button" role="menuitem" className={ITEM} onClick={onTalk}>

@@ -3,6 +3,7 @@
 import { trapTab } from "@/components/xiaomei/trap-tab";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import type { XiaomeiMemoryNote } from "@/lib/xiaomei-memory";
+import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -65,6 +66,9 @@ export function XiaomeiMemorySheet({
   events,
   align,
   placement,
+  shiftX = 0,
+  shiftY = 0,
+  maxHeight,
   onForget,
   onClose,
 }: {
@@ -72,6 +76,9 @@ export function XiaomeiMemorySheet({
   events: readonly XiaomeiMemoryNote[];
   align: "left" | "right";
   placement: "up" | "down";
+  shiftX?: number;
+  shiftY?: number;
+  maxHeight?: number;
   onForget: (summary: string) => void;
   onClose: () => void;
 }) {
@@ -102,6 +109,7 @@ export function XiaomeiMemorySheet({
         align === "right" ? "right-0" : "left-0",
         placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
       )}
+      style={xiaomeiPopoverOffsetStyle(shiftX, shiftY, maxHeight)}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <div className="mb-2 flex items-start justify-between gap-2">

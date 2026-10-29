@@ -3,6 +3,7 @@
 import { trapTab } from "@/components/xiaomei/trap-tab";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { XIAOMEI_CATCHPHRASE, XIAOMEI_CHAT_EMPTY, XIAOMEI_CHAT_STARTERS, XIAOMEI_NAME } from "@/lib/xiaomei-lines";
+import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -20,6 +21,8 @@ export function XiaomeiChatSheet({
   align,
   placement,
   maxHeight,
+  shiftX = 0,
+  shiftY = 0,
   onSend,
   onRetry,
   onClose,
@@ -30,6 +33,8 @@ export function XiaomeiChatSheet({
   align: "left" | "right";
   placement: "up" | "down";
   maxHeight: number;
+  shiftX?: number;
+  shiftY?: number;
   onSend: (text: string) => Promise<boolean>;
   onRetry: () => Promise<boolean>;
   onClose: () => void;
@@ -79,7 +84,7 @@ export function XiaomeiChatSheet({
         align === "right" ? "right-0" : "left-0",
         placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
       )}
-      style={{ maxHeight }}
+      style={xiaomeiPopoverOffsetStyle(shiftX, shiftY, maxHeight)}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
         <p id="xiaomei-chat-title" className="text-xs tracking-tight text-lab-ink-subtle">

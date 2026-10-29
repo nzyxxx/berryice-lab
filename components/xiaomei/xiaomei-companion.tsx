@@ -44,7 +44,19 @@ import {
   type XiaomeiMemoryRecord,
 } from "@/lib/xiaomei-memory";
 import { XIAOMEI_METERS_KEY, formatMeterDelta, readFeedClock } from "@/lib/xiaomei-meters";
-import { dockXiaomeiChat, peekTransform } from "@/lib/xiaomei-place";
+import {
+  XIAOMEI_CHAT_PANEL,
+  XIAOMEI_HINT_PANEL,
+  XIAOMEI_MEMORY_PANEL,
+  XIAOMEI_MENU_PANEL,
+  XIAOMEI_SPEECH_PANEL,
+  dockXiaomeiChat,
+  liveAnchorBox,
+  peekTransform,
+  placeXiaomeiPopover,
+  xiaomeiPopoverOffsetStyle,
+  xiaomeiVisibleView,
+} from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -134,19 +146,57 @@ function markHintSeen() {
   window.dispatchEvent(new Event(HINT_EVENT));
 }
 
+const EMPTY_VIEW_FRAME = {
+  inset: 0,
+  height: 0,
+  width: 0,
+  offsetTop: 0,
+  offsetLeft: 0,
+  safeTop: 0,
+  safeRight: 0,
+  safeBottom: 0,
+  safeLeft: 0,
+};
+
+function readSafeInsets(probe: HTMLElement) {
+  const style = getComputedStyle(probe);
+  return {
+    safeTop: parseFloat(style.paddingTop) || 0,
+    safeRight: parseFloat(style.paddingRight) || 0,
+    safeBottom: parseFloat(style.paddingBottom) || 0,
+    safeLeft: parseFloat(style.paddingLeft) || 0,
+  };
+}
+
 function useKeyboardFrame(active: boolean) {
-  const [frame, setFrame] = useState({ inset: 0, height: 0, offsetTop: 0 });
+  const [frame, setFrame] = useState(EMPTY_VIEW_FRAME);
   useEffect(() => {
     if (!active) return;
+    const probe = document.createElement("div");
+    probe.setAttribute("aria-hidden", "true");
+    probe.style.cssText =
+      "position:fixed;inset:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
+    document.documentElement.appendChild(probe);
     const read = () => {
       const viewport = window.visualViewport;
       const height = viewport?.height ?? window.innerHeight;
+      const width = viewport?.width ?? window.innerWidth;
       const offsetTop = viewport?.offsetTop ?? 0;
+      const offsetLeft = viewport?.offsetLeft ?? 0;
       const inset = Math.max(0, Math.round(window.innerHeight - height - offsetTop));
+      const safe = readSafeInsets(probe);
       setFrame((prev) =>
-        prev.inset === inset && prev.height === height && prev.offsetTop === offsetTop
+        prev.inset === inset &&
+        prev.height === height &&
+        prev.width === width &&
+        prev.offsetTop === offsetTop &&
+        prev.offsetLeft === offsetLeft &&
+        prev.safeTop === safe.safeTop &&
+        prev.safeRight === safe.safeRight &&
+        prev.safeBottom === safe.safeBottom &&
+        prev.safeLeft === safe.safeLeft
           ? prev
-          : { inset, height, offsetTop },
+          : { inset, height, width, offsetTop, offsetLeft, ...safe },
       );
     };
     read();
@@ -158,7 +208,8 @@ function useKeyboardFrame(active: boolean) {
       viewport?.removeEventListener("resize", read);
       viewport?.removeEventListener("scroll", read);
       window.removeEventListener("resize", read);
-      setFrame({ inset: 0, height: 0, offsetTop: 0 });
+      probe.remove();
+      setFrame(EMPTY_VIEW_FRAME);
     };
   }, [active]);
   return frame;
@@ -201,13 +252,13 @@ export function XiaomeiCompanion() {
   const [chatOpen, setChatOpen] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [memoryRecord, setMemoryRecord] = useState<XiaomeiMemoryRecord | null>(null);
-  const keyboardFrame = useKeyboardFrame(chatOpen);
   const [menuOpen, setMenuOpen] = useState(false);
   const muted = useSyncExternalStore(subscribeMute, readMuted, () => false);
   const [speech, setSpeech] = useState<Speech | null>(null);
   const [moodPin, setMoodPin] = useState<XiaomeiMood | null>(null);
   const [hover, setHover] = useState(false);
   const [gesture, setGesture] = useState<Gesture | null>(null);
+  const keyboardFrame = useKeyboardFrame(chatOpen || menuOpen || memoryOpen || Boolean(speech));
 
   const chatOpenRef = useRef(false);
   const menuOpenRef = useRef(false);
@@ -478,11 +529,52 @@ export function XiaomeiCompanion() {
     gesture,
   });
   const showSpeech = speech && !chatOpen && !menuOpen && !memoryOpen && !muted;
-  const align = place.pos.x > 160 ? "right" : "left";
-  const placement = place.pos.y > 220 ? "up" : "down";
-  const roomAbove = place.pos.y - 64;
-  const roomBelow =
-    (typeof window === "undefined" ? 800 : window.innerHeight) - place.pos.y - place.box.height - 96;
+  const peekApplied = chatOpen || menuOpen || memoryOpen ? null : place.peek;
+  const anchor = liveAnchorBox(place.pos, place.box, peekApplied);
+  const innerWidth = typeof window === "undefined" ? 800 : window.innerWidth;
+  const innerHeight = typeof window === "undefined" ? 800 : window.innerHeight;
+  const visual =
+    keyboardFrame.width > 0
+      ? {
+          offsetLeft: keyboardFrame.offsetLeft,
+          offsetTop: keyboardFrame.offsetTop,
+          width: keyboardFrame.width,
+          height: keyboardFrame.height,
+        }
+      : typeof window !== "undefined" && window.visualViewport
+        ? {
+            offsetLeft: window.visualViewport.offsetLeft,
+            offsetTop: window.visualViewport.offsetTop,
+            width: window.visualViewport.width,
+            height: window.visualViewport.height,
+          }
+        : null;
+  const view = xiaomeiVisibleView({
+    innerWidth,
+    innerHeight,
+    visual,
+    safe: {
+      top: keyboardFrame.safeTop,
+      right: keyboardFrame.safeRight,
+      bottom: keyboardFrame.safeBottom,
+      left: keyboardFrame.safeLeft,
+    },
+  });
+  const sheetWidth = Math.min(XIAOMEI_MEMORY_PANEL.width, Math.max(0, view.width - 32));
+  const panel = menuOpen
+    ? XIAOMEI_MENU_PANEL
+    : memoryOpen
+      ? { width: sheetWidth, height: XIAOMEI_MEMORY_PANEL.height }
+      : chatOpen
+        ? { width: sheetWidth, height: XIAOMEI_CHAT_PANEL.height }
+        : showSpeech
+          ? XIAOMEI_SPEECH_PANEL
+          : XIAOMEI_HINT_PANEL;
+  const pop = placeXiaomeiPopover({ anchor, view, panel });
+  const align = pop.align;
+  const placement = pop.placement;
+  const roomAbove = Math.max(0, anchor.y - (view.top + view.safeTop + 8));
+  const roomBelow = Math.max(0, view.top + view.height - view.safeBottom - 8 - anchor.y - anchor.height);
   const dock = dockXiaomeiChat({
     y: place.pos.y,
     boxHeight: place.box.height,
@@ -490,8 +582,8 @@ export function XiaomeiCompanion() {
     roomAbove,
     roomBelow,
     keyboardInset: chatOpen ? keyboardFrame.inset : 0,
-    visibleTop: keyboardFrame.offsetTop,
-    visibleHeight: keyboardFrame.height,
+    visibleTop: keyboardFrame.offsetTop || view.top,
+    visibleHeight: keyboardFrame.height || view.height,
   });
   const showHint = !coarse && !hintSeen && !chatOpen && !menuOpen && !memoryOpen && !muted && !showSpeech;
   const memoryView = memoryRecord ? memoryNotesForDrawer(memoryRecord) : { facts: [], events: [] };
@@ -529,6 +621,9 @@ export function XiaomeiCompanion() {
           muted={muted}
           align={align}
           placement={placement}
+          shiftX={pop.shiftX}
+          shiftY={pop.shiftY}
+          maxHeight={pop.maxHeight}
           fullness={meters.meters.fullness}
           affection={meters.meters.affection}
           onTalk={openChat}
@@ -582,6 +677,9 @@ export function XiaomeiCompanion() {
           events={memoryView.events}
           align={align}
           placement={placement}
+          shiftX={pop.shiftX}
+          shiftY={pop.shiftY}
+          maxHeight={pop.maxHeight}
           onForget={forgetNote}
           onClose={closeMemory}
         />
@@ -595,6 +693,7 @@ export function XiaomeiCompanion() {
           align={align}
           placement={dock.placement}
           maxHeight={dock.maxHeight}
+          shiftX={pop.shiftX}
           onSend={chat.send}
           onRetry={chat.retry}
           onClose={closeChat}
@@ -610,6 +709,7 @@ export function XiaomeiCompanion() {
             align === "right" ? "right-0" : "left-0",
             placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}
+          style={xiaomeiPopoverOffsetStyle(pop.shiftX, pop.shiftY)}
         >
           {speech.text}
           {speech.delta ? (
@@ -633,6 +733,7 @@ export function XiaomeiCompanion() {
             align === "right" ? "right-0" : "left-0",
             placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}
+          style={xiaomeiPopoverOffsetStyle(pop.shiftX, pop.shiftY)}
         >
           {XIAOMEI_HOLD_HINT}
         </p>
