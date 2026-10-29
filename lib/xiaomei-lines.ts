@@ -235,7 +235,7 @@ export const XIAOMEI_FEED_FULL_LINES = [
   "嘴巴合不上了。停一下嘛。",
 ] as const;
 
-export const XIAOMEI_ABOUT = `我是${XIAOMEI_NAME}。嘴上不饶人，点心还是会分你。`;
+export const XIAOMEI_ABOUT = `哼，我是${XIAOMEI_NAME}。角标那个。`;
 
 /** 第一次还没打开过菜单时，贴在身边。点一下仍然只听短句。 */
 export const XIAOMEI_HOLD_HINT = "长按跟我说话";
