@@ -236,6 +236,8 @@ export function useXiaomeiPlace(options: {
   const onPointerMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
     const drag = dragRef.current;
     if (!drag || drag.id !== event.pointerId) return;
+    // 长按已经打开菜单。之后的手指抖动不能再当成拖拽，否则菜单会马上被拖走关掉。
+    if (holdFired.current) return;
     const dx = event.clientX - drag.originX;
     const dy = event.clientY - drag.originY;
     if (!drag.moved && Math.hypot(dx, dy) < DRAG_SLOP) return;

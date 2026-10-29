@@ -55,6 +55,7 @@ import {
   XIAOMEI_CHAT_STARTERS,
   XIAOMEI_CLICK_LINES,
   XIAOMEI_HOLD_HINT,
+  XIAOMEI_LONG_PRESS_HINT,
   XIAOMEI_COMFORT_LINES,
   XIAOMEI_FEED_FULL_LINES,
   XIAOMEI_FEED_LINES,
@@ -143,6 +144,7 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     ...Object.values(XIAOMEI_SCENE_LINES).flat(),
     XIAOMEI_ABOUT,
     XIAOMEI_HOLD_HINT,
+    XIAOMEI_LONG_PRESS_HINT,
     XIAOMEI_CHAT_EMPTY,
     ...XIAOMEI_CHAT_STARTERS.flatMap((item) => [item.label, item.text]),
   ];
@@ -806,12 +808,13 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /visualViewport/);
   assert.doesNotMatch(companion, /formatMeterDelta|饱腹|好感/);
   assert.match(companion, /XIAOMEI_HOLD_HINT/);
-  assert.match(companion, /XIAOMEI_PET_LINES/);
-  assert.match(companion, /onHold: onPet/);
+  assert.match(companion, /XIAOMEI_LONG_PRESS_HINT/);
+  assert.match(companion, /onHold: openMenu/);
+  assert.doesNotMatch(companion, /onHold:\s*onPet|const onPet|长按是摸头|aria-label="打开菜单"|aria-label='打开菜单'/);
+  assert.doesNotMatch(companion, />\s*菜单\s*</);
+  assert.match(companion, /长按打开菜单/);
   assert.match(companion, /forgetXiaomeiNote/);
   assert.match(companion, /XiaomeiMemorySheet/);
-  assert.match(companion, /长按是摸头/);
-  assert.doesNotMatch(companion, /长按打开菜单/);
   assert.match(companion, /dockXiaomeiChat/);
   assert.match(companion, /placeXiaomeiPopover/);
   assert.match(companion, /liveAnchorBox/);
@@ -837,6 +840,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(metersHook, /readPetClock/);
   const placeHook = await readFile(new URL("../components/xiaomei/use-xiaomei-place.ts", import.meta.url), "utf8");
   assert.match(placeHook, /XIAOMEI_PET_HOLD_MS/);
+  assert.match(placeHook, /if \(holdFired\.current\) return/);
   const chatHook = await readFile(new URL("../components/xiaomei/use-xiaomei-chat.ts", import.meta.url), "utf8");
   assert.match(chatHook, /XIAOMEI_SCENE_LINES/);
   assert.match(chatHook, /XIAOMEI_SCENE_PIN_MS/);

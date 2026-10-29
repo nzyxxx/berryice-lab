@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 const ITEM =
   "flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm text-lab-ink hover:bg-white/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40";
 
-/** 右键菜单。长按是摸头，不在这里。只抛动作，不自己改位置、不写存储、不去请求。 */
+/** 小莓菜单。长按立绘或右键打开。只抛动作，不自己改位置、不写存储、不去请求。 */
 export function XiaomeiMenu({
   muted,
   align,
