@@ -779,6 +779,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
     "../components/lab/support-button.tsx",
     "./xiaomei-lines.ts",
     "./xiaomei-actions.ts",
+    "./xiaomei-faces.ts",
     "./xiaomei-meters.ts",
     "./xiaomei-memory.ts",
   ];
@@ -794,10 +795,11 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /resolveXiaomeiFace/);
   assert.match(companion, /flashClick/);
   assert.match(companion, /playFeed/);
+  assert.match(companion, /playDrink/);
   assert.match(companion, /XiaomeiStage/);
   assert.doesNotMatch(companion, /requestAnimationFrame|speechSynthesis/);
   const actions = await readFile(new URL("./xiaomei-actions.ts", import.meta.url), "utf8");
-  assert.match(actions, /moodForChatStatus/);
+  assert.match(actions, /xiaomeiChatFace/);
   assert.match(companion, /XIAOMEI_CLICK_LINES/);
   assert.match(companion, /isXiaomeiHungry/);
   assert.match(companion, /XIAOMEI_FEED_TOO_MUCH_LINES/);
@@ -824,6 +826,8 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(menu, /让\{XIAOMEI_NAME\}说点什么/);
   assert.match(menu, /关于\{XIAOMEI_NAME\}/);
   assert.match(menu, /喂食/);
+  assert.match(menu, /喝水/);
+  assert.match(menu, /XIAOMEI_CUP_SRC/);
   assert.doesNotMatch(menu, /饱腹|好感/);
   assert.match(menu, /跟她说话/);
   assert.match(menu, /会真的回你/);
@@ -955,8 +959,31 @@ test("位置夹在视口里，贴边才探出，默认让开回到顶部", () =>
   assert.equal(high.maxHeight, 240);
 });
 
-test("五张表情 WebP 画布是全身 256×438，舞台读帧常量", async () => {
-  const names = ["blank", "content", "happy", "sad", "annoyed"] as const;
+test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async () => {
+  const names = [
+    "blank",
+    "content",
+    "happy",
+    "sad",
+    "annoyed",
+    "blink_open",
+    "blink_half",
+    "blink_closed",
+    "mood_surprised",
+    "mood_thinking",
+    "mood_sleepy",
+    "mood_shy",
+    "mood_smug",
+    "mood_puff",
+    "mood_love",
+    "mood_wink",
+    "mood_cry",
+    "mood_cool",
+    "mood_eager",
+    "mood_soft",
+    "pose_drink_hold",
+    "pose_drink_sip",
+  ] as const;
   for (const name of names) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.webp`, import.meta.url));
     assert.equal(data.subarray(0, 4).toString(), "RIFF", name);

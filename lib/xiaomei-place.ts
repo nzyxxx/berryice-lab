@@ -184,7 +184,7 @@ export const XIAOMEI_POPOVER_GAP = 8;
 export const XIAOMEI_POPOVER_PAD = 8;
 
 /** 与 `w-52` + `max-h-24rem` 对齐，略估高，宁可先翻面。 */
-export const XIAOMEI_MENU_PANEL = { width: 208, height: 384 } as const;
+export const XIAOMEI_MENU_PANEL = { width: 208, height: 428 } as const;
 
 /** 与 `min(17.5rem, 100vw-2rem)` + `max-h-22rem` 对齐。 */
 export const XIAOMEI_MEMORY_PANEL = { width: 280, height: 352 } as const;

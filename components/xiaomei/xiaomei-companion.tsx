@@ -41,6 +41,7 @@ import {
   xiaomeiPropKind,
   xiaomeiPropPose,
 } from "@/lib/xiaomei-actions";
+import { XIAOMEI_A1_FACES, xiaomeiFaceSrc } from "@/lib/xiaomei-faces";
 import {
   forgetXiaomeiNote,
   isXiaomeiHungry,
@@ -221,7 +222,7 @@ function useKeyboardFrame(active: boolean) {
 
 /**
  * 全站右下角的小莓妹。拖拽用指针事件。
- * 待机、喝水、点心、打伞、转圈、散步只用 CSS，不留 rAF。
+ * 待机身体动作用 CSS。眨眼和喝水换全身帧，只排 setTimeout，不留 rAF。
  * z-40：低于弹层（门户 z-50）、回到顶部（z-60）和移动抽屉（z-70）。
  * 点击从本地池里随机回一句；和模型说话从菜单「跟她说话」进。
  * 长按立绘打开菜单；桌面右键同样可以。没有单独的菜单按钮。
@@ -270,7 +271,7 @@ export function XiaomeiCompanion() {
   const spriteRef = useRef<HTMLButtonElement>(null);
   const mutedRef = useRef(false);
   const speechRef = useRef<Speech | null>(null);
-  const flashClickRef = useRef<(mood: XiaomeiMood) => void>(() => {});
+  const flashClickRef = useRef<(mood: XiaomeiMood, context?: "click" | "pet" | "mutter") => void>(() => {});
   const taps = useRef<number[]>([]);
   const pinSource = useRef<Speech["source"] | null>(null);
 
@@ -330,6 +331,14 @@ export function XiaomeiCompanion() {
     paused: () =>
       speechRef.current != null || chatOpenRef.current || menuOpenRef.current || memoryOpenRef.current,
   });
+
+  useEffect(() => {
+    if (!place.ready || place.hidden) return;
+    for (const face of XIAOMEI_A1_FACES) {
+      const img = new Image();
+      img.src = xiaomeiFaceSrc(face);
+    }
+  }, [place.hidden, place.ready]);
   const { clear } = presence;
 
   useEffect(() => {
@@ -491,6 +500,8 @@ export function XiaomeiCompanion() {
     moodPin,
     leadMood: presence.lead,
     beatMood: presence.beatMood,
+    poseFace: presence.poseFace,
+    blinkFace: presence.blinkFace,
     hover: hover && !memoryOpen,
   });
   const showSpeech = speech && !chatOpen && !menuOpen && !memoryOpen && !muted;
@@ -567,9 +578,17 @@ export function XiaomeiCompanion() {
       onPointerEnter={() => {
         setHover(true);
         place.onEnter();
-        if (!chatOpenRef.current && !menuOpenRef.current && !memoryOpenRef.current && !speechRef.current) {
+        const currentSpeech = speechRef.current;
+        if (
+          !chatOpenRef.current &&
+          !menuOpenRef.current &&
+          !memoryOpenRef.current &&
+          !currentSpeech &&
+          !presence.poseFace
+        ) {
           const tone = toneFromAffection(metersRef.current.affection);
           const line = pickTaggedLine(XIAOMEI_HOVER_LINES, speechRef.current?.text, tone);
+          flashClickRef.current(line.mood, "click");
           speak(line.mood, line.text, "hover");
         }
       }}
@@ -594,6 +613,7 @@ export function XiaomeiCompanion() {
             setMenuOpen(false);
             const tone = toneFromAffection(metersRef.current.affection);
             const line = pickTaggedLine(XIAOMEI_MUTTER_LINES, speechRef.current?.text, tone);
+            flashClickRef.current(line.mood, "mutter");
             speak(line.mood, line.text, "mutter");
           }}
           onFeed={() => {
@@ -610,6 +630,10 @@ export function XiaomeiCompanion() {
             const mood = result.tooMuch || result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
             presence.playFeed(mood);
             speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed");
+          }}
+          onDrink={() => {
+            setMenuOpen(false);
+            presence.playDrink();
           }}
           onMute={toggleMute}
           onCorner={() => {

@@ -2,6 +2,7 @@
 
 import { trapTab } from "@/components/xiaomei/trap-tab";
 import { xiaomeiWhisperClass } from "@/components/xiaomei/xiaomei-surface";
+import { XIAOMEI_CUP_SRC } from "@/lib/xiaomei-faces";
 import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ export function XiaomeiMenu({
   onTalk,
   onMutter,
   onFeed,
+  onDrink,
   onMute,
   onCorner,
   onAbout,
@@ -36,6 +38,7 @@ export function XiaomeiMenu({
   onTalk: () => void;
   onMutter: () => void;
   onFeed: () => void;
+  onDrink: () => void;
   onMute: () => void;
   onCorner: () => void;
   onAbout: () => void;
@@ -79,6 +82,11 @@ export function XiaomeiMenu({
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onFeed}>
         喂食
+      </button>
+      <button type="button" role="menuitem" className={ITEM} onClick={onDrink}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={XIAOMEI_CUP_SRC} alt="" width={469} height={875} draggable={false} className="mr-2 h-6 w-auto" />
+        喝水
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onMute}>
         {muted ? "取消静音" : "静音"}

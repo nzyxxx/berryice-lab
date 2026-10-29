@@ -1,13 +1,14 @@
 /**
  * 小莓妹的短动作和表情微变。纯计算，不碰 DOM、不挂 rAF。
- * 眨眼、哈欠、伸懒腰、音符、欢呼、叹气叠在现有五张脸上。
- * 喝水、点心、打伞是 SVG 道具；转圈是水平翻转，散步是左右走动。
- * 不新切立绘，也不换别人的外形。
+ * 眨眼是四帧全身换图。十二张新情绪跟五张旧脸一样换 src。
+ * 喝水是端杯再抿，不再用跳动的 SVG 杯子。点心、伞仍是道具。
+ * 转圈是水平翻转，散步是左右走动。
  * 菜单关上、没有台词时，十秒里大约三拍，几乎每拍都在动。
  * 间隔长过最长的一拍。同一种动作或微表情不连播。
  */
 
-import { moodForChatStatus, type XiaomeiMood } from "./xiaomei-lines";
+import { type XiaomeiDrinkPose, type XiaomeiFace } from "./xiaomei-faces";
+import { type XiaomeiMood } from "./xiaomei-lines";
 
 export const XIAOMEI_IDLE_BEATS = [
   "blink",
@@ -151,7 +152,38 @@ const HUNGRY_CUTS: readonly { beat: XiaomeiIdleBeat; until: number }[] = [
   { beat: "spin", until: 1 },
 ];
 
-export type XiaomeiTrailContext = XiaomeiIdleBeat | "click" | "feed";
+export type XiaomeiTrailContext = XiaomeiIdleBeat | "click" | "feed" | "pet" | "mutter";
+
+/**
+ * 站立眨眼。睁眼是待机底，所以第一帧和结束后的底图接得上。
+ * 四帧一共约三分之一秒，间隔另排，避免连闪。
+ */
+export const XIAOMEI_BLINK_CYCLE = ["blink_open", "blink_half", "blink_closed", "blink_half"] as const;
+
+export const XIAOMEI_BLINK_FRAME_MS = [90, 70, 110, 70] as const;
+
+export const XIAOMEI_BLINK_CYCLE_MS = XIAOMEI_BLINK_FRAME_MS.reduce((sum, ms) => sum + ms, 0);
+
+/** 端着看清，再抿一口。两段加起来等于喝水这一拍。 */
+export const XIAOMEI_DRINK_HOLD_MS = 1100;
+
+export function blinkFaceAt(elapsedMs: number): (typeof XIAOMEI_BLINK_CYCLE)[number] | null {
+  if (!Number.isFinite(elapsedMs)) return null;
+  if (elapsedMs < 0) return XIAOMEI_BLINK_CYCLE[0];
+  let cursor = 0;
+  for (let index = 0; index < XIAOMEI_BLINK_CYCLE.length; index += 1) {
+    cursor += XIAOMEI_BLINK_FRAME_MS[index] ?? 0;
+    if (elapsedMs < cursor) return XIAOMEI_BLINK_CYCLE[index] ?? null;
+  }
+  return null;
+}
+
+export function drinkFaceAt(elapsedMs: number): XiaomeiDrinkPose | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_drink_hold";
+  if (elapsedMs < XIAOMEI_DRINK_HOLD_MS) return "pose_drink_hold";
+  if (elapsedMs < XIAOMEI_BEAT_MS.drink) return "pose_drink_sip";
+  return null;
+}
 
 function unitRoll(roll: number): number {
   if (!Number.isFinite(roll)) return 0;
@@ -172,7 +204,7 @@ function isActionBeat(beat: XiaomeiIdleBeat): beat is XiaomeiActionBeat {
   return (XIAOMEI_ACTION_BEATS as readonly XiaomeiIdleBeat[]).includes(beat);
 }
 
-function isMicroBeat(beat: XiaomeiIdleBeat): boolean {
+function isMicroBeat(beat: XiaomeiIdleBeat): beat is (typeof XIAOMEI_MICRO_BEATS)[number] {
   return (XIAOMEI_MICRO_BEATS as readonly XiaomeiIdleBeat[]).includes(beat);
 }
 
@@ -204,47 +236,70 @@ export function idleGapMs(roll: number): number {
   return Math.round(min + unit * (max - min));
 }
 
-function leadMood(settled: XiaomeiMood): XiaomeiMood {
-  if (settled === "happy") return "content";
-  if (settled === "content") return "blank";
-  if (settled === "annoyed" || settled === "sad") return "blank";
-  return "content";
-}
+const REACTION_LEAD = {
+  click: {
+    happy: "mood_wink",
+    content: "mood_shy",
+    annoyed: "mood_puff",
+    sad: "mood_cry",
+    blank: "mood_thinking",
+  },
+  feed: {
+    happy: "mood_eager",
+    content: "mood_soft",
+    annoyed: "mood_puff",
+    sad: "mood_cry",
+    blank: "mood_surprised",
+  },
+  pet: {
+    happy: "mood_love",
+    content: "mood_shy",
+    annoyed: "mood_puff",
+    sad: "mood_soft",
+    blank: "mood_thinking",
+  },
+  mutter: {
+    happy: "mood_smug",
+    content: "mood_cool",
+    annoyed: "mood_puff",
+    sad: "mood_soft",
+    blank: "mood_thinking",
+  },
+} as const satisfies Record<"click" | "feed" | "pet" | "mutter", Record<XiaomeiMood, XiaomeiFace>>;
 
-/** 两帧。待机不主动切到难过；点击和投喂的落点跟这句台词走。 */
+/** 两帧。待机不切难过脸；点击、投喂、摸头、碎碎念的落点跟这句台词走。 */
 export function expressionTrail(
   context: XiaomeiTrailContext,
   settled: XiaomeiMood,
-): readonly [XiaomeiMood, XiaomeiMood] {
-  if (context === "blink" || context === "blink2" || context === "slowblink") return ["blank", "content"];
-  if (context === "yawn") return ["blank", "content"];
-  if (context === "stretch") return ["content", "happy"];
-  if (context === "peek") return ["content", "blank"];
-  if (context === "nod") return ["content", "happy"];
-  if (context === "tilt") return ["blank", "content"];
-  if (context === "pout") return ["content", "annoyed"];
-  if (context === "note") return ["blank", "content"];
-  if (context === "cheer") return ["content", "happy"];
-  if (context === "sigh") return ["blank", "annoyed"];
-  if (context === "glance") return ["content", "blank"];
-  if (context === "smile") return ["blank", "happy"];
-  if (context === "sip" || context === "drink") return ["blank", "content"];
-  if (context === "hold") return ["content", "happy"];
-  if (context === "wipe") return ["annoyed", "content"];
-  if (context === "hum") return ["content", "happy"];
-  if (context === "sway") return ["blank", "happy"];
-  if (context === "snack") return ["content", "happy"];
-  if (context === "umbrella") return ["content", "happy"];
-  if (context === "spin") return ["blank", "happy"];
-  if (context === "walk") return ["content", "blank"];
-  return [leadMood(settled), settled];
+): readonly [XiaomeiFace, XiaomeiFace] {
+  if (context === "blink" || context === "blink2" || context === "slowblink") return ["blink_open", "blink_half"];
+  if (context === "yawn") return ["mood_sleepy", "blink_closed"];
+  if (context === "stretch") return ["mood_eager", "happy"];
+  if (context === "peek") return ["mood_thinking", "blank"];
+  if (context === "nod") return ["mood_soft", "happy"];
+  if (context === "tilt") return ["mood_cool", "content"];
+  if (context === "pout") return ["mood_puff", "annoyed"];
+  if (context === "note") return ["mood_thinking", "blank"];
+  if (context === "cheer") return ["mood_love", "mood_eager"];
+  if (context === "sigh") return ["mood_sleepy", "mood_soft"];
+  if (context === "glance") return ["mood_cool", "mood_thinking"];
+  if (context === "smile") return ["mood_smug", "mood_wink"];
+  if (context === "sip" || context === "drink") return ["pose_drink_hold", "pose_drink_sip"];
+  if (context === "hold") return ["pose_drink_hold", "content"];
+  if (context === "wipe") return ["mood_puff", "content"];
+  if (context === "hum") return ["mood_soft", "happy"];
+  if (context === "sway") return ["mood_cool", "happy"];
+  if (context === "snack") return ["mood_eager", "happy"];
+  if (context === "umbrella") return ["mood_cool", "content"];
+  if (context === "spin") return ["mood_surprised", "mood_eager"];
+  if (context === "walk") return ["mood_shy", "blank"];
+  return [REACTION_LEAD[context][settled], settled];
 }
 
 export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boolean): string | null {
   if (dragging) return null;
-  if (beat === "blink") return "xiaomei-blink";
-  if (beat === "blink2") return "xiaomei-blink2";
-  if (beat === "slowblink") return "xiaomei-slowblink";
+  if (beat === "blink" || beat === "blink2" || beat === "slowblink") return "xiaomei-float";
+  if (beat === "drink" || beat === "sip" || beat === "hold") return null;
   if (beat === "yawn") return "xiaomei-yawn";
   if (beat === "stretch") return "xiaomei-stretch";
   if (beat === "peek") return "xiaomei-peek";
@@ -254,9 +309,6 @@ export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boole
   if (beat === "note") return "xiaomei-note";
   if (beat === "cheer") return "xiaomei-cheer";
   if (beat === "sigh") return "xiaomei-sigh";
-  if (beat === "sip") return "xiaomei-sip";
-  if (beat === "drink") return "xiaomei-drink";
-  if (beat === "hold") return "xiaomei-hold";
   if (beat === "wipe") return "xiaomei-wipe";
   if (beat === "snack") return "xiaomei-snack";
   if (beat === "hum") return "xiaomei-hum";
@@ -269,19 +321,8 @@ export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boole
 }
 
 export function xiaomeiCueKind(beat: XiaomeiIdleBeat | null): XiaomeiCueKind | null {
-  if (
-    beat === "blink" ||
-    beat === "blink2" ||
-    beat === "slowblink" ||
-    beat === "yawn" ||
-    beat === "stretch" ||
-    beat === "note" ||
-    beat === "hum" ||
-    beat === "cheer" ||
-    beat === "sigh"
-  ) {
-    return beat;
-  }
+  if (beat === "blink" || beat === "blink2" || beat === "slowblink" || beat === "yawn") return null;
+  if (beat === "stretch" || beat === "note" || beat === "hum" || beat === "cheer" || beat === "sigh") return beat;
   return null;
 }
 
@@ -299,23 +340,31 @@ export function xiaomeiChatCue(
 }
 
 export function xiaomeiPropKind(beat: XiaomeiIdleBeat | null): XiaomeiPropKind | null {
-  if (beat === "drink" || beat === "sip" || beat === "hold") return "cup";
   if (beat === "snack") return "snack";
   if (beat === "umbrella") return "umbrella";
   return null;
 }
 
+/** 点心怎么拿。喝水改全身姿势，不再叠杯子。 */
 export function xiaomeiPropPose(beat: XiaomeiIdleBeat | null): XiaomeiPropPose | null {
-  if (beat === "drink") return "raise";
-  if (beat === "sip") return "sip";
-  if (beat === "hold") return "hold";
   if (beat === "snack") return "bite";
   return null;
 }
 
+/** 聊天时盖上的脸。想用思考，说完开心用期待，没接上用鼓脸。台词情绪仍走原来的五张。 */
+export function xiaomeiChatFace(
+  status: "thinking" | "done" | "error",
+  replyMood: "happy" | "annoyed" | "content" = "happy",
+): XiaomeiFace {
+  if (status === "thinking") return "mood_thinking";
+  if (status === "error") return "mood_puff";
+  return replyMood === "happy" ? "mood_eager" : "mood_cool";
+}
+
 /**
- * 聊天中的状态脸优先。引子脸只盖过台词一帧。
- * 没人说话时才用待机拍；悬浮是最后的兜底。
+ * 聊天中的状态脸优先，喝水姿势盖过台词，眨眼只盖站立的空档。
+ * 引子脸盖过台词一帧。没人说话时才用待机拍。
+ * 什么都没有时站在睁眼的 blink_open 上，眨眼才接得上。
  */
 export function resolveXiaomeiFace(input: {
   chatOpen: boolean;
@@ -323,16 +372,20 @@ export function resolveXiaomeiFace(input: {
   replyMood: "happy" | "annoyed";
   speechMood: XiaomeiMood | null;
   moodPin: XiaomeiMood | null;
-  leadMood: XiaomeiMood | null;
-  beatMood: XiaomeiMood | null;
+  leadMood: XiaomeiFace | null;
+  beatMood: XiaomeiFace | null;
+  poseFace?: XiaomeiFace | null;
+  blinkFace?: XiaomeiFace | null;
   hover: boolean;
-}): XiaomeiMood {
-  if (input.chatOpen && input.status !== "idle") return moodForChatStatus(input.status, input.replyMood);
+}): XiaomeiFace {
+  if (input.chatOpen && input.status !== "idle") return xiaomeiChatFace(input.status, input.replyMood);
+  if (input.poseFace) return input.poseFace;
   if (input.chatOpen) return "content";
   if (input.leadMood) return input.leadMood;
   if (input.speechMood) return input.speechMood;
   if (input.moodPin) return input.moodPin;
   if (input.beatMood) return input.beatMood;
+  if (input.blinkFace) return input.blinkFace;
   if (input.hover) return "annoyed";
-  return "content";
+  return "blink_open";
 }

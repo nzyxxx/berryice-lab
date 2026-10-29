@@ -1,45 +1,13 @@
 /**
- * 杯子、点心、伞还没有独立立绘，先用小 SVG 叠在现有围裙立绘上。
- * 尺寸由 CSS 放大到立绘能看清的程度。不改脸。
- * TODO(prop-art): 有正式道具帧之后，换成 public/xiaomei 里的切片，删掉这三枚 SVG。
+ * 点心仍是 SVG，跟着身体走。喝水改走全身姿势，杯子已经在画面里。
+ * prop_cup.png 用在菜单图标上，不再叠一只跳动的杯子。
  */
 
 import type { XiaomeiPropKind, XiaomeiPropPose } from "@/lib/xiaomei-actions";
-import { cn } from "@/lib/utils";
 
-/** 只画道具，不改脸、不记状态。杯子跟着身体走，影子留在杯底。 */
+/** 只画道具，不改脸、不记状态。 */
 export function XiaomeiProp({ kind, pose }: { kind: XiaomeiPropKind; pose: XiaomeiPropPose | null }) {
-  if (kind === "cup") {
-    const poseClass =
-      pose === "sip" ? "xiaomei-pose-sip" : pose === "hold" ? "xiaomei-pose-hold" : "xiaomei-pose-raise";
-    return (
-      <span className={cn("xiaomei-prop xiaomei-prop-cup", poseClass)} aria-hidden>
-        <span className="xiaomei-prop-object">
-          <span className="xiaomei-prop-shadow" />
-          <svg viewBox="0 0 32 32" width="100%" height="100%">
-          <path
-            d="M8 7.2h13.4l-1.3 14.6a3.4 3.4 0 0 1-3.4 3.1h-4a3.4 3.4 0 0 1-3.4-3.1L8 7.2z"
-            fill="rgba(255,255,255,0.94)"
-            stroke="#24305f"
-            strokeWidth="1.6"
-          />
-          <path
-            d="M10.2 13.2h9.2l-.6 7.2a2.2 2.2 0 0 1-2.2 2h-3.6a2.2 2.2 0 0 1-2.2-2l-.6-7.2z"
-            fill="#5aa2ff"
-          />
-          <path d="M11.2 9.2h3.2" stroke="#24305f" strokeWidth="1.6" strokeLinecap="round" />
-          <path
-            d="M21.2 10.2h3.2c1.5 0 2.4 1.2 2.2 2.6-.3 1.6-1.6 2.6-3.2 2.6h-2.4"
-            fill="none"
-            stroke="#24305f"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-          />
-        </svg>
-        </span>
-      </span>
-    );
-  }
+  if (kind === "cup") return null;
 
   if (kind === "umbrella") {
     return (
@@ -67,7 +35,7 @@ export function XiaomeiProp({ kind, pose }: { kind: XiaomeiPropKind; pose: Xiaom
   }
 
   return (
-    <span className="xiaomei-prop xiaomei-prop-snack xiaomei-pose-bite" aria-hidden>
+    <span className="xiaomei-prop xiaomei-prop-snack xiaomei-pose-bite" aria-hidden data-pose={pose ?? "bite"}>
       <span className="xiaomei-prop-object">
         <span className="xiaomei-prop-shadow" />
         <svg viewBox="0 0 32 32" width="100%" height="100%">
