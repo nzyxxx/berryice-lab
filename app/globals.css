@@ -618,19 +618,51 @@ html.home-motion [data-reveal].is-shown {
   }
 }
 
-/* 小莓待机：只动 transform，不挂 rAF。气泡和拖拽在另一层，避免两套 transform 打架。 */
+/* 小莓待机：只动 transform / opacity，不挂 rAF。气泡和拖拽在另一层，避免两套 transform 打架。
+   升起时人略放大、脚下影子收窄，是轻层次，不是第二张立绘。 */
 @keyframes xiaomei-float {
   0%,
   100% {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(0, -3px, 0);
+    transform: translate3d(0, -4px, 0) scale(1.018);
   }
 }
 
 .xiaomei-float {
   animation: xiaomei-float 3.8s ease-in-out infinite;
+}
+
+.xiaomei-ground {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  bottom: -4px;
+  width: 70%;
+  height: 14px;
+  border-radius: 999px;
+  background: radial-gradient(ellipse at center, rgba(198, 214, 255, 0.55), rgba(198, 214, 255, 0) 72%);
+  transform: translate3d(-50%, 0, 0);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: xiaomei-ground 3.8s ease-in-out infinite;
+}
+
+.xiaomei-ground-still {
+  animation: none;
+}
+
+@keyframes xiaomei-ground {
+  0%,
+  100% {
+    transform: translate3d(-50%, 0, 0) scaleX(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(-50%, 1px, 0) scaleX(0.78);
+    opacity: 0.22;
+  }
 }
 
 @keyframes xiaomei-glance {
@@ -648,6 +680,206 @@ html.home-motion [data-reveal].is-shown {
 
 .xiaomei-glance {
   animation: xiaomei-glance 1.6s ease-in-out 1;
+}
+
+.xiaomei-drink,
+.xiaomei-snack,
+.xiaomei-umbrella,
+.xiaomei-walk {
+  transform-origin: 50% 78%;
+}
+
+.xiaomei-spin {
+  transform-origin: 50% 46%;
+}
+
+@keyframes xiaomei-drink {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  40% {
+    transform: translate3d(0, -3px, 0) rotate(-5deg) scale(1.02);
+  }
+  62% {
+    transform: translate3d(0, -4px, 0) rotate(-7deg) scale(1.025);
+  }
+}
+
+.xiaomei-drink {
+  animation: xiaomei-drink 2.3s ease-in-out 1;
+}
+
+@keyframes xiaomei-snack {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  28% {
+    transform: translate3d(0, 1px, 0) rotate(3deg) scale(1);
+  }
+  46% {
+    transform: translate3d(0, -2px, 0) rotate(-2deg) scale(1.015);
+  }
+}
+
+.xiaomei-snack {
+  animation: xiaomei-snack 2.1s ease-in-out 1;
+}
+
+@keyframes xiaomei-umbrella {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  45% {
+    transform: translate3d(-1px, -2px, 0) rotate(-3deg);
+  }
+  75% {
+    transform: translate3d(1px, -1px, 0) rotate(2deg);
+  }
+}
+
+.xiaomei-umbrella {
+  animation: xiaomei-umbrella 2.2s ease-in-out 1;
+}
+
+@keyframes xiaomei-spin {
+  0%,
+  100% {
+    transform: rotate(0deg) scaleX(1);
+  }
+  28% {
+    transform: rotate(-8deg) scaleX(0.12);
+  }
+  50% {
+    transform: rotate(6deg) scaleX(-1);
+  }
+  74% {
+    transform: rotate(-5deg) scaleX(0.12);
+  }
+}
+
+.xiaomei-spin {
+  animation: xiaomei-spin 2s ease-in-out 1;
+}
+
+@keyframes xiaomei-walk {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  20% {
+    transform: translate3d(-7px, -1px, 0) rotate(-4deg);
+  }
+  40% {
+    transform: translate3d(-2px, 0, 0) rotate(1deg);
+  }
+  65% {
+    transform: translate3d(7px, -1px, 0) rotate(4deg);
+  }
+  85% {
+    transform: translate3d(2px, 0, 0) rotate(-1deg);
+  }
+}
+
+.xiaomei-walk {
+  animation: xiaomei-walk 2.4s ease-in-out 1;
+}
+
+.xiaomei-prop {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 6%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.xiaomei-prop-cup {
+  animation: xiaomei-cup 2.3s ease-in-out 1 both;
+}
+
+.xiaomei-prop-snack {
+  animation: xiaomei-snack-prop 2.1s ease-in-out 1 both;
+}
+
+.xiaomei-prop-umbrella {
+  top: 0;
+  bottom: auto;
+  left: 62%;
+  width: 26px;
+  height: 26px;
+  margin-left: -4px;
+  animation: xiaomei-umbrella-prop 2.2s ease-in-out 1 both;
+}
+
+@keyframes xiaomei-cup {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0) rotate(-12deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate3d(1px, -4px, 0) rotate(-4deg);
+  }
+  48% {
+    opacity: 1;
+    transform: translate3d(3px, -16px, 0) rotate(14deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translate3d(2px, -18px, 0) rotate(18deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 2px, 0) rotate(0deg);
+  }
+}
+
+@keyframes xiaomei-umbrella-prop {
+  0% {
+    opacity: 0;
+    transform: translate3d(3px, -4px, 0) rotate(10deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+  62% {
+    opacity: 1;
+    transform: translate3d(-2px, 1px, 0) rotate(5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(2px, -3px, 0) rotate(8deg);
+  }
+}
+
+@keyframes xiaomei-snack-prop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.75);
+  }
+  20% {
+    opacity: 1;
+    transform: translate3d(1px, -4px, 0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(2px, -14px, 0) scale(1);
+  }
+  74% {
+    opacity: 0.85;
+    transform: translate3d(1px, -8px, 0) scale(0.88);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 2px, 0) scale(0.8);
+  }
 }
 
 .xiaomei-caret {
@@ -669,7 +901,16 @@ html.home-motion [data-reveal].is-shown {
 @media (prefers-reduced-motion: reduce) {
   .xiaomei-float,
   .xiaomei-glance,
-  .xiaomei-caret {
+  .xiaomei-caret,
+  .xiaomei-ground,
+  .xiaomei-drink,
+  .xiaomei-snack,
+  .xiaomei-umbrella,
+  .xiaomei-spin,
+  .xiaomei-walk,
+  .xiaomei-prop-cup,
+  .xiaomei-prop-snack,
+  .xiaomei-prop-umbrella {
     animation: none !important;
   }
 }

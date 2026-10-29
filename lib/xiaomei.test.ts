@@ -765,12 +765,16 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
     "../components/xiaomei/xiaomei-companion.tsx",
     "../components/xiaomei/xiaomei-menu.tsx",
     "../components/xiaomei/xiaomei-memory-sheet.tsx",
+    "../components/xiaomei/xiaomei-stage.tsx",
+    "../components/xiaomei/xiaomei-prop.tsx",
     "../components/xiaomei/use-xiaomei-meters.ts",
     "../components/xiaomei/use-xiaomei-place.ts",
+    "../components/xiaomei/use-xiaomei-presence.ts",
     "../components/xiaomei/use-xiaomei-chat.ts",
     "../components/xiaomei/xiaomei-chat-sheet.tsx",
     "../components/lab/support-button.tsx",
     "./xiaomei-lines.ts",
+    "./xiaomei-actions.ts",
     "./xiaomei-meters.ts",
     "./xiaomei-memory.ts",
   ];
@@ -783,7 +787,13 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   const companion = await readFile(new URL("../components/xiaomei/xiaomei-companion.tsx", import.meta.url), "utf8");
   assert.match(companion, /pickTaggedLine\(pool/);
   assert.match(companion, /pickTaggedLine\(XIAOMEI_HOVER_LINES, speechRef\.current\?\.text, tone\)/);
-  assert.match(companion, /moodForChatStatus/);
+  assert.match(companion, /resolveXiaomeiFace/);
+  assert.match(companion, /flashClick/);
+  assert.match(companion, /playFeed/);
+  assert.match(companion, /XiaomeiStage/);
+  assert.doesNotMatch(companion, /requestAnimationFrame|speechSynthesis/);
+  const actions = await readFile(new URL("./xiaomei-actions.ts", import.meta.url), "utf8");
+  assert.match(actions, /moodForChatStatus/);
   assert.match(companion, /XIAOMEI_CLICK_LINES/);
   assert.match(companion, /isXiaomeiHungry/);
   assert.match(companion, /XIAOMEI_FEED_TOO_MUCH_LINES/);

@@ -3,9 +3,11 @@
 import { XiaomeiChatSheet } from "@/components/xiaomei/xiaomei-chat-sheet";
 import { XiaomeiMemorySheet } from "@/components/xiaomei/xiaomei-memory-sheet";
 import { XiaomeiMenu } from "@/components/xiaomei/xiaomei-menu";
+import { XiaomeiStage } from "@/components/xiaomei/xiaomei-stage";
 import { useXiaomeiChat } from "@/components/xiaomei/use-xiaomei-chat";
 import { useXiaomeiMeters } from "@/components/xiaomei/use-xiaomei-meters";
 import { useXiaomeiPlace } from "@/components/xiaomei/use-xiaomei-place";
+import { useXiaomeiPresence } from "@/components/xiaomei/use-xiaomei-presence";
 import {
   XIAOMEI_ABOUT,
   XIAOMEI_CATCHPHRASE,
@@ -26,14 +28,13 @@ import {
   XIAOMEI_RECALL_LINES,
   XIAOMEI_SAY_EVENT,
   XIAOMEI_SPAM_LINES,
-  XIAOMEI_SPRITE,
   isXiaomeiMood,
-  moodForChatStatus,
   pickTaggedLine,
   pickXiaomeiLine,
   type XiaomeiMood,
   type XiaomeiSayDetail,
 } from "@/lib/xiaomei-lines";
+import { resolveXiaomeiFace, xiaomeiMotionClass, xiaomeiPropKind } from "@/lib/xiaomei-actions";
 import {
   forgetXiaomeiNote,
   isXiaomeiHungry,
@@ -58,7 +59,6 @@ import {
   xiaomeiVisibleView,
 } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 type Speech = {
@@ -67,7 +67,6 @@ type Speech = {
   source: "greet" | "hover" | "click" | "event" | "about" | "spam" | "mutter" | "feed" | "pet";
   delta: string | null;
 };
-type Gesture = "glance" | "smile";
 
 const MUTE_KEY = "berryice.xiaomei.muted";
 const MUTE_EVENT = "xiaomei-mute";
@@ -216,7 +215,8 @@ function useKeyboardFrame(active: boolean) {
 }
 
 /**
- * 全站右下角的小莓妹。拖拽用指针事件，待机和左右看只用 CSS，不留 rAF。
+ * 全站右下角的小莓妹。拖拽用指针事件。
+ * 待机、喝水、点心、打伞、转圈、散步只用 CSS，不留 rAF。
  * z-40：低于弹层（门户 z-50）、回到顶部（z-60）和移动抽屉（z-70）。
  * 点击从本地池里随机回一句；和模型说话从菜单「跟她说话」进。
  * 长按摸头。菜单用右键；没有右键的屏幕，立绘旁边有「菜单」。
@@ -257,7 +257,6 @@ export function XiaomeiCompanion() {
   const [speech, setSpeech] = useState<Speech | null>(null);
   const [moodPin, setMoodPin] = useState<XiaomeiMood | null>(null);
   const [hover, setHover] = useState(false);
-  const [gesture, setGesture] = useState<Gesture | null>(null);
   const keyboardFrame = useKeyboardFrame(chatOpen || menuOpen || memoryOpen || Boolean(speech));
 
   const chatOpenRef = useRef(false);
@@ -268,6 +267,7 @@ export function XiaomeiCompanion() {
   const spriteRef = useRef<HTMLButtonElement>(null);
   const mutedRef = useRef(false);
   const speechRef = useRef<Speech | null>(null);
+  const flashClickRef = useRef<(mood: XiaomeiMood) => void>(() => {});
   const taps = useRef<number[]>([]);
   const pinSource = useRef<Speech["source"] | null>(null);
 
@@ -304,6 +304,7 @@ export function XiaomeiCompanion() {
     taps.current = taps.current.filter((stamp) => now - stamp < SPAM_WINDOW_MS);
     taps.current.push(now);
     if (taps.current.length >= 4) {
+      flashClickRef.current("annoyed");
       speak("annoyed", pickXiaomeiLine(XIAOMEI_SPAM_LINES, speechRef.current?.text), "spam");
       return;
     }
@@ -312,6 +313,7 @@ export function XiaomeiCompanion() {
       ? [...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_CLICK_LINES]
       : XIAOMEI_CLICK_LINES;
     const line = pickTaggedLine(pool, speechRef.current?.text, tone);
+    flashClickRef.current(line.mood);
     speak(line.mood, line.text, "click");
   }, [speak]);
 
@@ -348,6 +350,17 @@ export function XiaomeiCompanion() {
     onDragStart: () => setMenuOpen(false),
     allowPeek: !chatOpen && !menuOpen && !memoryOpen,
   });
+  const presence = useXiaomeiPresence({
+    enabled: place.ready && !place.hidden && !chatOpen && !menuOpen && !memoryOpen,
+    hungry: isXiaomeiHungry(meters.meters.fullness),
+    paused: () =>
+      speechRef.current != null || chatOpenRef.current || menuOpenRef.current || memoryOpenRef.current,
+  });
+  const { clear } = presence;
+
+  useEffect(() => {
+    flashClickRef.current = presence.flashClick;
+  });
 
   useEffect(() => {
     if (!place.ready || place.hidden || muted) return;
@@ -377,30 +390,6 @@ export function XiaomeiCompanion() {
     }, 4800);
     return () => window.clearTimeout(id);
   }, [moodPin, speech]);
-
-  useEffect(() => {
-    if (!place.ready || place.hidden) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let cancelled = false;
-    let timer = 0;
-    let clearGesture = 0;
-    const loop = () => {
-      timer = window.setTimeout(() => {
-        if (cancelled) return;
-        if (!chatOpenRef.current && !menuOpenRef.current && !memoryOpenRef.current && !speechRef.current) {
-          setGesture(Math.random() < 0.5 ? "glance" : "smile");
-          clearGesture = window.setTimeout(() => setGesture(null), 1600);
-        }
-        loop();
-      }, 9000 + Math.random() * 5000);
-    };
-    loop();
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-      window.clearTimeout(clearGesture);
-    };
-  }, [place.hidden, place.ready]);
 
   useEffect(() => {
     const onSay = (event: Event) => {
@@ -454,10 +443,10 @@ export function XiaomeiCompanion() {
     setMenuOpen(false);
     setMemoryOpen(false);
     setSpeech(null);
-    setGesture(null);
+    clear();
     place.clearPeek();
     setChatOpen(true);
-  }, [place]);
+  }, [clear, place]);
 
   const openMemory = useCallback(() => {
     const record = readXiaomeiMemory();
@@ -470,10 +459,10 @@ export function XiaomeiCompanion() {
     pinSource.current = null;
     setSpeech(null);
     setMoodPin(null);
-    setGesture(null);
+    clear();
     place.clearPeek();
     setMemoryOpen(true);
-  }, [chat, place]);
+  }, [chat, clear, place]);
 
   const forgetNote = useCallback((summary: string) => {
     if (forgetLock.current) return;
@@ -519,14 +508,15 @@ export function XiaomeiCompanion() {
     );
   }
 
-  const face = faceFor({
+  const face = resolveXiaomeiFace({
     chatOpen,
     status: chat.status,
     replyMood: chat.replyMood,
-    speech,
+    speechMood: speech?.mood ?? null,
     moodPin,
+    leadMood: presence.lead,
+    beatMood: presence.beatMood,
     hover: hover && !memoryOpen,
-    gesture,
   });
   const showSpeech = speech && !chatOpen && !menuOpen && !memoryOpen && !muted;
   const peekApplied = chatOpen || menuOpen || memoryOpen ? null : place.peek;
@@ -646,6 +636,7 @@ export function XiaomeiCompanion() {
                   ? XIAOMEI_FEED_SOFT_LINES
                   : XIAOMEI_FEED_LINES;
             const mood = result.tooMuch || result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
+            presence.playFeed(mood);
             speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed", {
               fullness: result.meters.fullness - before.fullness,
               affection: result.meters.affection - before.affection,
@@ -765,6 +756,7 @@ export function XiaomeiCompanion() {
       <button
         ref={spriteRef}
         type="button"
+        data-xiaomei-beat={presence.beat ?? "rest"}
         aria-label={`${XIAOMEI_NAME}。点一下听她说，长按是摸头`}
         aria-expanded={chatOpen || menuOpen || memoryOpen}
         aria-haspopup="menu"
@@ -782,38 +774,13 @@ export function XiaomeiCompanion() {
           if (event.button === 2 || event.ctrlKey) openMenu();
         }}
       >
-        <Image
-          src={XIAOMEI_SPRITE[face]}
-          alt=""
-          width={256}
-          height={351}
-          unoptimized
-          draggable={false}
-          className={cn(
-            "pointer-events-none h-full w-full object-contain [filter:drop-shadow(0_0_1px_rgba(255,255,255,0.55))_drop-shadow(0_2px_5px_rgba(0,0,0,0.45))]",
-            gesture === "glance" && !place.dragging ? "xiaomei-glance" : !place.dragging && "xiaomei-float",
-          )}
+        <XiaomeiStage
+          mood={face}
+          motionClass={xiaomeiMotionClass(presence.beat, place.dragging)}
+          prop={xiaomeiPropKind(presence.beat)}
+          liftShadow={!place.dragging}
         />
       </button>
     </div>
   );
-}
-
-function faceFor(input: {
-  chatOpen: boolean;
-  status: "idle" | "thinking" | "done" | "error";
-  replyMood: "happy" | "annoyed";
-  speech: Speech | null;
-  moodPin: XiaomeiMood | null;
-  hover: boolean;
-  gesture: Gesture | null;
-}): XiaomeiMood {
-  if (input.chatOpen && input.status !== "idle") return moodForChatStatus(input.status, input.replyMood);
-  if (input.chatOpen) return "content";
-  if (input.speech) return input.speech.mood;
-  if (input.moodPin) return input.moodPin;
-  if (input.gesture === "glance") return "blank";
-  if (input.gesture === "smile") return "happy";
-  if (input.hover && !input.chatOpen) return "annoyed";
-  return "content";
 }
