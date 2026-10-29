@@ -83,7 +83,10 @@ export function feedXiaomei(current: XiaomeiMeters): XiaomeiFeedResult {
   };
 }
 
-/** 喂食气泡下面的一行数字。没变化就别画，避免「+0」把满了的口误说成又吃了。 */
+/**
+ * 内部差值的可读形式。气泡和菜单都不贴这行。
+ * 没变化就返回空，避免把「没动」说成又吃了一口。
+ */
 export function formatMeterDelta(fullness: number, affection: number): string | null {
   const parts: string[] = [];
   if (fullness !== 0) parts.push(`饱腹 ${fullness > 0 ? `+${fullness}` : fullness}`);

@@ -13,7 +13,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * 待机拍和点击/投喂的引子脸。只排 setTimeout，不挂 rAF。
- * 聊天、菜单、记忆打开时停掉。台词还在时不新开一拍。
+ * 聊天、菜单、记忆打开时停掉下一拍。台词还在时不新开一拍。
+ * 喂食的点心拍在关菜单的同一轮排上，菜单合上后接着播，不会被清掉。
  */
 export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean; paused: () => boolean }) {
   const [beat, setBeat] = useState<XiaomeiIdleBeat | null>(null);

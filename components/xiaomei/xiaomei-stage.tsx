@@ -1,7 +1,8 @@
 "use client";
 
+import { XiaomeiCue } from "@/components/xiaomei/xiaomei-cue";
 import { XiaomeiProp } from "@/components/xiaomei/xiaomei-prop";
-import type { XiaomeiPropKind } from "@/lib/xiaomei-actions";
+import type { XiaomeiCueKind, XiaomeiPropKind } from "@/lib/xiaomei-actions";
 import { XIAOMEI_SPRITE, type XiaomeiMood } from "@/lib/xiaomei-lines";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -11,11 +12,13 @@ export function XiaomeiStage({
   mood,
   motionClass,
   prop,
+  cue,
   liftShadow,
 }: {
   mood: XiaomeiMood;
   motionClass: string | null;
   prop: XiaomeiPropKind | null;
+  cue: XiaomeiCueKind | null;
   liftShadow: boolean;
 }) {
   return (
@@ -30,10 +33,12 @@ export function XiaomeiStage({
         draggable={false}
         className={cn(
           "pointer-events-none relative z-[1] h-full w-full object-contain [filter:drop-shadow(0_0_1px_rgba(255,255,255,0.55))_drop-shadow(0_2px_5px_rgba(0,0,0,0.45))]",
+          "object-bottom",
           motionClass,
         )}
       />
       {prop ? <XiaomeiProp kind={prop} /> : null}
+      {cue ? <XiaomeiCue kind={cue} /> : null}
     </>
   );
 }

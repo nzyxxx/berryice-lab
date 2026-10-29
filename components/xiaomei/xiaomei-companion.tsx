@@ -34,7 +34,13 @@ import {
   type XiaomeiMood,
   type XiaomeiSayDetail,
 } from "@/lib/xiaomei-lines";
-import { resolveXiaomeiFace, xiaomeiMotionClass, xiaomeiPropKind } from "@/lib/xiaomei-actions";
+import {
+  resolveXiaomeiFace,
+  xiaomeiChatCue,
+  xiaomeiCueKind,
+  xiaomeiMotionClass,
+  xiaomeiPropKind,
+} from "@/lib/xiaomei-actions";
 import {
   forgetXiaomeiNote,
   isXiaomeiHungry,
@@ -44,7 +50,7 @@ import {
   writeXiaomeiMemory,
   type XiaomeiMemoryRecord,
 } from "@/lib/xiaomei-memory";
-import { XIAOMEI_METERS_KEY, formatMeterDelta, readFeedClock } from "@/lib/xiaomei-meters";
+import { XIAOMEI_METERS_KEY, readFeedClock } from "@/lib/xiaomei-meters";
 import {
   XIAOMEI_CHAT_PANEL,
   XIAOMEI_HINT_PANEL,
@@ -65,7 +71,6 @@ type Speech = {
   text: string;
   mood: XiaomeiMood;
   source: "greet" | "hover" | "click" | "event" | "about" | "spam" | "mutter" | "feed" | "pet";
-  delta: string | null;
 };
 
 const MUTE_KEY = "berryice.xiaomei.muted";
@@ -280,23 +285,15 @@ export function XiaomeiCompanion() {
     speechRef.current = speech;
   });
 
-  const speak = useCallback(
-    (mood: XiaomeiMood, text: string, source: Speech["source"], delta?: { fullness: number; affection: number }) => {
-      pinSource.current = source;
-      setMoodPin(mood);
-      if (mutedRef.current) {
-        setSpeech(null);
-        return;
-      }
-      setSpeech({
-        text,
-        mood,
-        source,
-        delta: delta ? formatMeterDelta(delta.fullness, delta.affection) : null,
-      });
-    },
-    [],
-  );
+  const speak = useCallback((mood: XiaomeiMood, text: string, source: Speech["source"]) => {
+    pinSource.current = source;
+    setMoodPin(mood);
+    if (mutedRef.current) {
+      setSpeech(null);
+      return;
+    }
+    setSpeech({ text, mood, source });
+  }, []);
 
   const onTap = useCallback(() => {
     if (chatOpenRef.current || menuOpenRef.current) return;
@@ -338,10 +335,7 @@ export function XiaomeiCompanion() {
     }
     const tone = toneFromAffection(before);
     const line = pickTaggedLine(XIAOMEI_PET_LINES, speechRef.current?.text, tone);
-    speak(line.mood === "content" ? "content" : "happy", line.text, "pet", {
-      fullness: 0,
-      affection: result.gain,
-    });
+    speak(line.mood === "content" ? "content" : "happy", line.text, "pet");
   }, [speak]);
 
   const place = useXiaomeiPlace({
@@ -371,11 +365,11 @@ export function XiaomeiCompanion() {
       if (remembered.topics.length > 0) {
         const mood: XiaomeiMood = tone === "guarded" ? "annoyed" : tone === "classic" ? "content" : "happy";
         const text = pickXiaomeiLine(XIAOMEI_RECALL_LINES[tone]);
-        setSpeech((current) => current ?? { text, mood, source: "greet", delta: null });
+        setSpeech((current) => current ?? { text, mood, source: "greet" });
         setMoodPin((current) => current ?? mood);
         return;
       }
-      setSpeech((current) => current ?? { text: XIAOMEI_CATCHPHRASE, mood: "content", source: "greet", delta: null });
+      setSpeech((current) => current ?? { text: XIAOMEI_CATCHPHRASE, mood: "content", source: "greet" });
       setMoodPin((current) => current ?? "content");
     }, 900);
     return () => window.clearTimeout(id);
@@ -508,6 +502,7 @@ export function XiaomeiCompanion() {
     );
   }
 
+  const chatCue = xiaomeiChatCue(chatOpen, chat.status, chat.replyMood);
   const face = resolveXiaomeiFace({
     chatOpen,
     status: chat.status,
@@ -614,8 +609,6 @@ export function XiaomeiCompanion() {
           shiftX={pop.shiftX}
           shiftY={pop.shiftY}
           maxHeight={pop.maxHeight}
-          fullness={meters.meters.fullness}
-          affection={meters.meters.affection}
           onTalk={openChat}
           onMutter={() => {
             setMenuOpen(false);
@@ -624,7 +617,6 @@ export function XiaomeiCompanion() {
             speak(line.mood, line.text, "mutter");
           }}
           onFeed={() => {
-            const before = metersRef.current;
             const result = meters.feed();
             if (!result) return;
             setMenuOpen(false);
@@ -637,10 +629,7 @@ export function XiaomeiCompanion() {
                   : XIAOMEI_FEED_LINES;
             const mood = result.tooMuch || result.kind === "full" ? "annoyed" : result.kind === "soft" ? "content" : "happy";
             presence.playFeed(mood);
-            speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed", {
-              fullness: result.meters.fullness - before.fullness,
-              affection: result.meters.affection - before.affection,
-            });
+            speak(mood, pickXiaomeiLine(pool, speechRef.current?.text), "feed");
           }}
           onMute={toggleMute}
           onCorner={() => {
@@ -703,9 +692,6 @@ export function XiaomeiCompanion() {
           style={xiaomeiPopoverOffsetStyle(pop.shiftX, pop.shiftY)}
         >
           {speech.text}
-          {speech.delta ? (
-            <span className="mt-1 block text-[11px] tabular-nums text-lab-ink-subtle">{speech.delta}</span>
-          ) : null}
           <span
             aria-hidden
             className={cn(
@@ -776,8 +762,13 @@ export function XiaomeiCompanion() {
       >
         <XiaomeiStage
           mood={face}
-          motionClass={xiaomeiMotionClass(presence.beat, place.dragging)}
+          motionClass={
+            chatCue
+              ? xiaomeiMotionClass(chatCue, place.dragging)
+              : xiaomeiMotionClass(presence.beat, place.dragging)
+          }
           prop={xiaomeiPropKind(presence.beat)}
+          cue={chatCue ?? xiaomeiCueKind(presence.beat)}
           liftShadow={!place.dragging}
         />
       </button>
