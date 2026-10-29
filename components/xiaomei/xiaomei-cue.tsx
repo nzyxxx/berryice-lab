@@ -38,9 +38,9 @@ export function XiaomeiCue({ kind }: { kind: XiaomeiCueKind }) {
     return (
       <span className="xiaomei-cue xiaomei-cue-note" aria-hidden>
         <svg viewBox="0 0 32 32" width="100%" height="100%">
-          <path d="M12 24V8l14-3v16" fill="none" stroke="#d7e4ff" strokeWidth="2.4" strokeLinecap="round" />
-          <circle cx="9" cy="24" r="3.2" fill="#8eb4ff" />
-          <circle cx="23" cy="21" r="3.2" fill="#8eb4ff" />
+          <path d="M12 24V8l14-3v16" fill="none" stroke="rgba(232,236,246,0.72)" strokeWidth="1.6" strokeLinecap="round" />
+          <circle cx="9" cy="24" r="2.4" fill="rgba(158,176,214,0.8)" />
+          <circle cx="23" cy="21" r="2.4" fill="rgba(158,176,214,0.8)" />
         </svg>
       </span>
     );

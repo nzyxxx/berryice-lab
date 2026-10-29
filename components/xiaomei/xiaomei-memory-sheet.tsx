@@ -1,7 +1,7 @@
 "use client";
 
 import { trapTab } from "@/components/xiaomei/trap-tab";
-import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
+import { xiaomeiWhisperClass } from "@/components/xiaomei/xiaomei-surface";
 import type { XiaomeiMemoryNote } from "@/lib/xiaomei-memory";
 import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
@@ -103,7 +103,7 @@ export function XiaomeiMemorySheet({
       aria-modal="true"
       aria-labelledby="xiaomei-memory-title"
       className={cn(
-        glassSurfaceClass("overflow-y-auto"),
+        xiaomeiWhisperClass("overflow-y-auto backdrop-blur-md"),
         "absolute z-10 flex w-[min(17.5rem,calc(100vw-2rem))] flex-col rounded-2xl p-3",
         "max-h-[min(22rem,calc(100dvh-8rem))]",
         align === "right" ? "right-0" : "left-0",

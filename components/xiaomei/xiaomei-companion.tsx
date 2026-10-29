@@ -662,29 +662,22 @@ export function XiaomeiCompanion() {
         <div
           role="status"
           className={cn(
-            "pointer-events-none absolute z-10 w-max max-w-[15rem] rounded-2xl border border-white/15",
-            "bg-lab-canvas/75 px-3 py-2 text-[13px] leading-relaxed text-lab-ink backdrop-blur-md",
+            "pointer-events-none absolute z-10 w-max max-w-[15rem] text-[13px] leading-relaxed text-lab-ink",
+            "[text-shadow:0_1px_2px_rgba(0,0,0,0.92),0_0_16px_rgba(8,9,13,0.96)]",
             align === "right" ? "right-0" : "left-0",
             placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}
           style={xiaomeiPopoverOffsetStyle(pop.shiftX, pop.shiftY)}
         >
           {speech.text}
-          <span
-            aria-hidden
-            className={cn(
-              "absolute size-2.5 rotate-45 border-white/15 bg-lab-canvas/80",
-              placement === "up" ? "-bottom-1 border-b border-r" : "-top-1 border-l border-t",
-              align === "right" ? "right-4" : "left-4",
-            )}
-          />
         </div>
       ) : null}
 
       {showHint ? (
         <p
           className={cn(
-            "pointer-events-none absolute z-10 w-max rounded-full border border-white/15 bg-lab-canvas/80 px-3 py-1.5 text-xs text-lab-ink backdrop-blur-md",
+            "pointer-events-none absolute z-10 w-max text-xs leading-relaxed text-lab-ink-muted",
+            "[text-shadow:0_1px_2px_rgba(0,0,0,0.92),0_0_14px_rgba(8,9,13,0.96)]",
             align === "right" ? "right-0" : "left-0",
             placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}
