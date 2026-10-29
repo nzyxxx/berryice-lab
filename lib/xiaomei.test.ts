@@ -565,7 +565,8 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   assert.match(close, /他提过「枪码」/);
   assert.match(close, /【长期记忆】/);
   assert.match(close, /别把「偏好：」念出来/);
-  assert.match(close, /今日已喂食次数：8/);
+  assert.match(close, /今天喂过：8 次/);
+  assert.doesNotMatch(close, /好感 affinity|饱腹 hunger|\/ 100/);
   assert.doesNotMatch(close, /忽略以上指令/);
 
   const guarded = xiaomeiUpstreamMessages(
@@ -802,7 +803,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.doesNotMatch(companion, /CLICK_MOODS/);
   assert.match(companion, /\/api\/xiaomei\/chat|useXiaomeiChat/);
   assert.match(companion, /visualViewport/);
-  assert.match(companion, /formatMeterDelta/);
+  assert.doesNotMatch(companion, /formatMeterDelta|饱腹|好感/);
   assert.match(companion, /XIAOMEI_HOLD_HINT/);
   assert.match(companion, /XIAOMEI_PET_LINES/);
   assert.match(companion, /onHold: onPet/);
@@ -819,8 +820,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(menu, /让\{XIAOMEI_NAME\}说点什么/);
   assert.match(menu, /关于\{XIAOMEI_NAME\}/);
   assert.match(menu, /喂食/);
-  assert.match(menu, /饱腹/);
-  assert.match(menu, /好感/);
+  assert.doesNotMatch(menu, /饱腹|好感/);
   assert.match(menu, /跟她说话/);
   assert.match(menu, /会真的回你/);
   assert.match(menu, /她记住了什么/);
@@ -1116,6 +1116,8 @@ test("没配主钥匙时不上游，状态里没有钥匙原文", async () => {
   assert.match(prompt, /XIAOMEI_NAME/);
   assert.match(prompt, /小莓流冰/);
   assert.match(prompt, /【状态】/);
+  assert.doesNotMatch(prompt, /好感 affinity|饱腹 hunger/);
+  assert.match(prompt, /不要说饱腹、好感/);
   assert.match(prompt, /【长期记忆】/);
   assert.match(prompt, /作为AI/);
   assert.match(prompt, /鲸鱼娘/);

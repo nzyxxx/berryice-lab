@@ -3,6 +3,11 @@
 /** 按住这么久、并且没拖动，算摸头。菜单走右键，不走这条计时。 */
 export const XIAOMEI_PET_HOLD_MS = 450;
 
+/**
+ * 五张表情都是 256×351 围裙半身。
+ * 仓库和这台机器上都没有 static_full.webp（public/xiaomei、xiaomei/ship_v3_final 皆无），
+ * 所以角标仍用这五张，不另画腿。
+ */
 export const XIAOMEI_FRAME = { width: 256, height: 351 } as const;
 
 /** 顶栏大约 56px。再往上拖会被头挡住，点不到。 */

@@ -698,11 +698,11 @@ html.home-motion [data-reveal].is-shown {
   100% {
     transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
   }
-  40% {
-    transform: translate3d(0, -3px, 0) rotate(-5deg) scale(1.02);
+  38% {
+    transform: translate3d(4px, -10px, 0) rotate(-14deg) scale(1.14);
   }
-  62% {
-    transform: translate3d(0, -4px, 0) rotate(-7deg) scale(1.025);
+  64% {
+    transform: translate3d(6px, -14px, 0) rotate(-18deg) scale(1.2);
   }
 }
 
@@ -715,11 +715,17 @@ html.home-motion [data-reveal].is-shown {
   100% {
     transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
   }
-  28% {
-    transform: translate3d(0, 1px, 0) rotate(3deg) scale(1);
+  24% {
+    transform: translate3d(0, 4px, 0) rotate(8deg) scale(1.06);
   }
-  46% {
-    transform: translate3d(0, -2px, 0) rotate(-2deg) scale(1.015);
+  42% {
+    transform: translate3d(2px, -10px, 0) rotate(-8deg) scale(1.16);
+  }
+  58% {
+    transform: translate3d(0, 3px, 0) rotate(6deg) scale(1.04);
+  }
+  76% {
+    transform: translate3d(2px, -8px, 0) rotate(-5deg) scale(1.12);
   }
 }
 
@@ -730,13 +736,13 @@ html.home-motion [data-reveal].is-shown {
 @keyframes xiaomei-umbrella {
   0%,
   100% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
   }
-  45% {
-    transform: translate3d(-1px, -2px, 0) rotate(-3deg);
+  42% {
+    transform: translate3d(-8px, -8px, 0) rotate(-10deg) scale(1.1);
   }
-  75% {
-    transform: translate3d(1px, -1px, 0) rotate(2deg);
+  74% {
+    transform: translate3d(8px, -5px, 0) rotate(8deg) scale(1.08);
   }
 }
 
@@ -747,16 +753,17 @@ html.home-motion [data-reveal].is-shown {
 @keyframes xiaomei-spin {
   0%,
   100% {
-    transform: rotate(0deg) scaleX(1);
+    transform: rotate(0deg) scale(1);
   }
-  28% {
-    transform: rotate(-8deg) scaleX(0.12);
+  18% {
+    transform: rotate(-16deg) scaleX(0.08) scale(1.08);
   }
-  50% {
-    transform: rotate(6deg) scaleX(-1);
+  34%,
+  66% {
+    transform: rotate(6deg) scaleX(-1) scale(1.2);
   }
-  74% {
-    transform: rotate(-5deg) scaleX(0.12);
+  82% {
+    transform: rotate(-12deg) scaleX(0.08) scale(1.08);
   }
 }
 
@@ -769,17 +776,16 @@ html.home-motion [data-reveal].is-shown {
   100% {
     transform: translate3d(0, 0, 0) rotate(0deg);
   }
-  20% {
-    transform: translate3d(-7px, -1px, 0) rotate(-4deg);
+  16%,
+  34% {
+    transform: translate3d(-32px, -6px, 0) rotate(-12deg) scale(1.06);
   }
-  40% {
-    transform: translate3d(-2px, 0, 0) rotate(1deg);
+  48% {
+    transform: translate3d(-8px, 2px, 0) rotate(4deg);
   }
-  65% {
-    transform: translate3d(7px, -1px, 0) rotate(4deg);
-  }
-  85% {
-    transform: translate3d(2px, 0, 0) rotate(-1deg);
+  64%,
+  82% {
+    transform: translate3d(16px, -5px, 0) rotate(10deg) scale(1.05);
   }
 }
 
@@ -787,98 +793,389 @@ html.home-motion [data-reveal].is-shown {
   animation: xiaomei-walk 2.4s ease-in-out 1;
 }
 
+/* 半身像大约 96px。道具故意放大，雨夜里才看得清。不改立绘。 */
 .xiaomei-prop {
   position: absolute;
   z-index: 2;
-  left: 50%;
-  bottom: 6%;
-  width: 18px;
-  height: 18px;
-  margin-left: -9px;
   pointer-events: none;
   opacity: 0;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.92)) drop-shadow(0 4px 5px rgba(0, 0, 0, 0.55));
 }
 
 .xiaomei-prop-cup {
+  left: 64%;
+  bottom: 8%;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
   animation: xiaomei-cup 2.3s ease-in-out 1 both;
 }
 
 .xiaomei-prop-snack {
+  left: 58%;
+  bottom: 4%;
+  width: 52px;
+  height: 52px;
+  margin-left: -26px;
   animation: xiaomei-snack-prop 2.1s ease-in-out 1 both;
 }
 
 .xiaomei-prop-umbrella {
-  top: 0;
+  top: -28px;
   bottom: auto;
-  left: 62%;
-  width: 26px;
-  height: 26px;
-  margin-left: -4px;
+  left: 50%;
+  width: 72px;
+  height: 72px;
+  margin-left: -36px;
   animation: xiaomei-umbrella-prop 2.2s ease-in-out 1 both;
 }
 
 @keyframes xiaomei-cup {
   0% {
     opacity: 0;
-    transform: translate3d(0, 4px, 0) rotate(-12deg);
+    transform: translate3d(0, 12px, 0) rotate(-20deg) scale(0.65);
   }
-  18% {
+  14% {
     opacity: 1;
-    transform: translate3d(1px, -4px, 0) rotate(-4deg);
+    transform: translate3d(2px, -6px, 0) rotate(-8deg) scale(1);
   }
-  48% {
+  42%,
+  68% {
     opacity: 1;
-    transform: translate3d(3px, -16px, 0) rotate(14deg);
-  }
-  70% {
-    opacity: 1;
-    transform: translate3d(2px, -18px, 0) rotate(18deg);
+    transform: translate3d(-4px, -42px, 0) rotate(26deg) scale(1.16);
   }
   100% {
     opacity: 0;
-    transform: translate3d(0, 2px, 0) rotate(0deg);
+    transform: translate3d(0, 8px, 0) rotate(0deg) scale(0.8);
   }
 }
 
 @keyframes xiaomei-umbrella-prop {
   0% {
     opacity: 0;
-    transform: translate3d(3px, -4px, 0) rotate(10deg);
+    transform: translate3d(0, 16px, 0) rotate(14deg) scale(0.55);
   }
-  18% {
+  16% {
     opacity: 1;
-    transform: translate3d(0, 0, 0) rotate(-6deg);
+    transform: translate3d(0, 0, 0) rotate(-8deg) scale(1);
   }
-  62% {
+  46% {
     opacity: 1;
-    transform: translate3d(-2px, 1px, 0) rotate(5deg);
+    transform: translate3d(-8px, -2px, 0) rotate(8deg) scale(1.06);
+  }
+  74% {
+    opacity: 1;
+    transform: translate3d(8px, 0, 0) rotate(-6deg) scale(1.04);
   }
   100% {
     opacity: 0;
-    transform: translate3d(2px, -3px, 0) rotate(8deg);
+    transform: translate3d(0, 10px, 0) rotate(10deg) scale(0.7);
   }
 }
 
 @keyframes xiaomei-snack-prop {
   0% {
     opacity: 0;
-    transform: translate3d(0, 6px, 0) scale(0.75);
+    transform: translate3d(0, 14px, 0) scale(0.55);
   }
-  20% {
+  16% {
     opacity: 1;
-    transform: translate3d(1px, -4px, 0) scale(1);
+    transform: translate3d(2px, -8px, 0) scale(1.08);
   }
-  50% {
+  36% {
     opacity: 1;
-    transform: translate3d(2px, -14px, 0) scale(1);
+    transform: translate3d(-2px, -38px, 0) scale(1.18);
   }
-  74% {
-    opacity: 0.85;
-    transform: translate3d(1px, -8px, 0) scale(0.88);
+  52% {
+    opacity: 1;
+    transform: translate3d(-1px, -24px, 0) scale(0.78);
+  }
+  68% {
+    opacity: 1;
+    transform: translate3d(-2px, -40px, 0) scale(1.14);
   }
   100% {
     opacity: 0;
-    transform: translate3d(0, 2px, 0) scale(0.8);
+    transform: translate3d(0, 8px, 0) scale(0.7);
+  }
+}
+
+.xiaomei-blink {
+  transform-origin: 50% 70%;
+  animation: xiaomei-blink 0.9s ease-in-out 1;
+}
+
+.xiaomei-yawn,
+.xiaomei-stretch,
+.xiaomei-sigh {
+  transform-origin: 50% 82%;
+}
+
+.xiaomei-yawn {
+  animation: xiaomei-yawn 1.7s ease-in-out 1;
+}
+
+.xiaomei-stretch {
+  transform-origin: 50% 100%;
+  animation: xiaomei-stretch 1.8s ease-in-out 1;
+}
+
+.xiaomei-note {
+  animation: xiaomei-note 1.5s ease-in-out 1;
+}
+
+.xiaomei-cheer {
+  animation: xiaomei-cheer 1.4s ease-in-out 1;
+}
+
+.xiaomei-sigh {
+  animation: xiaomei-sigh 1.6s ease-in-out 1;
+}
+
+@keyframes xiaomei-blink {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  42% {
+    transform: scaleY(0.88);
+  }
+}
+
+@keyframes xiaomei-yawn {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  48% {
+    transform: translate3d(0, -8px, 0) rotate(-10deg) scale(1.08);
+  }
+}
+
+@keyframes xiaomei-stretch {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1, 1);
+  }
+  36%,
+  68% {
+    transform: translate3d(0, -12px, 0) scale(1.06, 1.18);
+  }
+}
+
+@keyframes xiaomei-note {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  45% {
+    transform: rotate(-7deg);
+  }
+  72% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes xiaomei-cheer {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  28% {
+    transform: translate3d(0, -14px, 0) scale(1.14);
+  }
+  52% {
+    transform: translate3d(0, -2px, 0) scale(1.02);
+  }
+  74% {
+    transform: translate3d(0, -10px, 0) scale(1.1);
+  }
+}
+
+@keyframes xiaomei-sigh {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  55% {
+    transform: translate3d(2px, 8px, 0) scale(0.94, 0.9) rotate(4deg);
+  }
+}
+
+.xiaomei-cue {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.xiaomei-cue-blink {
+  top: 38%;
+  left: 16%;
+  width: 68%;
+  height: 16%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.xiaomei-cue-blink span {
+  width: 30%;
+  height: 100%;
+  border-radius: 999px;
+  background: #2a3f86;
+  transform-origin: center;
+  animation: xiaomei-eyelid 0.9s ease-in-out 1 both;
+}
+
+@keyframes xiaomei-eyelid {
+  0%,
+  100% {
+    transform: scaleY(0.2);
+    opacity: 0;
+  }
+  38%,
+  58% {
+    transform: scaleY(1);
+    opacity: 0.92;
+  }
+}
+
+.xiaomei-cue-yawn {
+  left: 38%;
+  top: 52%;
+  width: 24px;
+  height: 20px;
+}
+
+.xiaomei-cue-yawn span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #1b2454;
+  box-shadow: inset 0 -4px 0 #f0b4c4;
+  animation: xiaomei-yawn-mouth 1.7s ease-in-out 1 both;
+}
+
+@keyframes xiaomei-yawn-mouth {
+  0%,
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  40%,
+  70% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.xiaomei-cue-stretch {
+  top: -18px;
+  left: 8%;
+  width: 84%;
+  height: 36px;
+  animation: xiaomei-stretch-arms 1.8s ease-in-out 1 both;
+}
+
+@keyframes xiaomei-stretch-arms {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.7);
+  }
+  30%,
+  72% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.xiaomei-cue-note {
+  top: 8%;
+  right: -6px;
+  width: 28px;
+  height: 28px;
+  animation: xiaomei-note-float 1.5s ease-in-out 1 both;
+}
+
+@keyframes xiaomei-note-float {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.6);
+  }
+  25%,
+  70% {
+    opacity: 1;
+    transform: translate3d(4px, -10px, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(8px, -22px, 0) scale(0.8);
+  }
+}
+
+.xiaomei-cue-cheer {
+  top: 6%;
+  left: 8%;
+  width: 84%;
+  height: 22px;
+}
+
+.xiaomei-cue-cheer span {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffe38a;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  animation: xiaomei-cheer-star 1.4s ease-in-out 1 both;
+}
+
+.xiaomei-cue-cheer span:last-child {
+  right: 0;
+  animation-delay: 0.12s;
+}
+
+@keyframes xiaomei-cheer-star {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.4);
+  }
+  35%,
+  70% {
+    opacity: 1;
+    transform: translate3d(0, -8px, 0) scale(1.15);
+  }
+}
+
+.xiaomei-cue-sigh {
+  top: 46%;
+  left: 62%;
+  width: 28px;
+  height: 16px;
+}
+
+.xiaomei-cue-sigh span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  animation: xiaomei-sigh-puff 1.6s ease-out 1 both;
+}
+
+@keyframes xiaomei-sigh-puff {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 4px, 0) scale(0.4);
+  }
+  30% {
+    opacity: 0.9;
+    transform: translate3d(6px, -2px, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(22px, -8px, 0) scale(1.3);
   }
 }
 
@@ -908,6 +1205,18 @@ html.home-motion [data-reveal].is-shown {
   .xiaomei-umbrella,
   .xiaomei-spin,
   .xiaomei-walk,
+  .xiaomei-blink,
+  .xiaomei-yawn,
+  .xiaomei-stretch,
+  .xiaomei-note,
+  .xiaomei-cheer,
+  .xiaomei-sigh,
+  .xiaomei-cue-blink span,
+  .xiaomei-cue-yawn span,
+  .xiaomei-cue-stretch,
+  .xiaomei-cue-note,
+  .xiaomei-cue-cheer span,
+  .xiaomei-cue-sigh span,
   .xiaomei-prop-cup,
   .xiaomei-prop-snack,
   .xiaomei-prop-umbrella {

@@ -1,5 +1,6 @@
 /**
  * 杯子、点心、伞还没有独立立绘，先用小 SVG 叠在现有围裙半身像上。
+ * 尺寸由 CSS 放大到半身像能看清的程度。不改脸。
  * TODO(prop-art): 有正式道具帧之后，换成 public/xiaomei 里的切片，删掉这三枚 SVG。
  */
 
@@ -10,18 +11,25 @@ export function XiaomeiProp({ kind }: { kind: XiaomeiPropKind }) {
   if (kind === "cup") {
     return (
       <span className="xiaomei-prop xiaomei-prop-cup" aria-hidden>
-        <svg viewBox="0 0 32 32" width="18" height="18">
+        <svg viewBox="0 0 32 32" width="100%" height="100%">
           <path
-            d="M9.5 8.5h11.2l-1.15 13.4a3.1 3.1 0 0 1-3.1 2.8h-2.7a3.1 3.1 0 0 1-3.1-2.8L9.5 8.5z"
-            fill="rgba(255,255,255,0.62)"
-            stroke="rgba(255,255,255,0.92)"
-            strokeWidth="1.3"
+            d="M8 7.2h13.4l-1.3 14.6a3.4 3.4 0 0 1-3.4 3.1h-4a3.4 3.4 0 0 1-3.4-3.1L8 7.2z"
+            fill="rgba(255,255,255,0.94)"
+            stroke="#24305f"
+            strokeWidth="1.6"
           />
           <path
-            d="M11 14.2h8.4l-.55 6.6a2.1 2.1 0 0 1-2.1 1.9h-3.1a2.1 2.1 0 0 1-2.1-1.9l-.55-6.6z"
-            fill="#8ebfff"
+            d="M10.2 13.2h9.2l-.6 7.2a2.2 2.2 0 0 1-2.2 2h-3.6a2.2 2.2 0 0 1-2.2-2l-.6-7.2z"
+            fill="#5aa2ff"
           />
-          <path d="M12.2 10.1h2.4" stroke="rgba(255,255,255,0.95)" strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M11.2 9.2h3.2" stroke="#24305f" strokeWidth="1.6" strokeLinecap="round" />
+          <path
+            d="M21.2 10.2h3.2c1.5 0 2.4 1.2 2.2 2.6-.3 1.6-1.6 2.6-3.2 2.6h-2.4"
+            fill="none"
+            stroke="#24305f"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
         </svg>
       </span>
     );
@@ -30,16 +38,23 @@ export function XiaomeiProp({ kind }: { kind: XiaomeiPropKind }) {
   if (kind === "umbrella") {
     return (
       <span className="xiaomei-prop xiaomei-prop-umbrella" aria-hidden>
-        <svg viewBox="0 0 32 32" width="26" height="26">
+        <svg viewBox="0 0 32 32" width="100%" height="100%">
           <path
-            d="M4 15.5c0-6.4 5.4-11 12-11s12 4.6 12 11H4z"
-            fill="#7ea2ff"
-            stroke="rgba(255,255,255,0.9)"
-            strokeWidth="1.2"
+            d="M3 16.2C3 9 8.8 3.4 16 3.4S29 9 29 16.2H3z"
+            fill="#8eb4ff"
+            stroke="white"
+            strokeWidth="1.6"
           />
-          <path d="M16 5.2v10.2" stroke="rgba(255,255,255,0.85)" strokeWidth="1.1" />
-          <path d="M16 15.4v8.2" stroke="#24305f" strokeWidth="1.4" strokeLinecap="round" />
-          <path d="M16 23.6c1.8 0 2.6 1.5 2.6 2.4 0 .7-.6 1.1-1.3 1.1-1 0-1.6-.8-1.3-1.8" fill="none" stroke="#24305f" strokeWidth="1.3" strokeLinecap="round" />
+          <path d="M16 4.2v12" stroke="rgba(255,255,255,0.95)" strokeWidth="1.3" />
+          <path d="M10.2 16.2c.2-2.6 2.4-4.6 5.8-4.6" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1" />
+          <path d="M16 16.2v8.4" stroke="#24305f" strokeWidth="1.7" strokeLinecap="round" />
+          <path
+            d="M16 24.6c2.2 0 3.1 1.6 3.1 2.6 0 .8-.7 1.3-1.5 1.3-1.2 0-1.9-.9-1.6-2"
+            fill="none"
+            stroke="#24305f"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
         </svg>
       </span>
     );
@@ -47,11 +62,11 @@ export function XiaomeiProp({ kind }: { kind: XiaomeiPropKind }) {
 
   return (
     <span className="xiaomei-prop xiaomei-prop-snack" aria-hidden>
-      <svg viewBox="0 0 32 32" width="18" height="18">
-        <ellipse cx="16" cy="20.5" rx="9" ry="6.2" fill="#e7b888" />
-        <ellipse cx="16" cy="18.6" rx="9" ry="5" fill="#f6d3a6" />
-        <circle cx="16" cy="12.2" r="3.1" fill="#3d4eae" />
-        <circle cx="14.9" cy="11.2" r="0.8" fill="rgba(255,255,255,0.75)" />
+      <svg viewBox="0 0 32 32" width="100%" height="100%">
+        <ellipse cx="16" cy="21" rx="11" ry="7" fill="#e7b888" />
+        <ellipse cx="16" cy="18.6" rx="11" ry="5.6" fill="#f6d3a6" />
+        <circle cx="16" cy="11.2" r="5.2" fill="#3d4eae" />
+        <circle cx="14.2" cy="9.6" r="1.4" fill="rgba(255,255,255,0.85)" />
       </svg>
     </span>
   );
