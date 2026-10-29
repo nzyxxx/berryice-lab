@@ -24,6 +24,7 @@ import {
   XIAOMEI_SPAM_LINES,
   XIAOMEI_SPRITE,
   isXiaomeiMood,
+  moodForChatStatus,
   pickTaggedLine,
   pickXiaomeiLine,
   type XiaomeiMood,
@@ -341,6 +342,7 @@ export function XiaomeiCompanion() {
     markHintSeen();
     setMenuOpen(false);
     setSpeech(null);
+    setGesture(null);
     place.clearPeek();
     setChatOpen(true);
   }, [place]);
@@ -412,7 +414,8 @@ export function XiaomeiCompanion() {
         setHover(true);
         place.onEnter();
         if (!chatOpenRef.current && !menuOpenRef.current && !speechRef.current) {
-          const line = pickTaggedLine(XIAOMEI_HOVER_LINES, speechRef.current?.text);
+          const tone = toneFromAffection(metersRef.current.affection);
+          const line = pickTaggedLine(XIAOMEI_HOVER_LINES, speechRef.current?.text, tone);
           speak(line.mood, line.text, "hover");
         }
       }}
@@ -478,6 +481,7 @@ export function XiaomeiCompanion() {
         <XiaomeiChatSheet
           messages={chat.messages}
           pending={chat.pending}
+          sceneLine={chat.sceneLine}
           align={align}
           placement={dock.placement}
           maxHeight={dock.maxHeight}
@@ -564,9 +568,8 @@ function faceFor(input: {
   hover: boolean;
   gesture: Gesture | null;
 }): XiaomeiMood {
-  if (input.chatOpen && input.status === "thinking") return "blank";
-  if (input.chatOpen && input.status === "error") return "annoyed";
-  if (input.chatOpen && input.status === "done") return input.replyMood;
+  if (input.chatOpen && input.status !== "idle") return moodForChatStatus(input.status, input.replyMood);
+  if (input.chatOpen) return "content";
   if (input.speech) return input.speech.mood;
   if (input.moodPin) return input.moodPin;
   if (input.gesture === "glance") return "blank";

@@ -16,6 +16,7 @@ type SheetMessage = { role: "user" | "assistant"; content: string; failed?: bool
 export function XiaomeiChatSheet({
   messages,
   pending,
+  sceneLine,
   align,
   placement,
   maxHeight,
@@ -25,6 +26,7 @@ export function XiaomeiChatSheet({
 }: {
   messages: SheetMessage[];
   pending: boolean;
+  sceneLine: string | null;
   align: "left" | "right";
   placement: "up" | "down";
   maxHeight: number;
@@ -42,7 +44,7 @@ export function XiaomeiChatSheet({
     const node = scroller.current;
     if (!node) return;
     node.scrollTop = node.scrollHeight;
-  }, [messages, pending]);
+  }, [messages, pending, sceneLine]);
 
   useEffect(() => {
     const root = sectionRef.current;
@@ -132,7 +134,7 @@ export function XiaomeiChatSheet({
                     mine ? "ml-6 bg-white/10 text-lab-ink" : "mr-4 text-lab-ink",
                   )}
                 >
-                  {showThinking ? "嗯……" : message.content}
+                  {showThinking ? sceneLine || "嗯……" : message.content}
                   {streaming ? <span className="xiaomei-caret" aria-hidden /> : null}
                 </p>
                 {message.failed && lastFailed && !pending ? (
@@ -148,6 +150,7 @@ export function XiaomeiChatSheet({
             );
           })
         )}
+        {sceneLine && !pending ? <p className="text-[12px] leading-relaxed text-lab-ink-subtle">{sceneLine}</p> : null}
       </div>
 
       <form

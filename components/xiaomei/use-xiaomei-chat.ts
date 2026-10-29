@@ -1,6 +1,7 @@
 "use client";
 
 import { isXiaomeiJailbreak, moodAfterReply, pullSseEvents, type XiaomeiChatTurn } from "@/lib/xiaomei-chat";
+import { pickXiaomeiLine, XIAOMEI_SCENE_LINES, XIAOMEI_SCENE_PIN_MS } from "@/lib/xiaomei-lines";
 import { readXiaomeiMemory, rememberThread, writeXiaomeiMemory } from "@/lib/xiaomei-memory";
 import { XIAOMEI_METER_DEFAULT } from "@/lib/xiaomei-meters";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -20,8 +21,11 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [pending, setPending] = useState(false);
   const [status, setStatus] = useState<XiaomeiChatStatus>("idle");
+  const [sceneLine, setSceneLine] = useState<string | null>(null);
   const [replyMood, setReplyMood] = useState<"happy" | "annoyed">("happy");
   const lock = useRef(false);
+  const faceTimer = useRef<number | null>(null);
+  const sceneLineRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const messagesRef = useRef(messages);
   const hooksRef = useRef(options);
@@ -46,9 +50,38 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     pullStored();
   }, [pullStored]);
 
-  const resetFace = useCallback(() => {
-    setStatus("idle");
+  const clearFaceTimer = useCallback(() => {
+    if (faceTimer.current == null) return;
+    window.clearTimeout(faceTimer.current);
+    faceTimer.current = null;
   }, []);
+
+  const pinStatus = useCallback(
+    (next: "thinking" | "done" | "error") => {
+      clearFaceTimer();
+      const text = pickXiaomeiLine(XIAOMEI_SCENE_LINES[next], sceneLineRef.current ?? undefined);
+      sceneLineRef.current = text;
+      setSceneLine(text);
+      setStatus(next);
+      if (next === "thinking") return;
+      faceTimer.current = window.setTimeout(() => {
+        faceTimer.current = null;
+        sceneLineRef.current = null;
+        setSceneLine(null);
+        setStatus("idle");
+      }, XIAOMEI_SCENE_PIN_MS);
+    },
+    [clearFaceTimer],
+  );
+
+  const resetFace = useCallback(() => {
+    clearFaceTimer();
+    sceneLineRef.current = null;
+    setSceneLine(null);
+    setStatus("idle");
+  }, [clearFaceTimer]);
+
+  useEffect(() => () => clearFaceTimer(), [clearFaceTimer]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -60,7 +93,7 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     pullStored();
     lock.current = true;
     setPending(true);
-    setStatus("thinking");
+    pinStatus("thinking");
 
     const history: ThreadMessage[] = [
       ...messagesRef.current.filter((item) => !item.failed),
@@ -131,7 +164,7 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
 
       if (!accumulated.trim()) throw new Error("……我听到了啦。你再说一遍？");
       setReplyMood(moodAfterReply(accumulated));
-      setStatus("done");
+      pinStatus("done");
       const stored = readXiaomeiMemory();
       writeXiaomeiMemory(rememberThread(stored, content, accumulated.trim()));
       if (!isXiaomeiJailbreak(content)) hooksRef.current?.onReplied?.();
@@ -145,7 +178,7 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
           : FALLBACK;
       writeAssistant(accumulated.trim() ? `${accumulated}\n${message}` : message, true);
       setReplyMood("annoyed");
-      setStatus("error");
+      pinStatus("error");
       return true;
     } finally {
       window.clearTimeout(timer);
@@ -153,7 +186,7 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
       setPending(false);
       abortRef.current = null;
     }
-  }, [pullStored]);
+  }, [pinStatus, pullStored]);
 
   const send = useCallback((text: string) => begin(text), [begin]);
 
@@ -176,5 +209,5 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     return begin(content);
   }, [begin]);
 
-  return { messages, pending, status, replyMood, send, retry, stop, resetFace };
+  return { messages, pending, status, sceneLine, replyMood, send, retry, stop, resetFace };
 }
