@@ -1,6 +1,7 @@
 "use client";
 
 import { XiaomeiChatSheet } from "@/components/xiaomei/xiaomei-chat-sheet";
+import { XiaomeiMemorySheet } from "@/components/xiaomei/xiaomei-memory-sheet";
 import { XiaomeiMenu } from "@/components/xiaomei/xiaomei-menu";
 import { useXiaomeiChat } from "@/components/xiaomei/use-xiaomei-chat";
 import { useXiaomeiMeters } from "@/components/xiaomei/use-xiaomei-meters";
@@ -19,6 +20,9 @@ import {
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
   XIAOMEI_NAME,
+  XIAOMEI_PET_CAP_LINES,
+  XIAOMEI_PET_FULL_LINES,
+  XIAOMEI_PET_LINES,
   XIAOMEI_RECALL_LINES,
   XIAOMEI_SAY_EVENT,
   XIAOMEI_SPAM_LINES,
@@ -30,7 +34,15 @@ import {
   type XiaomeiMood,
   type XiaomeiSayDetail,
 } from "@/lib/xiaomei-lines";
-import { isXiaomeiHungry, readXiaomeiMemory, toneFromAffection } from "@/lib/xiaomei-memory";
+import {
+  forgetXiaomeiNote,
+  isXiaomeiHungry,
+  memoryNotesForDrawer,
+  readXiaomeiMemory,
+  toneFromAffection,
+  writeXiaomeiMemory,
+  type XiaomeiMemoryRecord,
+} from "@/lib/xiaomei-memory";
 import { XIAOMEI_METERS_KEY, formatMeterDelta, readFeedClock } from "@/lib/xiaomei-meters";
 import { dockXiaomeiChat, peekTransform } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
@@ -40,7 +52,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 type Speech = {
   text: string;
   mood: XiaomeiMood;
-  source: "greet" | "hover" | "click" | "event" | "about" | "spam" | "mutter" | "feed";
+  source: "greet" | "hover" | "click" | "event" | "about" | "spam" | "mutter" | "feed" | "pet";
   delta: string | null;
 };
 type Gesture = "glance" | "smile";
@@ -100,6 +112,16 @@ function readHintSeen(): boolean {
   return hintCache.value;
 }
 
+function subscribeCoarse(onChange: () => void) {
+  const query = window.matchMedia("(pointer: coarse), (hover: none)");
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function readCoarse(): boolean {
+  return window.matchMedia("(pointer: coarse), (hover: none)").matches;
+}
+
 function markHintSeen() {
   if (readHintSeen()) return;
   const raw = "1";
@@ -146,6 +168,7 @@ function useKeyboardFrame(active: boolean) {
  * 全站右下角的小莓妹。拖拽用指针事件，待机和左右看只用 CSS，不留 rAF。
  * z-40：低于弹层（门户 z-50）、回到顶部（z-60）和移动抽屉（z-70）。
  * 点击从本地池里随机回一句；和模型说话从菜单「跟她说话」进。
+ * 长按摸头。菜单用右键；没有右键的屏幕，立绘旁边有「菜单」。
  */
 export function XiaomeiCompanion() {
   const meters = useXiaomeiMeters();
@@ -153,6 +176,9 @@ export function XiaomeiCompanion() {
   metersRef.current = meters.meters;
   const warmRef = useRef(meters.warm);
   warmRef.current = meters.warm;
+  const petRef = useRef(meters.pet);
+  petRef.current = meters.pet;
+  const coarse = useSyncExternalStore(subscribeCoarse, readCoarse, () => false);
   const hintSeen = useSyncExternalStore(subscribeHint, readHintSeen, () => true);
   const chat = useXiaomeiChat({
     getMeters: () => {
@@ -173,6 +199,8 @@ export function XiaomeiCompanion() {
     },
   });
   const [chatOpen, setChatOpen] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
+  const [memoryRecord, setMemoryRecord] = useState<XiaomeiMemoryRecord | null>(null);
   const keyboardFrame = useKeyboardFrame(chatOpen);
   const [menuOpen, setMenuOpen] = useState(false);
   const muted = useSyncExternalStore(subscribeMute, readMuted, () => false);
@@ -183,6 +211,9 @@ export function XiaomeiCompanion() {
 
   const chatOpenRef = useRef(false);
   const menuOpenRef = useRef(false);
+  const memoryOpenRef = useRef(false);
+  const memoryRecordRef = useRef<XiaomeiMemoryRecord | null>(null);
+  const forgetLock = useRef(false);
   const spriteRef = useRef<HTMLButtonElement>(null);
   const mutedRef = useRef(false);
   const speechRef = useRef<Speech | null>(null);
@@ -192,6 +223,8 @@ export function XiaomeiCompanion() {
   useEffect(() => {
     chatOpenRef.current = chatOpen;
     menuOpenRef.current = menuOpen;
+    memoryOpenRef.current = memoryOpen;
+    memoryRecordRef.current = memoryRecord;
     mutedRef.current = muted;
     speechRef.current = speech;
   });
@@ -233,14 +266,36 @@ export function XiaomeiCompanion() {
 
   const openMenu = useCallback(() => {
     markHintSeen();
+    setMemoryOpen(false);
     setMenuOpen(true);
   }, []);
 
+  const onPet = useCallback(() => {
+    if (chatOpenRef.current || menuOpenRef.current || memoryOpenRef.current) return;
+    const before = metersRef.current.affection;
+    const result = petRef.current();
+    if (!result) return;
+    if (result.kind === "capped") {
+      speak("content", pickXiaomeiLine(XIAOMEI_PET_CAP_LINES, speechRef.current?.text), "pet");
+      return;
+    }
+    if (result.kind === "full" || result.gain <= 0) {
+      speak("content", pickXiaomeiLine(XIAOMEI_PET_FULL_LINES, speechRef.current?.text), "pet");
+      return;
+    }
+    const tone = toneFromAffection(before);
+    const line = pickTaggedLine(XIAOMEI_PET_LINES, speechRef.current?.text, tone);
+    speak(line.mood === "content" ? "content" : "happy", line.text, "pet", {
+      fullness: 0,
+      affection: result.gain,
+    });
+  }, [speak]);
+
   const place = useXiaomeiPlace({
     onTap,
-    onHold: openMenu,
+    onHold: onPet,
     onDragStart: () => setMenuOpen(false),
-    allowPeek: !chatOpen && !menuOpen,
+    allowPeek: !chatOpen && !menuOpen && !memoryOpen,
   });
 
   useEffect(() => {
@@ -281,7 +336,7 @@ export function XiaomeiCompanion() {
     const loop = () => {
       timer = window.setTimeout(() => {
         if (cancelled) return;
-        if (!chatOpenRef.current && !menuOpenRef.current && !speechRef.current) {
+        if (!chatOpenRef.current && !menuOpenRef.current && !memoryOpenRef.current && !speechRef.current) {
           setGesture(Math.random() < 0.5 ? "glance" : "smile");
           clearGesture = window.setTimeout(() => setGesture(null), 1600);
         }
@@ -323,10 +378,15 @@ export function XiaomeiCompanion() {
   }, [chat]);
 
   useEffect(() => {
-    if (!menuOpen && !chatOpen) return;
+    if (!menuOpen && !chatOpen && !memoryOpen) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
+      if (memoryOpenRef.current) {
+        setMemoryOpen(false);
+        spriteRef.current?.focus({ preventScroll: true });
+        return;
+      }
       if (chatOpenRef.current) {
         closeChat();
         return;
@@ -336,16 +396,52 @@ export function XiaomeiCompanion() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [chatOpen, closeChat, menuOpen]);
+  }, [chatOpen, closeChat, memoryOpen, menuOpen]);
 
   const openChat = useCallback(() => {
     markHintSeen();
     setMenuOpen(false);
+    setMemoryOpen(false);
     setSpeech(null);
     setGesture(null);
     place.clearPeek();
     setChatOpen(true);
   }, [place]);
+
+  const openMemory = useCallback(() => {
+    const record = readXiaomeiMemory();
+    memoryRecordRef.current = record;
+    setMemoryRecord(record);
+    setMenuOpen(false);
+    setChatOpen(false);
+    chat.stop();
+    chat.resetFace();
+    pinSource.current = null;
+    setSpeech(null);
+    setMoodPin(null);
+    setGesture(null);
+    place.clearPeek();
+    setMemoryOpen(true);
+  }, [chat, place]);
+
+  const forgetNote = useCallback((summary: string) => {
+    if (forgetLock.current) return;
+    forgetLock.current = true;
+    try {
+      const base = memoryRecordRef.current ?? readXiaomeiMemory();
+      const next = forgetXiaomeiNote(base, summary);
+      writeXiaomeiMemory(next);
+      memoryRecordRef.current = next;
+      setMemoryRecord(next);
+    } finally {
+      forgetLock.current = false;
+    }
+  }, []);
+
+  const closeMemory = useCallback(() => {
+    setMemoryOpen(false);
+    spriteRef.current?.focus({ preventScroll: true });
+  }, []);
 
   const toggleMute = useCallback(() => {
     const next = !mutedRef.current;
@@ -378,10 +474,10 @@ export function XiaomeiCompanion() {
     replyMood: chat.replyMood,
     speech,
     moodPin,
-    hover,
+    hover: hover && !memoryOpen,
     gesture,
   });
-  const showSpeech = speech && !chatOpen && !menuOpen && !muted;
+  const showSpeech = speech && !chatOpen && !menuOpen && !memoryOpen && !muted;
   const align = place.pos.x > 160 ? "right" : "left";
   const placement = place.pos.y > 220 ? "up" : "down";
   const roomAbove = place.pos.y - 64;
@@ -397,7 +493,8 @@ export function XiaomeiCompanion() {
     visibleTop: keyboardFrame.offsetTop,
     visibleHeight: keyboardFrame.height,
   });
-  const showHint = !hintSeen && !chatOpen && !menuOpen && !muted && !showSpeech;
+  const showHint = !coarse && !hintSeen && !chatOpen && !menuOpen && !memoryOpen && !muted && !showSpeech;
+  const memoryView = memoryRecord ? memoryNotesForDrawer(memoryRecord) : { facts: [], events: [] };
 
   return (
     <div
@@ -407,13 +504,13 @@ export function XiaomeiCompanion() {
         width: place.box.width,
         height: place.box.height,
         ...(dock.lift ? { top: "auto", bottom: keyboardFrame.inset + 8 } : { top: place.pos.y }),
-        transform: chatOpen || menuOpen ? "translate3d(0, 0, 0)" : peekTransform(place.peek),
+        transform: chatOpen || menuOpen || memoryOpen ? "translate3d(0, 0, 0)" : peekTransform(place.peek),
         transition: place.dragging ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
       }}
       onPointerEnter={() => {
         setHover(true);
         place.onEnter();
-        if (!chatOpenRef.current && !menuOpenRef.current && !speechRef.current) {
+        if (!chatOpenRef.current && !menuOpenRef.current && !memoryOpenRef.current && !speechRef.current) {
           const tone = toneFromAffection(metersRef.current.affection);
           const line = pickTaggedLine(XIAOMEI_HOVER_LINES, speechRef.current?.text, tone);
           speak(line.mood, line.text, "hover");
@@ -468,12 +565,25 @@ export function XiaomeiCompanion() {
             setMenuOpen(false);
             speak("content", XIAOMEI_ABOUT, "about");
           }}
+          onMemory={openMemory}
           onHide={() => {
             setMenuOpen(false);
+            setMemoryOpen(false);
             setChatOpen(false);
             chat.stop();
             place.hide();
           }}
+        />
+      ) : null}
+
+      {memoryOpen && memoryRecord ? (
+        <XiaomeiMemorySheet
+          facts={memoryView.facts}
+          events={memoryView.events}
+          align={align}
+          placement={placement}
+          onForget={forgetNote}
+          onClose={closeMemory}
         />
       ) : null}
 
@@ -528,18 +638,47 @@ export function XiaomeiCompanion() {
         </p>
       ) : null}
 
+      {coarse ? (
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-label="打开菜单"
+          className={cn(
+            "absolute top-0 z-10 flex h-11 items-center rounded-full border border-white/15 bg-lab-canvas/80 px-3 text-xs text-lab-ink backdrop-blur-md",
+            align === "right" ? "right-full mr-1" : "left-full ml-1",
+          )}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={() => {
+            if (menuOpenRef.current) {
+              setMenuOpen(false);
+              return;
+            }
+            openMenu();
+          }}
+        >
+          菜单
+        </button>
+      ) : null}
+
       <button
         ref={spriteRef}
         type="button"
-        aria-label={`${XIAOMEI_NAME}。点一下听她说，长按打开菜单`}
-        aria-expanded={chatOpen || menuOpen}
+        aria-label={`${XIAOMEI_NAME}。点一下听她说，长按是摸头`}
+        aria-expanded={chatOpen || menuOpen || memoryOpen}
         aria-haspopup="menu"
-        aria-controls={chatOpen ? "xiaomei-chat" : undefined}
+        aria-controls={chatOpen ? "xiaomei-chat" : memoryOpen ? "xiaomei-memory" : undefined}
         className="absolute inset-0 cursor-grab touch-none bg-transparent p-0 select-none active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
         {...place.spriteHandlers}
+        onKeyDown={(event) => {
+          if (event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey)) {
+            event.preventDefault();
+            openMenu();
+          }
+        }}
         onContextMenu={(event) => {
           event.preventDefault();
-          openMenu();
+          if (event.button === 2 || event.ctrlKey) openMenu();
         }}
       >
         <Image

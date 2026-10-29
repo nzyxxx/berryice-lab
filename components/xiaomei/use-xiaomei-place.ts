@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  XIAOMEI_PET_HOLD_MS,
   clampPlace,
   defaultPlace,
   nearestPeek,
@@ -219,7 +220,7 @@ export function useXiaomeiPlace(options: {
     holdTimer.current = window.setTimeout(() => {
       holdFired.current = true;
       onHoldRef.current?.();
-    }, 560);
+    }, XIAOMEI_PET_HOLD_MS);
     dragRef.current = {
       id: event.pointerId,
       originX: event.clientX,

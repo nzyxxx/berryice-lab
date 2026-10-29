@@ -24,7 +24,7 @@ function Meter({ label, value, tone }: { label: string; value: number; tone: "fu
   );
 }
 
-/** 右键 / 长按菜单。只抛动作，不自己改位置、不写存储、不去请求。 */
+/** 右键菜单。长按是摸头，不在这里。只抛动作，不自己改位置、不写存储、不去请求。 */
 export function XiaomeiMenu({
   muted,
   align,
@@ -37,6 +37,7 @@ export function XiaomeiMenu({
   onMute,
   onCorner,
   onAbout,
+  onMemory,
   onHide,
 }: {
   muted: boolean;
@@ -50,6 +51,7 @@ export function XiaomeiMenu({
   onMute: () => void;
   onCorner: () => void;
   onAbout: () => void;
+  onMemory: () => void;
   onHide: () => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -101,6 +103,9 @@ export function XiaomeiMenu({
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onAbout}>
         关于{XIAOMEI_NAME}
+      </button>
+      <button type="button" role="menuitem" className={ITEM} onClick={onMemory}>
+        她记住了什么
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onHide}>
         收起
