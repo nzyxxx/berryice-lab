@@ -5,6 +5,8 @@ import {
   XIAOMEI_BLINK_CYCLE,
   XIAOMEI_BLINK_FRAME_MS,
   XIAOMEI_DRINK_HOLD_MS,
+  XIAOMEI_GREET_MS,
+  XIAOMEI_GREET_WAVE_MS,
   XIAOMEI_TRAIL_MS,
   expressionTrail,
   idleGapMs,
@@ -19,6 +21,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /**
  * 待机拍、眨眼和点击/投喂的引子脸。只排 setTimeout，不挂 rAF。
  * 聊天、菜单、记忆打开时停掉下一拍。台词还在时不新开一拍，但喝水姿势可以盖过台词。
+ * 进场招呼先招手再鞠躬，盖过这句的脸，短于台词。喝水和喂食进行中不打断。
  * 喂食和喝水的动作在关菜单的同一轮排上，菜单合上后接着播，不会被清掉。
  */
 export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean; paused: () => boolean }) {
@@ -95,6 +98,33 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     }
     blinkTimers.current.push(window.setTimeout(() => setBlinkFace(null), elapsed));
   }, [clearBlinkTimers]);
+
+  const playGreet = useCallback(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (forcedRef.current) return;
+    clearBlink();
+    clearBeatTimers();
+    clearLeadTimer();
+    activeRef.current = true;
+    forcedRef.current = false;
+    setLead(null);
+    setBeat(null);
+    setBeatMood(null);
+    setPoseFace("pose_wave");
+    beatTimers.current.push(
+      window.setTimeout(() => {
+        setPoseFace("pose_bow");
+      }, XIAOMEI_GREET_WAVE_MS),
+    );
+    beatTimers.current.push(
+      window.setTimeout(() => {
+        activeRef.current = false;
+        setBeat(null);
+        setBeatMood(null);
+        setPoseFace(null);
+      }, XIAOMEI_GREET_MS),
+    );
+  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
 
   const startDrink = useCallback(() => {
     clearBlink();
@@ -277,6 +307,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     flashClick,
     playFeed,
     playDrink: startDrink,
+    playGreet,
     clear: stopVisual,
   };
 }

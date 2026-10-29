@@ -348,7 +348,15 @@ export function XiaomeiCompanion() {
   useEffect(() => {
     if (!place.ready || place.hidden || muted) return;
     const id = window.setTimeout(() => {
-      if (chatOpenRef.current || mutedRef.current) return;
+      if (
+        chatOpenRef.current ||
+        menuOpenRef.current ||
+        memoryOpenRef.current ||
+        mutedRef.current
+      ) {
+        return;
+      }
+      presence.playGreet();
       const remembered = readXiaomeiMemory();
       const tone = toneFromAffection(metersRef.current.affection);
       if (remembered.topics.length > 0) {
@@ -362,7 +370,7 @@ export function XiaomeiCompanion() {
       setMoodPin((current) => current ?? "content");
     }, 900);
     return () => window.clearTimeout(id);
-  }, [muted, place.hidden, place.ready]);
+  }, [muted, place.hidden, place.ready, presence.playGreet]);
 
   useEffect(() => {
     if (!moodPin || speech?.source === "hover") return;

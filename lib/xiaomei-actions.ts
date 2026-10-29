@@ -2,12 +2,13 @@
  * 小莓妹的短动作和表情微变。纯计算，不碰 DOM、不挂 rAF。
  * 眨眼是四帧全身换图。十二张新情绪跟五张旧脸一样换 src。
  * 喝水是端杯再抿，不再用跳动的 SVG 杯子。点心、伞仍是道具。
+ * 站姿微动作也换全身图：歪头、偷看、鞠躬、比心，不再靠转图层假装。
  * 转圈是水平翻转，散步是左右走动。
  * 菜单关上、没有台词时，十秒里大约三拍，几乎每拍都在动。
  * 间隔长过最长的一拍。同一种动作或微表情不连播。
  */
 
-import { type XiaomeiDrinkPose, type XiaomeiFace } from "./xiaomei-faces";
+import { type XiaomeiDrinkPose, type XiaomeiFace, type XiaomeiStandPose } from "./xiaomei-faces";
 import { type XiaomeiMood } from "./xiaomei-lines";
 
 export const XIAOMEI_IDLE_BEATS = [
@@ -167,6 +168,11 @@ export const XIAOMEI_BLINK_CYCLE_MS = XIAOMEI_BLINK_FRAME_MS.reduce((sum, ms) =>
 /** 端着看清，再抿一口。两段加起来等于喝水这一拍。 */
 export const XIAOMEI_DRINK_HOLD_MS = 1100;
 
+/** 进场先招手，再轻轻鞠一躬。短于问候台词，鞠躬完才露出这句的脸。 */
+export const XIAOMEI_GREET_WAVE_MS = 1100;
+
+export const XIAOMEI_GREET_MS = 2400;
+
 export function blinkFaceAt(elapsedMs: number): (typeof XIAOMEI_BLINK_CYCLE)[number] | null {
   if (!Number.isFinite(elapsedMs)) return null;
   if (elapsedMs < 0) return XIAOMEI_BLINK_CYCLE[0];
@@ -182,6 +188,13 @@ export function drinkFaceAt(elapsedMs: number): XiaomeiDrinkPose | null {
   if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_drink_hold";
   if (elapsedMs < XIAOMEI_DRINK_HOLD_MS) return "pose_drink_hold";
   if (elapsedMs < XIAOMEI_BEAT_MS.drink) return "pose_drink_sip";
+  return null;
+}
+
+export function greetFaceAt(elapsedMs: number): Extract<XiaomeiStandPose, "pose_wave" | "pose_bow"> | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_wave";
+  if (elapsedMs < XIAOMEI_GREET_WAVE_MS) return "pose_wave";
+  if (elapsedMs < XIAOMEI_GREET_MS) return "pose_bow";
   return null;
 }
 
@@ -239,10 +252,10 @@ export function idleGapMs(roll: number): number {
 const REACTION_LEAD = {
   click: {
     happy: "mood_wink",
-    content: "mood_shy",
+    content: "pose_heart",
     annoyed: "mood_puff",
     sad: "mood_cry",
-    blank: "mood_thinking",
+    blank: "pose_point",
   },
   feed: {
     happy: "mood_eager",
@@ -275,15 +288,15 @@ export function expressionTrail(
   if (context === "blink" || context === "blink2" || context === "slowblink") return ["blink_open", "blink_half"];
   if (context === "yawn") return ["mood_sleepy", "blink_closed"];
   if (context === "stretch") return ["mood_eager", "happy"];
-  if (context === "peek") return ["mood_thinking", "blank"];
-  if (context === "nod") return ["mood_soft", "happy"];
-  if (context === "tilt") return ["mood_cool", "content"];
+  if (context === "peek") return ["pose_peek", "pose_peek"];
+  if (context === "nod") return ["pose_bow", "pose_clasp"];
+  if (context === "tilt") return ["pose_tilt_l", "pose_tilt_r"];
   if (context === "pout") return ["mood_puff", "annoyed"];
   if (context === "note") return ["mood_thinking", "blank"];
   if (context === "cheer") return ["mood_love", "mood_eager"];
   if (context === "sigh") return ["mood_sleepy", "mood_soft"];
   if (context === "glance") return ["mood_cool", "mood_thinking"];
-  if (context === "smile") return ["mood_smug", "mood_wink"];
+  if (context === "smile") return ["pose_cheek", "pose_peace"];
   if (context === "sip" || context === "drink") return ["pose_drink_hold", "pose_drink_sip"];
   if (context === "hold") return ["pose_drink_hold", "content"];
   if (context === "wipe") return ["mood_puff", "content"];
@@ -302,9 +315,9 @@ export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boole
   if (beat === "drink" || beat === "sip" || beat === "hold") return null;
   if (beat === "yawn") return "xiaomei-yawn";
   if (beat === "stretch") return "xiaomei-stretch";
-  if (beat === "peek") return "xiaomei-peek";
+  // 歪头和偷看已经画在图里，再转图层会叠成双倍。呼吸留着。
+  if (beat === "peek" || beat === "tilt") return "xiaomei-float";
   if (beat === "nod") return "xiaomei-nod";
-  if (beat === "tilt") return "xiaomei-tilt";
   if (beat === "pout") return "xiaomei-pout";
   if (beat === "note") return "xiaomei-note";
   if (beat === "cheer") return "xiaomei-cheer";

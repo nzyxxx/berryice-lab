@@ -66,6 +66,7 @@ import {
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
   XIAOMEI_NAME,
+  XIAOMEI_SPRITE_VERSION,
   XIAOMEI_PET_CAP_LINES,
   XIAOMEI_PET_FULL_LINES,
   XIAOMEI_PET_LINES,
@@ -105,6 +106,7 @@ import {
   toneFromAffection,
   topicFromExchange,
 } from "./xiaomei-memory.ts";
+import { XIAOMEI_STAND_POSES } from "./xiaomei-faces.ts";
 import {
   clampPlace,
   defaultPlace,
@@ -796,6 +798,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /flashClick/);
   assert.match(companion, /playFeed/);
   assert.match(companion, /playDrink/);
+  assert.match(companion, /playGreet/);
   assert.match(companion, /XiaomeiStage/);
   assert.doesNotMatch(companion, /requestAnimationFrame|speechSynthesis/);
   const actions = await readFile(new URL("./xiaomei-actions.ts", import.meta.url), "utf8");
@@ -983,7 +986,9 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     "mood_soft",
     "pose_drink_hold",
     "pose_drink_sip",
+    ...XIAOMEI_STAND_POSES,
   ] as const;
+  assert.equal(XIAOMEI_SPRITE_VERSION, 6);
   for (const name of names) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.webp`, import.meta.url));
     assert.equal(data.subarray(0, 4).toString(), "RIFF", name);
