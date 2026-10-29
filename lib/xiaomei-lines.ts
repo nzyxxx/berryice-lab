@@ -66,6 +66,8 @@ export const XIAOMEI_SCENE_LINES = {
     "想说了再来戳我。",
     "哼，我又没走开。",
     "角落还空着。你知道。",
+    "站累了。蹲一下。哼。",
+    "看着外面。才没有发呆。",
   ],
   thinking: [
     "等一下，我在想。",
@@ -241,6 +243,7 @@ export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "happy", tone: "close", text: "你在旁边，我就想多哼两句。" },
   { mood: "content", tone: "close", text: "想告诉你今天的事。才不说。" },
   { mood: "content", text: "围裙有点歪啦。别看。" },
+  { mood: "blank", text: "站累了。蹲一下。才不是偷懒。" },
   { mood: "content", text: "哼，发呆也算我在干活。" },
   { mood: "blank", text: "雨声还在呢。我才没有数。" },
   { mood: "content", text: "才不是想找话说。只是刚好。" },

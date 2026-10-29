@@ -532,9 +532,14 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   assert.match(neutral, /爱看动漫/);
   assert.match(neutral, /喜欢唱歌/);
   assert.match(neutral, /爱睡懒觉/);
+  assert.match(neutral, /偶尔会蹲下/);
+  assert.match(neutral, /看着外面的景色发呆/);
   assert.match(neutral, /爱牛肉/);
   assert.match(neutral, /不爱猪肉/);
   assert.match(neutral, /偏内向/);
+  assert.match(neutral, /说话糯糯的/);
+  assert.match(neutral, /事能做妥/);
+  assert.match(neutral, /不要自我介绍「合格女仆」/);
   assert.match(neutral, /【指路】/);
   assert.match(neutral, /不要每轮都复述自己的名字/);
   assert.match(neutral, /鲸鱼娘/);
@@ -581,7 +586,7 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
 test("问你是谁时不念性格卡，也不撇清", () => {
   const prompt = buildXiaomeiSystemPrompt(sanitizeXiaomeiMemory(undefined));
   assert.match(prompt, /禁止把性格标签念出口/);
-  assert.match(prompt, /「傲娇」「嘴硬」「心软」「人设」「性格」「内向」/);
+  assert.match(prompt, /「傲娇」「嘴硬」「心软」「人设」「性格」「内向」「治愈」「合格」/);
   assert.match(prompt, /不是什么随便的AI/);
   assert.match(prompt, /尽管说吧/);
   assert.match(prompt, /对照句是尺子，不是口头禅/);
