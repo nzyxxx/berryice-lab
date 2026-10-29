@@ -9,11 +9,16 @@ import {
   XIAOMEI_GREET_MS,
   XIAOMEI_GREET_WAVE_MS,
   XIAOMEI_IDLE_GAP_MS,
+  XIAOMEI_SPIN_AT_MS,
   XIAOMEI_TRAIL_MS,
+  XIAOMEI_WALK_AT_MS,
+  XIAOMEI_WALK_STEP_MS,
   blinkFaceAt,
   drinkFaceAt,
   expressionTrail,
   greetFaceAt,
+  spinFaceAt,
+  walkFaceAt,
   idleGapMs,
   nextIdleBeat,
   resolveXiaomeiFace,
@@ -21,7 +26,13 @@ import {
   xiaomeiPropKind,
   type XiaomeiIdleBeat,
 } from "./xiaomei-actions.ts";
-import { XIAOMEI_A1_FACES, XIAOMEI_STAND_POSES, xiaomeiFaceSrc, type XiaomeiFace } from "./xiaomei-faces.ts";
+import {
+  XIAOMEI_A1_FACES,
+  XIAOMEI_ACTIVITY_POSES,
+  XIAOMEI_STAND_POSES,
+  xiaomeiFaceSrc,
+  type XiaomeiFace,
+} from "./xiaomei-faces.ts";
 import { XIAOMEI_MOODS, XIAOMEI_SPRITE_VERSION, type XiaomeiMood } from "./xiaomei-lines.ts";
 
 const PROP_ACTIONS = ["snack", "umbrella"] as const;
@@ -195,8 +206,8 @@ test("表情轨迹两帧，待机不切难过，点击和投喂落到这句的�
   assert.deepEqual(expressionTrail("wipe", "happy"), ["mood_puff", "content"]);
   assert.deepEqual(expressionTrail("hum", "blank"), ["mood_soft", "happy"]);
   assert.deepEqual(expressionTrail("sway", "content"), ["mood_cool", "happy"]);
-  assert.deepEqual(expressionTrail("yawn", "happy"), ["mood_sleepy", "blink_closed"]);
-  assert.deepEqual(expressionTrail("stretch", "blank"), ["mood_eager", "happy"]);
+  assert.deepEqual(expressionTrail("yawn", "happy"), ["pose_yawn", "pose_yawn"]);
+  assert.deepEqual(expressionTrail("stretch", "blank"), ["pose_stretch", "pose_stretch"]);
   assert.deepEqual(expressionTrail("note", "annoyed"), ["mood_thinking", "blank"]);
   assert.deepEqual(expressionTrail("cheer", "sad"), ["mood_love", "mood_eager"]);
   assert.deepEqual(expressionTrail("sigh", "happy"), ["mood_sleepy", "mood_soft"]);
@@ -205,8 +216,8 @@ test("表情轨迹两帧，待机不切难过，点击和投喂落到这句的�
   assert.deepEqual(expressionTrail("drink", "happy"), ["pose_drink_hold", "pose_drink_sip"]);
   assert.deepEqual(expressionTrail("snack", "annoyed"), ["mood_eager", "happy"]);
   assert.deepEqual(expressionTrail("umbrella", "blank"), ["mood_cool", "content"]);
-  assert.deepEqual(expressionTrail("spin", "content"), ["mood_surprised", "mood_eager"]);
-  assert.deepEqual(expressionTrail("walk", "happy"), ["mood_shy", "blank"]);
+  assert.deepEqual(expressionTrail("spin", "content"), ["pose_spin_1", "pose_spin_2"]);
+  assert.deepEqual(expressionTrail("walk", "happy"), ["pose_walk_l_1", "pose_walk_r_1"]);
 
   const settled: XiaomeiMood[] = ["happy", "content", "blank", "annoyed", "sad"];
   for (const mood of settled) {
@@ -248,8 +259,10 @@ test("表情轨迹两帧，待机不切难过，点击和投喂落到这句的�
     ),
     greetFaceAt(0),
     greetFaceAt(XIAOMEI_GREET_WAVE_MS),
+    ...XIAOMEI_SPIN_AT_MS.map((at) => spinFaceAt(at)),
+    ...XIAOMEI_WALK_AT_MS.map((at) => walkFaceAt(at)),
   ]);
-  for (const pose of XIAOMEI_STAND_POSES) {
+  for (const pose of [...XIAOMEI_STAND_POSES, ...XIAOMEI_ACTIVITY_POSES]) {
     assert.ok(posed.has(pose), pose);
   }
 });
@@ -277,6 +290,20 @@ test("眨眼四帧短于半秒，喝水先端后抿再回到空", () => {
   assert.equal(greetFaceAt(XIAOMEI_GREET_MS - 1), "pose_bow");
   assert.equal(greetFaceAt(XIAOMEI_GREET_MS), null);
   assert.equal(greetFaceAt(Number.NaN), "pose_wave");
+  assert.equal(spinFaceAt(0), "pose_spin_1");
+  assert.equal(spinFaceAt(XIAOMEI_SPIN_AT_MS[1] - 1), "pose_spin_1");
+  assert.equal(spinFaceAt(XIAOMEI_SPIN_AT_MS[1]), "pose_spin_2");
+  assert.equal(spinFaceAt(XIAOMEI_SPIN_AT_MS[2] - 1), "pose_spin_2");
+  assert.equal(spinFaceAt(XIAOMEI_SPIN_AT_MS[2]), "pose_spin_3");
+  assert.equal(spinFaceAt(XIAOMEI_BEAT_MS.spin - 1), "pose_spin_3");
+  assert.equal(spinFaceAt(XIAOMEI_BEAT_MS.spin), null);
+  assert.equal(walkFaceAt(0), "pose_walk_l_1");
+  assert.equal(walkFaceAt(XIAOMEI_WALK_STEP_MS), "pose_walk_l_2");
+  assert.equal(walkFaceAt(XIAOMEI_BEAT_MS.walk / 2), "pose_walk_r_1");
+  assert.equal(walkFaceAt(XIAOMEI_BEAT_MS.walk / 2 + XIAOMEI_WALK_STEP_MS), "pose_walk_r_2");
+  assert.equal(walkFaceAt(XIAOMEI_BEAT_MS.walk), null);
+  assert.equal(walkFaceAt(Number.NaN), "pose_walk_l_1");
+  assert.notEqual(walkFaceAt(0), walkFaceAt(XIAOMEI_BEAT_MS.walk / 2));
 });
 
 test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () => {
@@ -293,8 +320,8 @@ test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () =>
   assert.equal(xiaomeiMotionClass("wipe", false), "xiaomei-wipe");
   assert.equal(xiaomeiMotionClass("hum", false), "xiaomei-hum");
   assert.equal(xiaomeiMotionClass("sway", false), "xiaomei-sway");
-  assert.equal(xiaomeiMotionClass("yawn", false), "xiaomei-yawn");
-  assert.equal(xiaomeiMotionClass("stretch", false), "xiaomei-stretch");
+  assert.equal(xiaomeiMotionClass("yawn", false), "xiaomei-float");
+  assert.equal(xiaomeiMotionClass("stretch", false), "xiaomei-float");
   assert.equal(xiaomeiMotionClass("note", false), "xiaomei-note");
   assert.equal(xiaomeiMotionClass("cheer", false), "xiaomei-cheer");
   assert.equal(xiaomeiMotionClass("sigh", false), "xiaomei-sigh");
@@ -302,8 +329,8 @@ test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () =>
   assert.equal(xiaomeiMotionClass("drink", false), null);
   assert.equal(xiaomeiMotionClass("snack", false), "xiaomei-snack");
   assert.equal(xiaomeiMotionClass("umbrella", false), "xiaomei-umbrella");
-  assert.equal(xiaomeiMotionClass("spin", false), "xiaomei-spin");
-  assert.equal(xiaomeiMotionClass("walk", false), "xiaomei-walk");
+  assert.equal(xiaomeiMotionClass("spin", false), null);
+  assert.equal(xiaomeiMotionClass("walk", false), null);
   assert.equal(xiaomeiMotionClass("walk", true), null);
   assert.equal(xiaomeiPropKind(null), null);
   assert.equal(xiaomeiPropKind("glance"), null);
@@ -436,8 +463,10 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   assert.match(presence, /playGreet/);
   assert.match(presence, /pose_wave/);
   assert.match(presence, /XIAOMEI_GREET_WAVE_MS/);
+  assert.match(presence, /spinFaceAt/);
+  assert.match(presence, /walkFaceAt/);
   assert.equal(XIAOMEI_SPRITE_VERSION, 6);
-  for (const pose of XIAOMEI_STAND_POSES) {
+  for (const pose of [...XIAOMEI_STAND_POSES, ...XIAOMEI_ACTIVITY_POSES]) {
     assert.equal(xiaomeiFaceSrc(pose), `/xiaomei/${pose}.webp?v=${XIAOMEI_SPRITE_VERSION}`);
   }
   assert.doesNotMatch(presence, /requestAnimationFrame|speechSynthesis|DEEPSEEK|API_KEY/);

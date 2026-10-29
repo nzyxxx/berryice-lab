@@ -3,6 +3,7 @@
  * 眨眼和十二张情绪的身体锁在 blank 上，换 src 就等于换脸。
  * 喝水两张是新姿势，不能再叠一只杯子。
  * Batch B 十张站姿同样全身换 src：歪头、招手、鞠躬、偷看。
+ * Batch C 九张活动也是全身：哈欠、伸懒腰、转圈三帧、左右迈步。
  * 五张线上情绪仍由 xiaomei-lines 的 XiaomeiMood 管台词。
  */
 
@@ -20,6 +21,19 @@ export const XIAOMEI_STAND_POSES = [
   "pose_clasp",
   "pose_peek",
   "pose_point",
+] as const;
+
+/** Batch C 活动。转圈三帧、左右各两步，都不是镜像。 */
+export const XIAOMEI_ACTIVITY_POSES = [
+  "pose_yawn",
+  "pose_stretch",
+  "pose_spin_1",
+  "pose_spin_2",
+  "pose_spin_3",
+  "pose_walk_l_1",
+  "pose_walk_l_2",
+  "pose_walk_r_1",
+  "pose_walk_r_2",
 ] as const;
 
 export const XIAOMEI_A1_FACES = [
@@ -41,6 +55,7 @@ export const XIAOMEI_A1_FACES = [
   "pose_drink_hold",
   "pose_drink_sip",
   ...XIAOMEI_STAND_POSES,
+  ...XIAOMEI_ACTIVITY_POSES,
 ] as const;
 
 export type XiaomeiA1Face = (typeof XIAOMEI_A1_FACES)[number];
@@ -50,6 +65,8 @@ export type XiaomeiFace = XiaomeiMood | XiaomeiA1Face;
 export type XiaomeiDrinkPose = "pose_drink_hold" | "pose_drink_sip";
 
 export type XiaomeiStandPose = (typeof XIAOMEI_STAND_POSES)[number];
+
+export type XiaomeiActivityPose = (typeof XIAOMEI_ACTIVITY_POSES)[number];
 
 const A1_FACE_SET: ReadonlySet<string> = new Set(XIAOMEI_A1_FACES);
 

@@ -7,8 +7,12 @@ import {
   XIAOMEI_DRINK_HOLD_MS,
   XIAOMEI_GREET_MS,
   XIAOMEI_GREET_WAVE_MS,
+  XIAOMEI_SPIN_AT_MS,
   XIAOMEI_TRAIL_MS,
+  XIAOMEI_WALK_AT_MS,
   expressionTrail,
+  spinFaceAt,
+  walkFaceAt,
   idleGapMs,
   nextIdleBeat,
   type XiaomeiIdleBeat,
@@ -22,6 +26,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * 待机拍、眨眼和点击/投喂的引子脸。只排 setTimeout，不挂 rAF。
  * 聊天、菜单、记忆打开时停掉下一拍。台词还在时不新开一拍，但喝水姿势可以盖过台词。
  * 进场招呼先招手再鞠躬，盖过这句的脸，短于台词。喝水和喂食进行中不打断。
+ * 转圈三帧、散步左右换步都走姿势脸。不压扁，也不把右脚镜像成左脚。
  * 喂食和喝水的动作在关菜单的同一轮排上，菜单合上后接着播，不会被清掉。
  */
 export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean; paused: () => boolean }) {
@@ -126,6 +131,38 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     );
   }, [clearBeatTimers, clearBlink, clearLeadTimer]);
 
+  const startActivity = useCallback((beat: "spin" | "walk") => {
+    clearBlink();
+    clearBeatTimers();
+    clearLeadTimer();
+    activeRef.current = true;
+    forcedRef.current = false;
+    lastRef.current = beat;
+    setLead(null);
+    setBeat(beat);
+    setBeatMood(null);
+    const cuts = beat === "spin" ? XIAOMEI_SPIN_AT_MS : XIAOMEI_WALK_AT_MS;
+    const faceAt = beat === "spin" ? spinFaceAt : walkFaceAt;
+    setPoseFace(faceAt(0));
+    for (const at of cuts) {
+      if (at === 0) continue;
+      beatTimers.current.push(
+        window.setTimeout(() => {
+          const face = faceAt(at);
+          if (face) setPoseFace(face);
+        }, at),
+      );
+    }
+    beatTimers.current.push(
+      window.setTimeout(() => {
+        activeRef.current = false;
+        setBeat(null);
+        setBeatMood(null);
+        setPoseFace(null);
+      }, XIAOMEI_BEAT_MS[beat]),
+    );
+  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
+
   const startDrink = useCallback(() => {
     clearBlink();
     clearBeatTimers();
@@ -158,6 +195,10 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
       clearBlink();
       if (next === "drink") {
         startDrink();
+        return;
+      }
+      if (next === "spin" || next === "walk") {
+        startActivity(next);
         return;
       }
       clearBeatTimers();
@@ -199,7 +240,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         }, XIAOMEI_BEAT_MS[next]),
       );
     },
-    [clearBeatTimers, clearBlink, clearLeadTimer, startBlink, startDrink],
+    [clearBeatTimers, clearBlink, clearLeadTimer, startActivity, startBlink, startDrink],
   );
 
   const flashClick = useCallback(

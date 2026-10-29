@@ -106,7 +106,7 @@ import {
   toneFromAffection,
   topicFromExchange,
 } from "./xiaomei-memory.ts";
-import { XIAOMEI_STAND_POSES } from "./xiaomei-faces.ts";
+import { XIAOMEI_ACTIVITY_POSES, XIAOMEI_STAND_POSES } from "./xiaomei-faces.ts";
 import {
   clampPlace,
   defaultPlace,
@@ -987,6 +987,7 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     "pose_drink_hold",
     "pose_drink_sip",
     ...XIAOMEI_STAND_POSES,
+    ...XIAOMEI_ACTIVITY_POSES,
   ] as const;
   assert.equal(XIAOMEI_SPRITE_VERSION, 6);
   for (const name of names) {
