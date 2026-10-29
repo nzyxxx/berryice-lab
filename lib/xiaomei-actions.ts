@@ -2,12 +2,20 @@
  * 小莓妹的短动作和表情微变。纯计算，不碰 DOM、不挂 rAF。
  * 眨眼是四帧全身换图。十二张新情绪跟五张旧脸一样换 src。
  * 喝水是端杯再抿，不再用跳动的 SVG 杯子。点心、伞仍是道具。
- * 转圈是水平翻转，散步是左右走动。
+ * 站姿微动作也换全身图：歪头、偷看、鞠躬、比心，不再靠转图层假装。
+ * 哈欠和伸懒腰换整张。转圈按三帧换，不再压扁翻转。散步先往左迈再往右迈，左右是两套画。
+ * 点心是先捧着再咬。伞是撑开拿着。都不再叠跳动的贴纸。
  * 菜单关上、没有台词时，十秒里大约三拍，几乎每拍都在动。
  * 间隔长过最长的一拍。同一种动作或微表情不连播。
  */
 
-import { type XiaomeiDrinkPose, type XiaomeiFace } from "./xiaomei-faces";
+import {
+  type XiaomeiActivityPose,
+  type XiaomeiDrinkPose,
+  type XiaomeiFace,
+  type XiaomeiItemPose,
+  type XiaomeiStandPose,
+} from "./xiaomei-faces";
 import { type XiaomeiMood } from "./xiaomei-lines";
 
 export const XIAOMEI_IDLE_BEATS = [
@@ -167,6 +175,11 @@ export const XIAOMEI_BLINK_CYCLE_MS = XIAOMEI_BLINK_FRAME_MS.reduce((sum, ms) =>
 /** 端着看清，再抿一口。两段加起来等于喝水这一拍。 */
 export const XIAOMEI_DRINK_HOLD_MS = 1100;
 
+/** 进场先招手，再轻轻鞠一躬。短于问候台词，鞠躬完才露出这句的脸。 */
+export const XIAOMEI_GREET_WAVE_MS = 1100;
+
+export const XIAOMEI_GREET_MS = 2400;
+
 export function blinkFaceAt(elapsedMs: number): (typeof XIAOMEI_BLINK_CYCLE)[number] | null {
   if (!Number.isFinite(elapsedMs)) return null;
   if (elapsedMs < 0) return XIAOMEI_BLINK_CYCLE[0];
@@ -183,6 +196,58 @@ export function drinkFaceAt(elapsedMs: number): XiaomeiDrinkPose | null {
   if (elapsedMs < XIAOMEI_DRINK_HOLD_MS) return "pose_drink_hold";
   if (elapsedMs < XIAOMEI_BEAT_MS.drink) return "pose_drink_sip";
   return null;
+}
+
+/** 先看清点心，再咬一口。两段加起来等于这一拍，之后回到原来的表情。 */
+export const XIAOMEI_SNACK_HOLD_MS = 1000;
+
+export function snackFaceAt(elapsedMs: number): Extract<XiaomeiItemPose, "pose_snack_hold" | "pose_snack_bite"> | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_snack_hold";
+  if (elapsedMs < XIAOMEI_SNACK_HOLD_MS) return "pose_snack_hold";
+  if (elapsedMs < XIAOMEI_BEAT_MS.snack) return "pose_snack_bite";
+  return null;
+}
+
+export function umbrellaFaceAt(elapsedMs: number): Extract<XiaomeiItemPose, "pose_umbrella_hold"> | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_umbrella_hold";
+  if (elapsedMs < XIAOMEI_BEAT_MS.umbrella) return "pose_umbrella_hold";
+  return null;
+}
+
+export function greetFaceAt(elapsedMs: number): Extract<XiaomeiStandPose, "pose_wave" | "pose_bow"> | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_wave";
+  if (elapsedMs < XIAOMEI_GREET_WAVE_MS) return "pose_wave";
+  if (elapsedMs < XIAOMEI_GREET_MS) return "pose_bow";
+  return null;
+}
+
+/** 转圈三帧。第三帧落地偏软，仍留在这一拍里。 */
+export const XIAOMEI_SPIN_CYCLE = ["pose_spin_1", "pose_spin_2", "pose_spin_3"] as const;
+
+export const XIAOMEI_SPIN_AT_MS = [0, 670, 1340] as const;
+
+/** 一步 600ms。前半拍往左，后半拍往右。 */
+export const XIAOMEI_WALK_STEP_MS = 600;
+
+export const XIAOMEI_WALK_AT_MS = [0, 600, 1200, 1800] as const;
+
+export function spinFaceAt(elapsedMs: number): (typeof XIAOMEI_SPIN_CYCLE)[number] | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_spin_1";
+  if (elapsedMs >= XIAOMEI_BEAT_MS.spin) return null;
+  if (elapsedMs < XIAOMEI_SPIN_AT_MS[1]) return "pose_spin_1";
+  if (elapsedMs < XIAOMEI_SPIN_AT_MS[2]) return "pose_spin_2";
+  return "pose_spin_3";
+}
+
+export function walkFaceAt(elapsedMs: number): Extract<
+  XiaomeiActivityPose,
+  "pose_walk_l_1" | "pose_walk_l_2" | "pose_walk_r_1" | "pose_walk_r_2"
+> | null {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) return "pose_walk_l_1";
+  if (elapsedMs >= XIAOMEI_BEAT_MS.walk) return null;
+  const half = XIAOMEI_BEAT_MS.walk / 2;
+  if (elapsedMs < half) return elapsedMs < XIAOMEI_WALK_STEP_MS ? "pose_walk_l_1" : "pose_walk_l_2";
+  return elapsedMs < half + XIAOMEI_WALK_STEP_MS ? "pose_walk_r_1" : "pose_walk_r_2";
 }
 
 function unitRoll(roll: number): number {
@@ -239,10 +304,10 @@ export function idleGapMs(roll: number): number {
 const REACTION_LEAD = {
   click: {
     happy: "mood_wink",
-    content: "mood_shy",
+    content: "pose_heart",
     annoyed: "mood_puff",
     sad: "mood_cry",
-    blank: "mood_thinking",
+    blank: "pose_point",
   },
   feed: {
     happy: "mood_eager",
@@ -273,49 +338,53 @@ export function expressionTrail(
   settled: XiaomeiMood,
 ): readonly [XiaomeiFace, XiaomeiFace] {
   if (context === "blink" || context === "blink2" || context === "slowblink") return ["blink_open", "blink_half"];
-  if (context === "yawn") return ["mood_sleepy", "blink_closed"];
-  if (context === "stretch") return ["mood_eager", "happy"];
-  if (context === "peek") return ["mood_thinking", "blank"];
-  if (context === "nod") return ["mood_soft", "happy"];
-  if (context === "tilt") return ["mood_cool", "content"];
+  if (context === "yawn") return ["pose_yawn", "pose_yawn"];
+  if (context === "stretch") return ["pose_stretch", "pose_stretch"];
+  if (context === "peek") return ["pose_peek", "pose_peek"];
+  if (context === "nod") return ["pose_bow", "pose_clasp"];
+  if (context === "tilt") return ["pose_tilt_l", "pose_tilt_r"];
   if (context === "pout") return ["mood_puff", "annoyed"];
   if (context === "note") return ["mood_thinking", "blank"];
   if (context === "cheer") return ["mood_love", "mood_eager"];
   if (context === "sigh") return ["mood_sleepy", "mood_soft"];
   if (context === "glance") return ["mood_cool", "mood_thinking"];
-  if (context === "smile") return ["mood_smug", "mood_wink"];
+  if (context === "smile") return ["pose_cheek", "pose_peace"];
   if (context === "sip" || context === "drink") return ["pose_drink_hold", "pose_drink_sip"];
   if (context === "hold") return ["pose_drink_hold", "content"];
   if (context === "wipe") return ["mood_puff", "content"];
   if (context === "hum") return ["mood_soft", "happy"];
   if (context === "sway") return ["mood_cool", "happy"];
-  if (context === "snack") return ["mood_eager", "happy"];
-  if (context === "umbrella") return ["mood_cool", "content"];
-  if (context === "spin") return ["mood_surprised", "mood_eager"];
-  if (context === "walk") return ["mood_shy", "blank"];
+  if (context === "snack") return ["pose_snack_hold", "pose_snack_bite"];
+  if (context === "umbrella") return ["pose_umbrella_hold", "pose_umbrella_hold"];
+  if (context === "spin") return ["pose_spin_1", "pose_spin_2"];
+  if (context === "walk") return ["pose_walk_l_1", "pose_walk_r_1"];
   return [REACTION_LEAD[context][settled], settled];
 }
 
 export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boolean): string | null {
   if (dragging) return null;
   if (beat === "blink" || beat === "blink2" || beat === "slowblink") return "xiaomei-float";
-  if (beat === "drink" || beat === "sip" || beat === "hold") return null;
-  if (beat === "yawn") return "xiaomei-yawn";
-  if (beat === "stretch") return "xiaomei-stretch";
-  if (beat === "peek") return "xiaomei-peek";
+  if (
+    beat === "drink" ||
+    beat === "sip" ||
+    beat === "hold" ||
+    beat === "snack" ||
+    beat === "umbrella" ||
+    beat === "spin" ||
+    beat === "walk"
+  ) {
+    return null;
+  }
+  // 这些姿势已经画在图里。再压扁、翻转或滑步会和画面抢。哈欠和伸懒腰仍轻轻呼吸。
+  if (beat === "yawn" || beat === "stretch" || beat === "peek" || beat === "tilt") return "xiaomei-float";
   if (beat === "nod") return "xiaomei-nod";
-  if (beat === "tilt") return "xiaomei-tilt";
   if (beat === "pout") return "xiaomei-pout";
   if (beat === "note") return "xiaomei-note";
   if (beat === "cheer") return "xiaomei-cheer";
   if (beat === "sigh") return "xiaomei-sigh";
   if (beat === "wipe") return "xiaomei-wipe";
-  if (beat === "snack") return "xiaomei-snack";
   if (beat === "hum") return "xiaomei-hum";
   if (beat === "sway") return "xiaomei-sway";
-  if (beat === "umbrella") return "xiaomei-umbrella";
-  if (beat === "spin") return "xiaomei-spin";
-  if (beat === "walk") return "xiaomei-walk";
   if (beat === "glance") return "xiaomei-glance";
   return "xiaomei-float";
 }
@@ -339,15 +408,15 @@ export function xiaomeiChatCue(
   return null;
 }
 
+/** 喝水、点心、伞都画在全身里，不再浮第二只。 */
 export function xiaomeiPropKind(beat: XiaomeiIdleBeat | null): XiaomeiPropKind | null {
-  if (beat === "snack") return "snack";
-  if (beat === "umbrella") return "umbrella";
+  void beat;
   return null;
 }
 
-/** 点心怎么拿。喝水改全身姿势，不再叠杯子。 */
+/** 道具姿势留给旧贴纸。全身换帧之后这里为空。 */
 export function xiaomeiPropPose(beat: XiaomeiIdleBeat | null): XiaomeiPropPose | null {
-  if (beat === "snack") return "bite";
+  void beat;
   return null;
 }
 

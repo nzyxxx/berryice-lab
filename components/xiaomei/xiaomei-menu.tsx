@@ -2,7 +2,7 @@
 
 import { trapTab } from "@/components/xiaomei/trap-tab";
 import { xiaomeiWhisperClass } from "@/components/xiaomei/xiaomei-surface";
-import { XIAOMEI_CUP_SRC } from "@/lib/xiaomei-faces";
+import { XIAOMEI_CUP_SRC, XIAOMEI_SNACK_SRC } from "@/lib/xiaomei-faces";
 import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
@@ -81,6 +81,8 @@ export function XiaomeiMenu({
         让{XIAOMEI_NAME}说点什么
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onFeed}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={XIAOMEI_SNACK_SRC} alt="" width={711} height={795} draggable={false} className="mr-2 h-6 w-auto" />
         喂食
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onDrink}>

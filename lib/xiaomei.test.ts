@@ -66,6 +66,7 @@ import {
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
   XIAOMEI_NAME,
+  XIAOMEI_SPRITE_VERSION,
   XIAOMEI_PET_CAP_LINES,
   XIAOMEI_PET_FULL_LINES,
   XIAOMEI_PET_LINES,
@@ -105,6 +106,7 @@ import {
   toneFromAffection,
   topicFromExchange,
 } from "./xiaomei-memory.ts";
+import { XIAOMEI_ACTIVITY_POSES, XIAOMEI_ITEM_POSES, XIAOMEI_STAND_POSES } from "./xiaomei-faces.ts";
 import {
   clampPlace,
   defaultPlace,
@@ -796,6 +798,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /flashClick/);
   assert.match(companion, /playFeed/);
   assert.match(companion, /playDrink/);
+  assert.match(companion, /playGreet/);
   assert.match(companion, /XiaomeiStage/);
   assert.doesNotMatch(companion, /requestAnimationFrame|speechSynthesis/);
   const actions = await readFile(new URL("./xiaomei-actions.ts", import.meta.url), "utf8");
@@ -828,6 +831,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(menu, /喂食/);
   assert.match(menu, /喝水/);
   assert.match(menu, /XIAOMEI_CUP_SRC/);
+  assert.match(menu, /XIAOMEI_SNACK_SRC/);
   assert.doesNotMatch(menu, /饱腹|好感/);
   assert.match(menu, /跟她说话/);
   assert.match(menu, /会真的回你/);
@@ -983,7 +987,11 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     "mood_soft",
     "pose_drink_hold",
     "pose_drink_sip",
+    ...XIAOMEI_STAND_POSES,
+    ...XIAOMEI_ACTIVITY_POSES,
+    ...XIAOMEI_ITEM_POSES,
   ] as const;
+  assert.equal(XIAOMEI_SPRITE_VERSION, 6);
   for (const name of names) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.webp`, import.meta.url));
     assert.equal(data.subarray(0, 4).toString(), "RIFF", name);
@@ -994,6 +1002,10 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     assert.equal(width, XIAOMEI_FRAME.width, name);
     assert.equal(height, XIAOMEI_FRAME.height, name);
     assert.ok(data.includes(Buffer.from("ALPH")), name);
+  }
+  for (const name of ["prop_snack", "prop_umbrella"] as const) {
+    const data = await readFile(new URL(`../public/xiaomei/${name}.png`, import.meta.url));
+    assert.equal(data.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", name);
   }
   const stage = await readFile(new URL("../components/xiaomei/xiaomei-stage.tsx", import.meta.url), "utf8");
   assert.match(stage, /width=\{XIAOMEI_FRAME\.width\}/);
