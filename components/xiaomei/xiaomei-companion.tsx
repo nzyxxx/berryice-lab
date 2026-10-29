@@ -3,6 +3,7 @@
 import { XiaomeiChatSheet } from "@/components/xiaomei/xiaomei-chat-sheet";
 import { XiaomeiMemorySheet } from "@/components/xiaomei/xiaomei-memory-sheet";
 import { XiaomeiMenu } from "@/components/xiaomei/xiaomei-menu";
+import { xiaomeiWhisperClass } from "@/components/xiaomei/xiaomei-surface";
 import { XiaomeiStage } from "@/components/xiaomei/xiaomei-stage";
 import { useXiaomeiChat } from "@/components/xiaomei/use-xiaomei-chat";
 import { useXiaomeiMeters } from "@/components/xiaomei/use-xiaomei-meters";
@@ -12,6 +13,7 @@ import {
   XIAOMEI_ABOUT,
   XIAOMEI_CATCHPHRASE,
   XIAOMEI_HOLD_HINT,
+  XIAOMEI_LONG_PRESS_HINT,
   XIAOMEI_CLICK_LINES,
   XIAOMEI_FEED_FULL_LINES,
   XIAOMEI_FEED_LINES,
@@ -22,9 +24,6 @@ import {
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
   XIAOMEI_NAME,
-  XIAOMEI_PET_CAP_LINES,
-  XIAOMEI_PET_FULL_LINES,
-  XIAOMEI_PET_LINES,
   XIAOMEI_RECALL_LINES,
   XIAOMEI_SAY_EVENT,
   XIAOMEI_SPAM_LINES,
@@ -40,6 +39,7 @@ import {
   xiaomeiCueKind,
   xiaomeiMotionClass,
   xiaomeiPropKind,
+  xiaomeiPropPose,
 } from "@/lib/xiaomei-actions";
 import {
   forgetXiaomeiNote,
@@ -70,7 +70,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 type Speech = {
   text: string;
   mood: XiaomeiMood;
-  source: "greet" | "hover" | "click" | "event" | "about" | "spam" | "mutter" | "feed" | "pet";
+  source: "greet" | "hover" | "click" | "event" | "about" | "spam" | "mutter" | "feed";
 };
 
 const MUTE_KEY = "berryice.xiaomei.muted";
@@ -224,7 +224,7 @@ function useKeyboardFrame(active: boolean) {
  * 待机、喝水、点心、打伞、转圈、散步只用 CSS，不留 rAF。
  * z-40：低于弹层（门户 z-50）、回到顶部（z-60）和移动抽屉（z-70）。
  * 点击从本地池里随机回一句；和模型说话从菜单「跟她说话」进。
- * 长按摸头。菜单用右键；没有右键的屏幕，立绘旁边有「菜单」。
+ * 长按立绘打开菜单；桌面右键同样可以。没有单独的菜单按钮。
  */
 export function XiaomeiCompanion() {
   const meters = useXiaomeiMeters();
@@ -232,8 +232,6 @@ export function XiaomeiCompanion() {
   metersRef.current = meters.meters;
   const warmRef = useRef(meters.warm);
   warmRef.current = meters.warm;
-  const petRef = useRef(meters.pet);
-  petRef.current = meters.pet;
   const coarse = useSyncExternalStore(subscribeCoarse, readCoarse, () => false);
   const hintSeen = useSyncExternalStore(subscribeHint, readHintSeen, () => true);
   const chat = useXiaomeiChat({
@@ -320,27 +318,9 @@ export function XiaomeiCompanion() {
     setMenuOpen(true);
   }, []);
 
-  const onPet = useCallback(() => {
-    if (chatOpenRef.current || menuOpenRef.current || memoryOpenRef.current) return;
-    const before = metersRef.current.affection;
-    const result = petRef.current();
-    if (!result) return;
-    if (result.kind === "capped") {
-      speak("content", pickXiaomeiLine(XIAOMEI_PET_CAP_LINES, speechRef.current?.text), "pet");
-      return;
-    }
-    if (result.kind === "full" || result.gain <= 0) {
-      speak("content", pickXiaomeiLine(XIAOMEI_PET_FULL_LINES, speechRef.current?.text), "pet");
-      return;
-    }
-    const tone = toneFromAffection(before);
-    const line = pickTaggedLine(XIAOMEI_PET_LINES, speechRef.current?.text, tone);
-    speak(line.mood === "content" ? "content" : "happy", line.text, "pet");
-  }, [speak]);
-
   const place = useXiaomeiPlace({
     onTap,
-    onHold: onPet,
+    onHold: openMenu,
     onDragStart: () => setMenuOpen(false),
     allowPeek: !chatOpen && !menuOpen && !memoryOpen,
   });
@@ -570,7 +550,7 @@ export function XiaomeiCompanion() {
     visibleTop: keyboardFrame.offsetTop || view.top,
     visibleHeight: keyboardFrame.height || view.height,
   });
-  const showHint = !coarse && !hintSeen && !chatOpen && !menuOpen && !memoryOpen && !muted && !showSpeech;
+  const showHint = !hintSeen && !chatOpen && !menuOpen && !memoryOpen && !muted && !showSpeech;
   const memoryView = memoryRecord ? memoryNotesForDrawer(memoryRecord) : { facts: [], events: [] };
 
   return (
@@ -684,66 +664,38 @@ export function XiaomeiCompanion() {
         <div
           role="status"
           className={cn(
-            "pointer-events-none absolute z-10 w-max max-w-[15rem] rounded-2xl border border-white/15",
-            "bg-lab-canvas/75 px-3 py-2 text-[13px] leading-relaxed text-lab-ink backdrop-blur-md",
+            xiaomeiWhisperClass(
+              "pointer-events-none absolute z-10 w-max max-w-[15rem] rounded-2xl px-3 py-2 text-[13px] leading-relaxed",
+            ),
             align === "right" ? "right-0" : "left-0",
             placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}
           style={xiaomeiPopoverOffsetStyle(pop.shiftX, pop.shiftY)}
         >
           {speech.text}
-          <span
-            aria-hidden
-            className={cn(
-              "absolute size-2.5 rotate-45 border-white/15 bg-lab-canvas/80",
-              placement === "up" ? "-bottom-1 border-b border-r" : "-top-1 border-l border-t",
-              align === "right" ? "right-4" : "left-4",
-            )}
-          />
         </div>
       ) : null}
 
       {showHint ? (
         <p
           className={cn(
-            "pointer-events-none absolute z-10 w-max rounded-full border border-white/15 bg-lab-canvas/80 px-3 py-1.5 text-xs text-lab-ink backdrop-blur-md",
+            xiaomeiWhisperClass(
+              "pointer-events-none absolute z-10 w-max rounded-2xl px-2.5 py-1 text-xs leading-relaxed",
+            ),
             align === "right" ? "right-0" : "left-0",
             placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}
           style={xiaomeiPopoverOffsetStyle(pop.shiftX, pop.shiftY)}
         >
-          {XIAOMEI_HOLD_HINT}
+          {coarse ? XIAOMEI_LONG_PRESS_HINT : XIAOMEI_HOLD_HINT}
         </p>
-      ) : null}
-
-      {coarse ? (
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          aria-label="打开菜单"
-          className={cn(
-            "absolute top-0 z-10 flex h-11 items-center rounded-full border border-white/15 bg-lab-canvas/80 px-3 text-xs text-lab-ink backdrop-blur-md",
-            align === "right" ? "right-full mr-1" : "left-full ml-1",
-          )}
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={() => {
-            if (menuOpenRef.current) {
-              setMenuOpen(false);
-              return;
-            }
-            openMenu();
-          }}
-        >
-          菜单
-        </button>
       ) : null}
 
       <button
         ref={spriteRef}
         type="button"
         data-xiaomei-beat={presence.beat ?? "rest"}
-        aria-label={`${XIAOMEI_NAME}。点一下听她说，长按是摸头`}
+        aria-label={`${XIAOMEI_NAME}。点一下听她说，长按打开菜单`}
         aria-expanded={chatOpen || menuOpen || memoryOpen}
         aria-haspopup="menu"
         aria-controls={chatOpen ? "xiaomei-chat" : memoryOpen ? "xiaomei-memory" : undefined}
@@ -768,6 +720,7 @@ export function XiaomeiCompanion() {
               : xiaomeiMotionClass(presence.beat, place.dragging)
           }
           prop={xiaomeiPropKind(presence.beat)}
+          pose={xiaomeiPropPose(presence.beat)}
           cue={chatCue ?? xiaomeiCueKind(presence.beat)}
           liftShadow={!place.dragging}
         />

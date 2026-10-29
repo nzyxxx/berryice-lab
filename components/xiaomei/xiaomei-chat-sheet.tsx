@@ -1,7 +1,7 @@
 "use client";
 
 import { trapTab } from "@/components/xiaomei/trap-tab";
-import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
+import { xiaomeiWhisperClass } from "@/components/xiaomei/xiaomei-surface";
 import { XIAOMEI_CATCHPHRASE, XIAOMEI_CHAT_EMPTY, XIAOMEI_CHAT_STARTERS, XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,7 @@ export function XiaomeiChatSheet({
       aria-modal="true"
       aria-labelledby="xiaomei-chat-title"
       className={cn(
-        glassSurfaceClass(),
+        xiaomeiWhisperClass("backdrop-blur-md"),
         "absolute z-10 flex w-[min(17.5rem,calc(100vw-2rem))] flex-col rounded-2xl p-3",
         align === "right" ? "right-0" : "left-0",
         placement === "up" ? "bottom-full mb-2" : "top-full mt-2",

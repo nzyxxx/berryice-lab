@@ -3,12 +3,20 @@
  */
 
 import type { XiaomeiCueKind } from "@/lib/xiaomei-actions";
+import { cn } from "@/lib/utils";
 
 /** 只画这一拍的记号，不记状态。 */
 export function XiaomeiCue({ kind }: { kind: XiaomeiCueKind }) {
-  if (kind === "blink") {
+  if (kind === "blink" || kind === "blink2" || kind === "slowblink") {
     return (
-      <span className="xiaomei-cue xiaomei-cue-blink" aria-hidden>
+      <span
+        className={cn(
+          "xiaomei-cue xiaomei-cue-blink",
+          kind === "blink2" && "xiaomei-cue-blink2",
+          kind === "slowblink" && "xiaomei-cue-slowblink",
+        )}
+        aria-hidden
+      >
         <span />
         <span />
       </span>
@@ -34,13 +42,25 @@ export function XiaomeiCue({ kind }: { kind: XiaomeiCueKind }) {
     );
   }
 
+  if (kind === "hum") {
+    return (
+      <span className="xiaomei-cue xiaomei-cue-hum" aria-hidden>
+        <svg viewBox="0 0 32 32" width="100%" height="100%">
+          <path d="M13 22V10l10-2v12" fill="none" stroke="rgba(232,236,246,0.55)" strokeWidth="1.4" strokeLinecap="round" />
+          <circle cx="11" cy="22" r="1.8" fill="rgba(186,198,220,0.55)" />
+          <circle cx="21" cy="20" r="1.8" fill="rgba(186,198,220,0.55)" />
+        </svg>
+      </span>
+    );
+  }
+
   if (kind === "note") {
     return (
       <span className="xiaomei-cue xiaomei-cue-note" aria-hidden>
         <svg viewBox="0 0 32 32" width="100%" height="100%">
-          <path d="M12 24V8l14-3v16" fill="none" stroke="#d7e4ff" strokeWidth="2.4" strokeLinecap="round" />
-          <circle cx="9" cy="24" r="3.2" fill="#8eb4ff" />
-          <circle cx="23" cy="21" r="3.2" fill="#8eb4ff" />
+          <path d="M12 24V8l14-3v16" fill="none" stroke="rgba(232,236,246,0.72)" strokeWidth="1.6" strokeLinecap="round" />
+          <circle cx="9" cy="24" r="2.4" fill="rgba(158,176,214,0.8)" />
+          <circle cx="23" cy="21" r="2.4" fill="rgba(158,176,214,0.8)" />
         </svg>
       </span>
     );

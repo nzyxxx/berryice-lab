@@ -1,7 +1,7 @@
 "use client";
 
 import { trapTab } from "@/components/xiaomei/trap-tab";
-import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
+import { xiaomeiWhisperClass } from "@/components/xiaomei/xiaomei-surface";
 import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 const ITEM =
   "flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm text-lab-ink hover:bg-white/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40";
 
-/** 右键菜单。长按是摸头，不在这里。只抛动作，不自己改位置、不写存储、不去请求。 */
+/** 小莓菜单。长按立绘或右键打开。只抛动作，不自己改位置、不写存储、不去请求。 */
 export function XiaomeiMenu({
   muted,
   align,
@@ -59,7 +59,7 @@ export function XiaomeiMenu({
       role="menu"
       aria-label={XIAOMEI_NAME}
       className={cn(
-        glassSurfaceClass("overflow-y-auto"),
+        xiaomeiWhisperClass("overflow-y-auto backdrop-blur-md"),
         "absolute z-20 w-52 rounded-2xl p-1.5",
         "max-h-[min(24rem,calc(100dvh-5rem))]",
         align === "right" ? "right-0" : "left-0",

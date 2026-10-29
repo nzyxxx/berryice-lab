@@ -346,7 +346,7 @@ export const XIAOMEI_FEED_FULL_LINES = [
   "嘴巴合不上了。停一下嘛。",
 ] as const;
 
-/** 长按摸头。只用开心和满足这两张脸，不另画。 */
+/** 摸头短句。长按已经改成打开菜单，这些句子没有手势入口。 */
 export const XIAOMEI_PET_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "happy", text: "摸头就这一下。哼。" },
   { mood: "content", text: "手好暖。我没躲。" },
@@ -380,8 +380,11 @@ export const XIAOMEI_PET_FULL_LINES = [
 
 export const XIAOMEI_ABOUT = `哼，人家是女仆${XIAOMEI_NAME}。`;
 
-/** 第一次还没打开过菜单时，贴在身边。点一下仍然只听短句，长按是摸头。 */
+/** 鼠标第一次还没打开过菜单时贴在身边。点一下仍然只听短句。 */
 export const XIAOMEI_HOLD_HINT = "右键打开菜单";
+
+/** 触屏没有右键，也没有单独的菜单按钮。第一次提示长按立绘。 */
+export const XIAOMEI_LONG_PRESS_HINT = "长按打开菜单";
 
 /** 聊天窗还没开口时。短，不客服。 */
 export const XIAOMEI_CHAT_EMPTY = "想问路，或者随便说一句。我听着。";
