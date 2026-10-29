@@ -134,8 +134,8 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     assert.ok(pools.includes(sample), sample);
   }
   assert.equal(XIAOMEI_NAME, "小莓妹");
-  assert.match(XIAOMEI_ABOUT, /我是小莓妹/);
-  assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI/);
+  assert.match(XIAOMEI_ABOUT, /人家是小莓妹/);
+  assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI|角标/);
   const again = pickXiaomeiLine(["只有一句"]);
   assert.equal(again, "只有一句");
   const avoided = pickXiaomeiLine(["甲", "乙"], "甲");
@@ -371,9 +371,16 @@ test("问你是谁时不念性格卡，也不撇清", () => {
   assert.ok(prompt.includes("绝对不要说：哼，我才不是什么随便的AI"));
   assert.doesNotMatch(prompt, /【性格三词】/);
   assert.doesNotMatch(prompt, /你不是客服机器人/);
-  assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI/);
-  assert.match(XIAOMEI_ABOUT, /角标那个/);
+  assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI|角标/);
+  assert.match(XIAOMEI_ABOUT, /人家是小莓妹/);
   assert.ok(hanCount(XIAOMEI_ABOUT) <= 16);
+  assert.match(prompt, /桌面角标伙伴/);
+  const exit = prompt.slice(prompt.lastIndexOf("【出口】"));
+  assert.match(exit, /不要说「角标」「伙伴」「网站角色」/);
+  const who = prompt.slice(prompt.indexOf("用户问「你是谁」"), prompt.indexOf("用户说「你好」"));
+  assert.match(who, /人家是小莓妹/);
+  assert.match(who, /别一上来就盘问/);
+  assert.doesNotMatch(who, /角标/);
 });
 
 test("菜单和投喂不把钥匙或别人的形象带进客户端", async () => {
