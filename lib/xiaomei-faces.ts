@@ -87,6 +87,12 @@ export type XiaomeiLayeredBlinkFace = (typeof XIAOMEI_LAYERED_BLINK_FACES)[numbe
 /** 全身 / 姿势 src 交叉淡入时长。约一拍平滑，眨眼脸层不走这套。 */
 export const XIAOMEI_CROSSFADE_MS = 90;
 
+/** 异姿全身换图：下压 → 切图 → 弹起。同姿眨眼仍走分层，不走这套。 */
+export const XIAOMEI_MOTION_HIDE_DOWN_MS = 140;
+export const XIAOMEI_MOTION_HIDE_UP_MS = 360;
+/** 后台 tab 可能掐 WAAPI/定时器；超时后强制切到目标脸，避免卡在半藏。 */
+export const XIAOMEI_MOTION_HIDE_TIMEOUT_MS = 1600;
+
 const A1_FACE_SET: ReadonlySet<string> = new Set(XIAOMEI_A1_FACES);
 
 export function isXiaomeiA1Face(value: string): value is XiaomeiA1Face {

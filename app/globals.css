@@ -859,6 +859,130 @@ html.home-motion [data-reveal].is-shown {
   animation: xiaomei-walk 2.4s ease-in-out 1;
 }
 
+
+/* 短点 Q 弹：脚底原点，先压扁再 easeOutBack 回弹。 */
+@keyframes xiaomei-click-squash {
+  0% {
+    transform: scale3d(1, 1, 1);
+  }
+  28% {
+    transform: scale3d(1.06, 0.68, 1);
+  }
+  62% {
+    transform: scale3d(0.98, 1.06, 1);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+.xiaomei-click-squash {
+  transform-origin: bottom center;
+  animation: xiaomei-click-squash 280ms cubic-bezier(0.34, 1.45, 0.64, 1) 1;
+}
+
+/* 异姿换图：下压藏旧图 → 切 src → 弹起露新图。 */
+@keyframes xiaomei-motion-hide {
+  from {
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(0, 10px, 0) scale3d(0.92, 0.78, 1);
+    opacity: 0.92;
+  }
+}
+
+@keyframes xiaomei-motion-show {
+  from {
+    transform: translate3d(0, 12px, 0) scale3d(0.94, 0.82, 1);
+  }
+  70% {
+    transform: translate3d(0, -2px, 0) scale3d(1.02, 1.04, 1);
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+  }
+}
+
+.xiaomei-motion-hide {
+  transform-origin: bottom center;
+  animation: xiaomei-motion-hide 140ms cubic-bezier(0.55, 0, 1, 0.45) forwards;
+}
+
+.xiaomei-motion-show {
+  transform-origin: bottom center;
+  animation: xiaomei-motion-show 360ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 摸头小心心：纯 CSS，不新加立绘。 */
+.xiaomei-hearts {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.xiaomei-heart {
+  position: absolute;
+  top: 8%;
+  left: 48%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: #f4a4b8;
+  transform: rotate(45deg) scale(0.4);
+  opacity: 0;
+  animation: xiaomei-heart-float 640ms ease-out forwards;
+  border-radius: 1px;
+}
+
+.xiaomei-heart::before,
+.xiaomei-heart::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #f4a4b8;
+  border-radius: 50%;
+}
+
+.xiaomei-heart::before {
+  left: -4px;
+  top: 0;
+}
+
+.xiaomei-heart::after {
+  left: 0;
+  top: -4px;
+}
+
+.xiaomei-heart.is-alt {
+  left: 58%;
+  animation-delay: 60ms;
+  background: #ffc0d0;
+}
+
+.xiaomei-heart.is-alt::before,
+.xiaomei-heart.is-alt::after {
+  background: #ffc0d0;
+}
+
+@keyframes xiaomei-heart-float {
+  0% {
+    opacity: 0;
+    transform: rotate(45deg) translate3d(0, 6px, 0) scale(0.35);
+  }
+  18% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(45deg) translate3d(-4px, -22px, 0) scale(0.85);
+  }
+}
+
 /* 全身 / 姿势 src 交叉淡入。约 90ms smoothstep 近似。 */
 .xiaomei-crossfade {
   position: absolute;
@@ -1639,6 +1763,10 @@ html.home-motion [data-reveal].is-shown {
   .xiaomei-ground-walk,
   .xiaomei-crossfade-layer.is-out,
   .xiaomei-crossfade-layer.is-in,
+  .xiaomei-click-squash,
+  .xiaomei-motion-hide,
+  .xiaomei-motion-show,
+  .xiaomei-heart,
   .xiaomei-activity-soft,
   .xiaomei-drink,
   .xiaomei-snack,
