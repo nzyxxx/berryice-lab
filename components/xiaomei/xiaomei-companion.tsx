@@ -755,6 +755,9 @@ export function XiaomeiCompanion() {
           pose={xiaomeiPropPose(presence.beat)}
           cue={chatCue ?? xiaomeiCueKind(presence.beat)}
           liftShadow={!place.dragging}
+          groundMode={
+            place.dragging ? "still" : presence.beat === "walk" ? "walk" : "float"
+          }
         />
       </button>
     </div>

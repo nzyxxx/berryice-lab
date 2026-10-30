@@ -795,6 +795,11 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /pickTaggedLine\(pool/);
   assert.match(companion, /pickTaggedLine\(XIAOMEI_HOVER_LINES, speechRef\.current\?\.text, tone\)/);
   assert.match(companion, /resolveXiaomeiFace/);
+  assert.match(companion, /groundMode/);
+  const stage = await readFile(new URL("../components/xiaomei/xiaomei-stage.tsx", import.meta.url), "utf8");
+  assert.match(stage, /xiaomei-crossfade/);
+  assert.match(stage, /body_neutral|xiaomeiBodyNeutralSrc/);
+  assert.match(stage, /isXiaomeiLayeredBlinkFace/);
   assert.match(companion, /flashClick/);
   assert.match(companion, /playFeed/);
   assert.match(companion, /playDrink/);
@@ -973,6 +978,11 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     "blink_open",
     "blink_half",
     "blink_closed",
+    "body_neutral",
+    "face_open",
+    "face_half",
+    "face_closed",
+    "static_idle_volume",
     "mood_surprised",
     "mood_thinking",
     "mood_sleepy",
@@ -991,7 +1001,7 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     ...XIAOMEI_ACTIVITY_POSES,
     ...XIAOMEI_ITEM_POSES,
   ] as const;
-  assert.equal(XIAOMEI_SPRITE_VERSION, 6);
+  assert.equal(XIAOMEI_SPRITE_VERSION, 7);
   for (const name of names) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.webp`, import.meta.url));
     assert.equal(data.subarray(0, 4).toString(), "RIFF", name);
