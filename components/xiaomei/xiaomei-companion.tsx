@@ -23,6 +23,9 @@ import {
   XIAOMEI_HOVER_LINES,
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
+  XIAOMEI_PET_CAP_LINES,
+  XIAOMEI_PET_FULL_LINES,
+  XIAOMEI_PET_LINES,
   XIAOMEI_NAME,
   XIAOMEI_RECALL_LINES,
   XIAOMEI_SAY_EVENT,
@@ -53,6 +56,7 @@ import {
 } from "@/lib/xiaomei-memory";
 import { XIAOMEI_METERS_KEY, readFeedClock } from "@/lib/xiaomei-meters";
 import {
+  type XiaomeiHitZone,
   XIAOMEI_CHAT_PANEL,
   XIAOMEI_HINT_PANEL,
   XIAOMEI_MEMORY_PANEL,
@@ -261,6 +265,8 @@ export function XiaomeiCompanion() {
   const [speech, setSpeech] = useState<Speech | null>(null);
   const [moodPin, setMoodPin] = useState<XiaomeiMood | null>(null);
   const [hover, setHover] = useState(false);
+  const [squashPulse, setSquashPulse] = useState(0);
+  const [heartBurst, setHeartBurst] = useState(0);
   const keyboardFrame = useKeyboardFrame(chatOpen || menuOpen || memoryOpen || Boolean(speech));
 
   const chatOpenRef = useRef(false);
@@ -294,8 +300,9 @@ export function XiaomeiCompanion() {
     setSpeech({ text, mood, source });
   }, []);
 
-  const onTap = useCallback(() => {
+  const onTap = useCallback((zone: XiaomeiHitZone) => {
     if (chatOpenRef.current || menuOpenRef.current) return;
+    setSquashPulse((n) => n + 1);
     const now = Date.now();
     taps.current = taps.current.filter((stamp) => now - stamp < SPAM_WINDOW_MS);
     taps.current.push(now);
@@ -304,14 +311,42 @@ export function XiaomeiCompanion() {
       speak("annoyed", pickXiaomeiLine(XIAOMEI_SPAM_LINES, speechRef.current?.text), "spam");
       return;
     }
+
+    // 头短点：摸头短反馈 + cute/happy 微表情；小心心纯 CSS。长按仍开菜单，不走这里。
+    if (zone === "head") {
+      setHeartBurst((n) => n + 1);
+      const outcome = meters.pet();
+      const tone = toneFromAffection(metersRef.current.affection);
+      if (!outcome || outcome.kind === "capped") {
+        flashClickRef.current("annoyed", "pet");
+        speak("annoyed", pickXiaomeiLine(XIAOMEI_PET_CAP_LINES, speechRef.current?.text), "click");
+        return;
+      }
+      if (outcome.kind === "full") {
+        flashClickRef.current("content", "pet");
+        speak("content", pickXiaomeiLine(XIAOMEI_PET_FULL_LINES, speechRef.current?.text), "click");
+        return;
+      }
+      const line = pickTaggedLine(XIAOMEI_PET_LINES, speechRef.current?.text, tone);
+      flashClickRef.current(line.mood, "pet");
+      speak(line.mood, line.text, "click");
+      return;
+    }
+
+    // 身短点：轻 recoil / 略恼（已有 annoyed/puff 轨）。
     const tone = toneFromAffection(metersRef.current.affection);
-    const pool = isXiaomeiHungry(metersRef.current.fullness)
-      ? [...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_CLICK_LINES]
+    const basePool = isXiaomeiHungry(metersRef.current.fullness)
+      ? [...XIAOMEI_HUNGRY_LINES, ...XIAOMEI_CLICK_LINES]
       : XIAOMEI_CLICK_LINES;
+    // 身子多喂一点 annoyed，头才走摸头开心。
+    const pool =
+      tone === "guarded"
+        ? basePool
+        : [...basePool, ...basePool.filter((line) => line.mood === "annoyed")];
     const line = pickTaggedLine(pool, speechRef.current?.text, tone);
     flashClickRef.current(line.mood);
     speak(line.mood, line.text, "click");
-  }, [speak]);
+  }, [meters, speak]);
 
   const openMenu = useCallback(() => {
     markHintSeen();
@@ -727,7 +762,7 @@ export function XiaomeiCompanion() {
         ref={spriteRef}
         type="button"
         data-xiaomei-beat={presence.beat ?? "rest"}
-        aria-label={`${XIAOMEI_NAME}。点一下听她说，长按打开菜单`}
+        aria-label={`${XIAOMEI_NAME}。点头摸一下，点身子听她说，长按打开菜单`}
         aria-expanded={chatOpen || menuOpen || memoryOpen}
         aria-haspopup="menu"
         aria-controls={chatOpen ? "xiaomei-chat" : memoryOpen ? "xiaomei-memory" : undefined}
@@ -758,6 +793,8 @@ export function XiaomeiCompanion() {
           groundMode={
             place.dragging ? "still" : presence.beat === "walk" ? "walk" : "float"
           }
+          squashPulse={squashPulse}
+          heartBurst={heartBurst}
         />
       </button>
     </div>

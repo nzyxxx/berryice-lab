@@ -346,7 +346,7 @@ export const XIAOMEI_FEED_FULL_LINES = [
   "嘴巴合不上了。停一下嘛。",
 ] as const;
 
-/** 摸头短句。长按已经改成打开菜单，这些句子没有手势入口。 */
+/** 摸头短句。短点头区触发；长按仍只开菜单，不抢手势。 */
 export const XIAOMEI_PET_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "happy", text: "摸头就这一下。哼。" },
   { mood: "content", text: "手好暖。我没躲。" },

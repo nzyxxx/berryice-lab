@@ -351,3 +351,65 @@ export function xiaomeiPopoverOffsetStyle(
   if (typeof maxHeight === "number" && maxHeight > 0) style.maxHeight = maxHeight;
   return style;
 }
+
+/** 命中区：头约占立绘命中框上 40%，其余当身子。 */
+export const XIAOMEI_HIT_HEAD_RATIO = 0.4;
+
+export type XiaomeiHitZone = "head" | "body";
+
+/** 本地 y（相对命中框顶）→ 头 / 身。y 越界仍归最近一侧。 */
+export function classifyHitZone(localY: number, height: number): XiaomeiHitZone {
+  const h = Math.max(1, height);
+  const y = Number.isFinite(localY) ? localY : 0;
+  return y < h * XIAOMEI_HIT_HEAD_RATIO ? "head" : "body";
+}
+
+/** 过阻尼弹簧单轴速度步进：调用方随后 x += v * dt。方法借自通用弹簧，参数按角标重调。 */
+export const XIAOMEI_SPRING_K = 220;
+export const XIAOMEI_SPRING_C = 28;
+
+export function springStep(
+  v: number,
+  x: number,
+  target: number,
+  dt: number,
+  power = 1.15,
+): number {
+  const step = Math.min(Math.max(dt, 0), 1 / 30);
+  return v + ((target - x) * XIAOMEI_SPRING_K - v * XIAOMEI_SPRING_C) * power * step;
+}
+
+/** 松手慢于此速度（px/s）就原地 settle，更快才短惯性。 */
+export const XIAOMEI_RELEASE_SLOW_SPEED = 140;
+
+/** 惯性摩擦（每秒衰减系数的指数底）。 */
+export const XIAOMEI_INERTIA_DAMP = 6.2;
+
+/** 惯性最长跑这么久，避免粘住。 */
+export const XIAOMEI_INERTIA_MAX_MS = 420;
+
+/** 用末段样本估速。samples 按时间升序，至少 2 点。 */
+export function estimatePointerVelocity(
+  samples: readonly { t: number; x: number; y: number }[],
+  windowMs = 160,
+): { vx: number; vy: number; speed: number } {
+  if (samples.length < 2) return { vx: 0, vy: 0, speed: 0 };
+  const last = samples[samples.length - 1]!;
+  const cutoff = last.t - windowMs;
+  let first = samples[0]!;
+  for (let i = samples.length - 2; i >= 0; i -= 1) {
+    const sample = samples[i]!;
+    first = sample;
+    if (sample.t <= cutoff) break;
+  }
+  const dt = Math.max(1, last.t - first.t) / 1000;
+  const vx = (last.x - first.x) / dt;
+  const vy = (last.y - first.y) / dt;
+  return { vx, vy, speed: Math.hypot(vx, vy) };
+}
+
+/** 点击 Q 弹：压到这么扁再弹回。 */
+export const XIAOMEI_CLICK_SQUASH_Y = 0.68;
+
+/** 点击挤压动画时长（CSS 对齐）。 */
+export const XIAOMEI_CLICK_SQUASH_MS = 280;
