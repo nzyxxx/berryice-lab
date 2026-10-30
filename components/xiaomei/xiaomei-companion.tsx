@@ -22,10 +22,8 @@ import {
   XIAOMEI_HUNGRY_LINES,
   XIAOMEI_HOVER_LINES,
   XIAOMEI_LINES,
-  XIAOMEI_MUTTER_LINES,
   XIAOMEI_PET_CAP_LINES,
   XIAOMEI_PET_FULL_LINES,
-  XIAOMEI_PET_LINES,
   XIAOMEI_NAME,
   XIAOMEI_RECALL_LINES,
   XIAOMEI_SAY_EVENT,
@@ -68,9 +66,23 @@ import {
   xiaomeiPopoverOffsetStyle,
   xiaomeiVisibleView,
 } from "@/lib/xiaomei-place";
-import { placeBubbleBox, quietChatCue, shouldSuppressIdleChatter } from "@/lib/xiaomei-fsm";
+import {
+  XIAOMEI_CHATTER_GAP_MS,
+  chatterGapMs,
+  nextAmbientChatter,
+  pickChatterLine,
+  resolveChatterBucket,
+} from "@/lib/xiaomei-chatter";
+import {
+  isVisuallySleeping,
+  placeBubbleBox,
+  quietChatCue,
+  shouldSuppressIdleChatter,
+  type XiaomeiSleepPhase,
+} from "@/lib/xiaomei-fsm";
 import { readXiaomeiNapkin, writeXiaomeiNapkin, type XiaomeiNapkin } from "@/lib/xiaomei-napkin";
 import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 type Speech = {
@@ -233,6 +245,7 @@ function useKeyboardFrame(active: boolean) {
  * 长按立绘打开菜单；桌面右键同样可以。没有单独的菜单按钮。
  */
 export function XiaomeiCompanion() {
+  const pathname = usePathname() || "/";
   const meters = useXiaomeiMeters();
   const metersRef = useRef(meters.meters);
   metersRef.current = meters.meters;
@@ -286,6 +299,13 @@ export function XiaomeiCompanion() {
   const noteInteractionRef = useRef<() => void>(() => {});
   const taps = useRef<number[]>([]);
   const pinSource = useRef<Speech["source"] | null>(null);
+  const pathnameRef = useRef(pathname);
+  const sleepPhaseRef = useRef<XiaomeiSleepPhase>("awake");
+  const lastChatterAtRef = useRef(0);
+  const lastSpokenRef = useRef("");
+  const reawakenPendingRef = useRef(false);
+  const busyLatchRef = useRef(false);
+  const mutterAmbientRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     chatOpenRef.current = chatOpen;
@@ -299,6 +319,8 @@ export function XiaomeiCompanion() {
 
   const speak = useCallback((mood: XiaomeiMood, text: string, source: Speech["source"]) => {
     if (shouldSuppressIdleChatter(statusRef.current)) return;
+    lastChatterAtRef.current = Date.now();
+    lastSpokenRef.current = text;
     pinSource.current = source;
     setMoodPin(mood);
     if (mutedRef.current) {
@@ -312,6 +334,7 @@ export function XiaomeiCompanion() {
     noteInteractionRef.current();
     if (shouldSuppressIdleChatter(statusRef.current)) return;
     if (chatOpenRef.current || menuOpenRef.current) return;
+    reawakenPendingRef.current = false;
     setSquashPulse((n) => n + 1);
     const now = Date.now();
     taps.current = taps.current.filter((stamp) => now - stamp < SPAM_WINDOW_MS);
@@ -337,7 +360,13 @@ export function XiaomeiCompanion() {
         speak("content", pickXiaomeiLine(XIAOMEI_PET_FULL_LINES, speechRef.current?.text), "click");
         return;
       }
-      const line = pickTaggedLine(XIAOMEI_PET_LINES, speechRef.current?.text, tone);
+      const route = resolveChatterBucket({
+        status: statusRef.current,
+        pathname: pathnameRef.current,
+        touch: true,
+      });
+      const line = pickChatterLine(route, speechRef.current?.text, tone);
+      if (!line || route?.bucket !== "touch") return;
       flashClickRef.current(line.mood, "pet");
       speak(line.mood, line.text, "click");
       return;
@@ -401,9 +430,73 @@ export function XiaomeiCompanion() {
   const { clear } = presence;
 
   useEffect(() => {
+    pathnameRef.current = pathname;
+    sleepPhaseRef.current = presence.sleepPhase;
+    mutterAmbientRef.current = () => {
+      const blocked =
+        shouldSuppressIdleChatter(statusRef.current) ||
+        chatOpenRef.current ||
+        menuOpenRef.current ||
+        memoryOpenRef.current ||
+        mutedRef.current ||
+        speechRef.current != null ||
+        isVisuallySleeping(sleepPhaseRef.current) ||
+        (typeof document !== "undefined" && document.hidden);
+      const next = nextAmbientChatter({
+        now: Date.now(),
+        lastAt: lastChatterAtRef.current,
+        blocked,
+        status: statusRef.current,
+        pathname: pathnameRef.current,
+        reawaken: reawakenPendingRef.current,
+        sleeping: isVisuallySleeping(sleepPhaseRef.current),
+        avoid: lastSpokenRef.current,
+        tone: toneFromAffection(metersRef.current.affection),
+        minGapMs: XIAOMEI_CHATTER_GAP_MS.min,
+      });
+      if (!next) return;
+      if (next.bucket === "reawaken") reawakenPendingRef.current = false;
+      flashClickRef.current(next.line.mood, "mutter");
+      speak(next.line.mood, next.line.text, "mutter");
+    };
+  });
+
+  useEffect(() => {
     flashClickRef.current = presence.flashClick;
     noteInteractionRef.current = presence.noteInteraction;
   });
+
+  useEffect(() => {
+    if (!place.ready || place.hidden || muted) return;
+    let cancelled = false;
+    let timer = 0;
+    const arm = () => {
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        mutterAmbientRef.current();
+        arm();
+      }, chatterGapMs(Math.random()));
+    };
+    arm();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [muted, place.hidden, place.ready]);
+
+  // 思考钉过之后，等聊天窗合上再回神一句。再次思考会把还没说的回神清掉。
+  useEffect(() => {
+    if (shouldSuppressIdleChatter(chat.status)) {
+      busyLatchRef.current = true;
+      reawakenPendingRef.current = false;
+      return;
+    }
+    if (!busyLatchRef.current) return;
+    if (!place.ready || place.hidden || chatOpen || menuOpen || memoryOpen) return;
+    busyLatchRef.current = false;
+    reawakenPendingRef.current = true;
+    mutterAmbientRef.current();
+  }, [chat.status, chatOpen, memoryOpen, menuOpen, place.hidden, place.ready]);
 
   useEffect(() => {
     if (!place.ready || place.hidden || muted) return;
@@ -699,6 +792,7 @@ export function XiaomeiCompanion() {
         ) {
           const tone = toneFromAffection(metersRef.current.affection);
           const line = pickTaggedLine(XIAOMEI_HOVER_LINES, speechRef.current?.text, tone);
+          reawakenPendingRef.current = false;
           flashClickRef.current(line.mood, "click");
           speak(line.mood, line.text, "hover");
         }
@@ -723,7 +817,15 @@ export function XiaomeiCompanion() {
           onMutter={() => {
             setMenuOpen(false);
             const tone = toneFromAffection(metersRef.current.affection);
-            const line = pickTaggedLine(XIAOMEI_MUTTER_LINES, speechRef.current?.text, tone);
+            const route = resolveChatterBucket({
+              status: statusRef.current,
+              pathname: pathnameRef.current,
+              reawaken: reawakenPendingRef.current,
+              sleeping: isVisuallySleeping(sleepPhaseRef.current),
+            });
+            const line = pickChatterLine(route, lastSpokenRef.current, tone);
+            if (!line || !route || route.bucket === "thinking") return;
+            if (route.bucket === "reawaken") reawakenPendingRef.current = false;
             flashClickRef.current(line.mood, "mutter");
             speak(line.mood, line.text, "mutter");
           }}
