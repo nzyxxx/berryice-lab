@@ -429,6 +429,35 @@ test("脸的优先级：聊天盖过引子，引子盖过台词，待机拍盖�
     resolveXiaomeiFace({ ...base, chatOpen: true, status: "thinking", blinkFace: "blink_half" }),
     "mood_thinking",
   );
+  // Round3：罩层可短盖 thinking，罩层结束后仍回 thinking 底座（无 overlayActive）。
+  assert.equal(
+    resolveXiaomeiFace({
+      ...base,
+      chatOpen: true,
+      status: "thinking",
+      leadMood: "mood_love",
+      overlayActive: true,
+    }),
+    "mood_love",
+  );
+  assert.equal(
+    resolveXiaomeiFace({
+      ...base,
+      chatOpen: true,
+      status: "thinking",
+      leadMood: "mood_love",
+      overlayActive: false,
+    }),
+    "mood_thinking",
+  );
+  assert.equal(
+    resolveXiaomeiFace({ ...base, sleepPhase: "sleep", beatMood: "happy" }),
+    "mood_sleepy",
+  );
+  assert.equal(
+    resolveXiaomeiFace({ ...base, sleepPhase: "wake", poseFace: "pose_stretch" }),
+    "pose_stretch",
+  );
 });
 
 test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async () => {

@@ -860,11 +860,13 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(placeHook, /XIAOMEI_PET_HOLD_MS/);
   assert.match(placeHook, /if \(holdFired\.current\) return/);
   const chatHook = await readFile(new URL("../components/xiaomei/use-xiaomei-chat.ts", import.meta.url), "utf8");
-  assert.match(chatHook, /XIAOMEI_SCENE_LINES/);
+  assert.match(chatHook, /sceneBucket/);
+  assert.match(chatHook, /createCelebrateEdge/);
+  assert.match(chatHook, /celebratePulse/);
   assert.match(chatHook, /XIAOMEI_SCENE_PIN_MS/);
   assert.match(chatHook, /pinStatus\("thinking"\)/);
-  assert.match(chatHook, /pinStatus\("done"\)/);
-  assert.match(chatHook, /pinStatus\("error"\)/);
+  assert.match(chatHook, /pinStatus\("done"/);
+  assert.match(chatHook, /pinStatus\("error"/);
   assert.match(chatHook, /setStatus\("idle"\)/);
   const sheet = await readFile(new URL("../components/xiaomei/xiaomei-chat-sheet.tsx", import.meta.url), "utf8");
   assert.match(sheet, /sceneLine/);
@@ -1020,6 +1022,34 @@ test("Round2 刀：分区 Q 弹弹簧与 motion-hide 落在现有模块", async 
   assert.doesNotMatch(companion, /蓝莓/);
   assert.doesNotMatch(stage, /蓝莓/);
 });
+
+test("Round3 刀：睡眠醒觉 + 优先级表 + 边沿庆祝 + 气泡锚点落在现有模块", async () => {
+  const fsm = await readFile(new URL("./xiaomei-fsm.ts", import.meta.url), "utf8");
+  assert.match(fsm, /XIAOMEI_STATE_PRIORITY/);
+  assert.match(fsm, /wakeFromInteraction/);
+  assert.match(fsm, /shouldCelebrate/);
+  assert.match(fsm, /placeBubbleBox/);
+  assert.match(fsm, /sceneBucket/);
+  assert.match(fsm, /underlayAfterOverlay/);
+  assert.doesNotMatch(fsm, /蓝莓|whale-girl|dsh-pet|celebrate\.png|sleep\.png/i);
+  assert.doesNotMatch(fsm, /Moki|moki\./);
+
+  const presence = await readFile(new URL("../components/xiaomei/use-xiaomei-presence.ts", import.meta.url), "utf8");
+  assert.match(presence, /noteInteraction/);
+  assert.match(presence, /sleepPhase/);
+  assert.match(presence, /beginSleep/);
+  assert.match(presence, /playWake/);
+  assert.match(presence, /XIAOMEI_SLEEP_AFTER_MS/);
+
+  const companion = await readFile(new URL("../components/xiaomei/xiaomei-companion.tsx", import.meta.url), "utf8");
+  assert.match(companion, /noteInteractionRef/);
+  assert.match(companion, /celebratePulse/);
+  assert.match(companion, /placeBubbleBox/);
+  assert.match(companion, /sleepPhase/);
+  assert.match(companion, /overlayActive/);
+  assert.doesNotMatch(companion, /蓝莓/);
+});
+
 
 test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async () => {
   const names = [
