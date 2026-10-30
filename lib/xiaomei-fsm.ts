@@ -3,7 +3,7 @@
  * 纯计算，不碰 DOM / rAF。只借调度 / 分层 / 边沿方法，绝不抄外部宠像素或品牌口头禅。
  */
 
-import { type XiaomeiFace } from "./xiaomei-faces";
+import { XIAOMEI_MIN_HOLD_MS, type XiaomeiFace } from "./xiaomei-faces";
 import {
   moodForChatStatus,
   XIAOMEI_SCENE_LINES,
@@ -23,6 +23,24 @@ export const XIAOMEI_WAKE_MS = 1800;
 
 /** 完成/出错脉冲窗口。跟场景钉脸接近，略短一点。 */
 export const XIAOMEI_PULSE_MS = 1400;
+
+/** 最短驻留见 xiaomei-faces.XIAOMEI_MIN_HOLD_MS；此处再导出给调度侧。 */
+export { XIAOMEI_MIN_HOLD_MS };
+
+/** 待机眨眼武装：拉开间隔，避免眼皮连眨像闪。 */
+export const XIAOMEI_BLINK_ARM_MS = { min: 1600, max: 4000 } as const;
+
+export function blinkArmDelayMs(roll: number): number {
+  const unit = !Number.isFinite(roll) || roll <= 0 ? 0 : roll >= 1 ? 1 : roll;
+  const { min, max } = XIAOMEI_BLINK_ARM_MS;
+  return Math.round(min + unit * (max - min));
+}
+
+/** 是否已过最短驻留，可接受下一次低优先态切。 */
+export function canChangeAfterHold(heldSinceMs: number, nowMs: number, minHoldMs = XIAOMEI_MIN_HOLD_MS): boolean {
+  if (!Number.isFinite(heldSinceMs) || !Number.isFinite(nowMs)) return true;
+  return nowMs - heldSinceMs >= minHoldMs;
+}
 
 /**
  * 优先级表（文法单源）。行序即优先级：越靠前越高。

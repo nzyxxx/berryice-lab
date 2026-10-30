@@ -998,6 +998,22 @@ test("命中区头身上 40%，弹簧步进与松手估速可测", () => {
   assert.ok(flick.vx > 0);
 });
 
+test("防闪：分层眨眼常驻脸层 + 交叉淡入进出同时渐变 + 进层 key 稳定", async () => {
+  const stage = await readFile(new URL("../components/xiaomei/xiaomei-stage.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(stage, /is-active/);
+  assert.match(stage, /XIAOMEI_FACE_LAYERS/);
+  assert.match(stage, /face_open.*face_half.*face_closed|XIAOMEI_FACE_LAYERS\.map/s);
+  assert.match(stage, /key="in"/);
+  assert.match(stage, /phaseRef\.current !== "idle"/);
+  assert.match(stage, /XIAOMEI_MIN_HOLD_MS/);
+  assert.match(css, /@keyframes xiaomei-crossfade-out/);
+  assert.match(css, /\.xiaomei-stack-face\.is-idle/);
+  // 同姿含分层眨眼，避免回待机误走 motion-hide。
+  assert.match(stage, /分层眨眼也算站姿|!face\.startsWith\("pose_"\)/);
+  assert.doesNotMatch(css, /\.xiaomei-crossfade-layer\.is-out\s*\{[^}]*opacity:\s*0;/);
+});
+
 test("Round2 刀：分区 Q 弹弹簧与 motion-hide 落在现有模块", async () => {
   const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(css, /xiaomei-click-squash/);

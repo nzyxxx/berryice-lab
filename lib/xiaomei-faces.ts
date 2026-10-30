@@ -87,6 +87,9 @@ export type XiaomeiLayeredBlinkFace = (typeof XIAOMEI_LAYERED_BLINK_FACES)[numbe
 /** 全身 / 姿势 src 交叉淡入时长。约一拍平滑，眨眼脸层不走这套。 */
 export const XIAOMEI_CROSSFADE_MS = 90;
 
+/** 同姿/异姿最短驻留（ms）。未满不启新 crossfade/motion-hide，防抖闪。分层眨眼帧不受限。 */
+export const XIAOMEI_MIN_HOLD_MS = 320;
+
 /** 异姿全身换图：下压 → 切图 → 弹起。同姿眨眼仍走分层，不走这套。 */
 export const XIAOMEI_MOTION_HIDE_DOWN_MS = 140;
 export const XIAOMEI_MOTION_HIDE_UP_MS = 360;

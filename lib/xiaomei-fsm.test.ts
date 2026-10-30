@@ -24,6 +24,10 @@ import {
   statePriorityOrder,
   underlayAfterOverlay,
   wakeFromInteraction,
+  blinkArmDelayMs,
+  canChangeAfterHold,
+  XIAOMEI_BLINK_ARM_MS,
+  XIAOMEI_MIN_HOLD_MS,
 } from "./xiaomei-fsm.ts";
 import { XIAOMEI_SCENE_LINES } from "./xiaomei-lines.ts";
 
@@ -197,4 +201,13 @@ test("气泡锚点只翻上下，不拽角色坐标", () => {
   assert.equal("x" in tallBox, false);
   assert.equal("y" in tallBox, false);
   assert.equal("companion" in tallBox, false);
+});
+
+test("Round4 防闪：最短驻留与眨眼武装区间", () => {
+  assert.equal(canChangeAfterHold(0, XIAOMEI_MIN_HOLD_MS - 1), false);
+  assert.equal(canChangeAfterHold(0, XIAOMEI_MIN_HOLD_MS), true);
+  assert.equal(blinkArmDelayMs(0), XIAOMEI_BLINK_ARM_MS.min);
+  assert.equal(blinkArmDelayMs(1), XIAOMEI_BLINK_ARM_MS.max);
+  assert.ok(blinkArmDelayMs(0.5) > XIAOMEI_BLINK_ARM_MS.min);
+  assert.ok(blinkArmDelayMs(0.5) < XIAOMEI_BLINK_ARM_MS.max);
 });

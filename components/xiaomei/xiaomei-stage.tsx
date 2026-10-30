@@ -5,6 +5,8 @@ import { XiaomeiProp } from "@/components/xiaomei/xiaomei-prop";
 import type { XiaomeiCueKind, XiaomeiPropKind, XiaomeiPropPose } from "@/lib/xiaomei-actions";
 import {
   XIAOMEI_CROSSFADE_MS,
+  XIAOMEI_FACE_LAYERS,
+  XIAOMEI_MIN_HOLD_MS,
   XIAOMEI_MOTION_HIDE_DOWN_MS,
   XIAOMEI_MOTION_HIDE_TIMEOUT_MS,
   XIAOMEI_MOTION_HIDE_UP_MS,
@@ -27,9 +29,9 @@ export type XiaomeiGroundMode = "float" | "walk" | "still";
 
 type SwapPhase = "idle" | "hide" | "show" | "crossfade";
 
-/** 站姿表情（非 pose_*、非分层眨眼）≈ 同姿，可走 #31 短交叉淡入。 */
+/** 分层眨眼也算站姿：与站立情绪软切，回待机不走 motion-hide 压弹。 */
 function isStandingExpression(face: XiaomeiFace): boolean {
-  return !face.startsWith("pose_") && !isXiaomeiLayeredBlinkFace(face);
+  return !face.startsWith("pose_");
 }
 
 function XiaomeiSprite({
@@ -64,7 +66,7 @@ function XiaomeiSprite({
   }
 
   if (isXiaomeiLayeredBlinkFace(face)) {
-    const layer = xiaomeiBlinkFaceLayer(face);
+    const active = xiaomeiBlinkFaceLayer(face);
     return (
       <span
         className={cn("xiaomei-stack pointer-events-none relative z-[1] h-full w-full", SPRITE_FILTER, className)}
@@ -82,17 +84,24 @@ function XiaomeiSprite({
           data-xiaomei-layer="body"
           className="xiaomei-stack-body pointer-events-none absolute inset-0 h-full w-full object-contain object-bottom"
         />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={xiaomeiFaceLayerSrc(layer)}
-          alt=""
-          width={XIAOMEI_FRAME.width}
-          height={XIAOMEI_FRAME.height}
-          draggable={false}
-          decoding="sync"
-          data-xiaomei-layer={layer}
-          className="xiaomei-stack-face pointer-events-none absolute inset-0 z-[1] h-full w-full object-contain object-bottom"
-        />
+        {/* 三张脸层常驻，只切 is-active；绝不换 src / remount，避免眨眼空一拍。 */}
+        {XIAOMEI_FACE_LAYERS.map((layer) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={layer}
+            src={xiaomeiFaceLayerSrc(layer)}
+            alt=""
+            width={XIAOMEI_FRAME.width}
+            height={XIAOMEI_FRAME.height}
+            draggable={false}
+            decoding="sync"
+            data-xiaomei-layer={layer}
+            className={cn(
+              "xiaomei-stack-face pointer-events-none absolute inset-0 z-[1] h-full w-full object-contain object-bottom",
+              layer === active ? "is-active" : "is-idle",
+            )}
+          />
+        ))}
       </span>
     );
   }
@@ -119,7 +128,8 @@ function XiaomeiSprite({
 
 /**
  * 立绘、接触阴影、道具。不决定下一拍，也不写存储。
- * 分层眨眼只换脸层；同姿短交叉淡入保留；异姿全身切走下压→切图→弹起，避免双层叠影。
+ * 分层眨眼只亮常驻脸层；同姿短交叉淡入；异姿全身切走下压→切图→弹起。
+ * 飞行中只记 pending，落地再对齐，避免 crossfade 中途重启导致 opacity 连闪。
  */
 export function XiaomeiStage({
   mood,
@@ -150,12 +160,16 @@ export function XiaomeiStage({
   const [phase, setPhase] = useState<SwapPhase>("idle");
   const [squashOn, setSquashOn] = useState(false);
   const [hearts, setHearts] = useState<number[]>([]);
+  /** 换图落地后再对齐 pending 时踢一下，避免飞行中重启。 */
+  const [kick, setKick] = useState(0);
   const pendingMood = useRef(mood);
   const currentRef = useRef(current);
   const phaseRef = useRef(phase);
   const genRef = useRef(0);
   const lastSquash = useRef(0);
   const lastHeart = useRef(0);
+  const lastCommitAt = useRef(0);
+  const holdTimer = useRef(0);
   currentRef.current = current;
   phaseRef.current = phase;
 
@@ -191,13 +205,14 @@ export function XiaomeiStage({
 
   useEffect(() => {
     pendingMood.current = mood;
+
+    // 换图飞行中：只记 pending，绝不中途重启 crossfade / motion-hide（防 opacity 连闪）。
+    if (phaseRef.current !== "idle") return;
+
     const shown = currentRef.current;
-    if (mood === shown && phaseRef.current === "idle") return;
+    if (mood === shown) return;
 
-    // 换图进行中又来了新目标：只更新 pending，让超时/下一段吃到最新脸。
-    if (mood === shown && phaseRef.current !== "idle") return;
-
-    // 分层眨眼只换脸层，身体不动，不做全身交叉淡入，也不走 motion-hide。
+    // 分层眨眼只亮常驻脸层，身体不动。
     if (isXiaomeiLayeredBlinkFace(mood) && isXiaomeiLayeredBlinkFace(shown)) {
       setCurrent(mood);
       setOutgoing(null);
@@ -209,26 +224,53 @@ export function XiaomeiStage({
       setCurrent(mood);
       setOutgoing(null);
       setPhase("idle");
+      lastCommitAt.current = performance.now();
+      return;
+    }
+
+    // 同姿/异姿最短驻留：未满 hold 只记 pending，到期再 kick（眨眼帧不受限）。
+    const now = performance.now();
+    const held = now - lastCommitAt.current;
+    if (lastCommitAt.current > 0 && held < XIAOMEI_MIN_HOLD_MS) {
+      window.clearTimeout(holdTimer.current);
+      holdTimer.current = window.setTimeout(() => {
+        if (phaseRef.current !== "idle") return;
+        if (pendingMood.current === currentRef.current) return;
+        setKick((n) => n + 1);
+      }, XIAOMEI_MIN_HOLD_MS - held);
       return;
     }
 
     const gen = ++genRef.current;
+    lastCommitAt.current = now;
 
-    // 同姿站立表情：保留 #31 ~90ms 交叉淡入。
+    const finishIdle = () => {
+      if (genRef.current !== gen) return;
+      setOutgoing(null);
+      setPhase("idle");
+      const next = pendingMood.current;
+      if (next !== currentRef.current) {
+        window.setTimeout(() => {
+          if (genRef.current !== gen) return;
+          if (phaseRef.current !== "idle") return;
+          if (pendingMood.current === currentRef.current) return;
+          setKick((n) => n + 1);
+        }, 0);
+      }
+    };
+
+    // 同站姿（含分层眨眼↔站立情绪）：短交叉淡入，不压弹。
     if (isStandingExpression(mood) && isStandingExpression(shown)) {
       setOutgoing(shown);
       setCurrent(mood);
       setPhase("crossfade");
-      const timer = window.setTimeout(() => {
-        if (genRef.current !== gen) return;
-        setOutgoing(null);
-        setPhase("idle");
-      }, XIAOMEI_CROSSFADE_MS);
+      const timer = window.setTimeout(finishIdle, XIAOMEI_CROSSFADE_MS);
       const fallback = window.setTimeout(() => {
         if (genRef.current !== gen) return;
         setOutgoing(null);
         setCurrent(pendingMood.current);
         setPhase("idle");
+        setKick((n) => n + 1);
       }, XIAOMEI_MOTION_HIDE_TIMEOUT_MS);
       return () => {
         window.clearTimeout(timer);
@@ -246,20 +288,28 @@ export function XiaomeiStage({
     }, XIAOMEI_MOTION_HIDE_DOWN_MS);
     const up = window.setTimeout(() => {
       if (genRef.current !== gen) return;
-      setPhase("idle");
+      finishIdle();
     }, XIAOMEI_MOTION_HIDE_DOWN_MS + XIAOMEI_MOTION_HIDE_UP_MS);
     const fallback = window.setTimeout(() => {
       if (genRef.current !== gen) return;
       setOutgoing(null);
       setCurrent(pendingMood.current);
       setPhase("idle");
+      setKick((n) => n + 1);
     }, XIAOMEI_MOTION_HIDE_TIMEOUT_MS);
     return () => {
       window.clearTimeout(down);
       window.clearTimeout(up);
       window.clearTimeout(fallback);
     };
-  }, [mood, reducedMotion]);
+  }, [mood, reducedMotion, kick]);
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(holdTimer.current);
+    },
+    [],
+  );
 
   return (
     <>
@@ -288,10 +338,7 @@ export function XiaomeiStage({
               <XiaomeiSprite face={outgoing} reducedMotion={reducedMotion} />
             </span>
           ) : null}
-          <span
-            key={`in-${current}`}
-            className={cn("xiaomei-crossfade-layer", outgoing && "is-in")}
-          >
+          <span key="in" className={cn("xiaomei-crossfade-layer", outgoing && "is-in")}>
             <XiaomeiSprite face={current} reducedMotion={reducedMotion} />
           </span>
         </span>
