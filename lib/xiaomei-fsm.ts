@@ -203,6 +203,31 @@ export function activeLayer(input: {
   return "base";
 }
 
+/** 忙时闭嘴：思考中不抽待机甜句，也不挂音符脉冲。 */
+export function shouldSuppressIdleChatter(status: XiaomeiChatStatus): boolean {
+  return status === "thinking";
+}
+
+/**
+ * 忙时不给记号。完成只复用已经算出的边沿脉冲，不因为 status===done 再欢呼一次。
+ * 出错且没有在播的庆祝时，给一次叹气。
+ */
+export function quietChatCue(input: {
+  status: XiaomeiChatStatus;
+  celebrate: "cheer" | "sigh" | null;
+  chatOpen: boolean;
+}): "cheer" | "sigh" | null {
+  if (shouldSuppressIdleChatter(input.status)) return null;
+  if (input.celebrate) return input.celebrate;
+  if (input.chatOpen && input.status === "error") return "sigh";
+  return null;
+}
+
+/** 脉冲窗口还开着就不要重启。没有新脉冲、窗口也空，才清掉。 */
+export function shouldStartCelebratePulse(pulse: "cheer" | "sigh" | null, pulseBusy: boolean): boolean {
+  return pulse !== null && !pulseBusy;
+}
+
 /**
  * 真回合边沿：仅 thinking→done 且非取消/断线时庆祝一次。
  * 重复 done、error、idle、cancel 都不 cheer。

@@ -20,6 +20,7 @@ import {
   type XiaomeiMemoryContext,
   type XiaomeiScene,
 } from "./xiaomei-memory";
+import { formatNapkinBlock, type XiaomeiNapkin } from "./xiaomei-napkin";
 import {
   formatWikiGroundBlock,
   loadWikiGroundCards,
@@ -162,11 +163,13 @@ export function buildXiaomeiSystemPrompt(
   scene: XiaomeiScene = "chat",
   userText = "",
   wikiBlock = "",
+  napkin?: XiaomeiNapkin | null,
 ): string {
   const parts = [
     XIAOMEI_SYSTEM_PROMPT,
     stateBlock(memory),
     memoryBlock(memory, userText),
+    formatNapkinBlock(napkin, memory.userName),
     sceneBlock(scene),
   ];
   const wiki = wikiBlock.trim();
@@ -179,6 +182,7 @@ export function xiaomeiUpstreamMessages(
   messages: XiaomeiChatTurn[],
   memory: XiaomeiMemoryContext,
   wikiCards?: readonly XiaomeiWikiCard[] | null,
+  napkin?: XiaomeiNapkin | null,
 ) {
   const lastUser = [...messages].reverse().find((turn) => turn.role === "user")?.content ?? "";
   const scene = sceneFromUser(lastUser);
@@ -187,7 +191,7 @@ export function xiaomeiUpstreamMessages(
       ? formatWikiGroundBlock(pickWikiGround(wikiCards, lastUser))
       : "";
   return [
-    { role: "system" as const, content: buildXiaomeiSystemPrompt(memory, scene, lastUser, wiki) },
+    { role: "system" as const, content: buildXiaomeiSystemPrompt(memory, scene, lastUser, wiki, napkin) },
     ...messages,
   ];
 }
@@ -196,13 +200,14 @@ export function xiaomeiUpstreamMessages(
 export async function xiaomeiUpstreamMessagesGrounded(
   messages: XiaomeiChatTurn[],
   memory: XiaomeiMemoryContext,
+  napkin?: XiaomeiNapkin | null,
 ) {
   const lastUser = [...messages].reverse().find((turn) => turn.role === "user")?.content ?? "";
   if (!mightNeedWikiGround(sceneFromUser(lastUser), lastUser)) {
-    return xiaomeiUpstreamMessages(messages, memory);
+    return xiaomeiUpstreamMessages(messages, memory, null, napkin);
   }
   const cards = await loadWikiGroundCards();
-  return xiaomeiUpstreamMessages(messages, memory, cards);
+  return xiaomeiUpstreamMessages(messages, memory, cards, napkin);
 }
 
 export type XiaomeiUpstreamTarget = {
@@ -340,6 +345,7 @@ export async function requestXiaomeiUpstream(
   key: string,
   messages: XiaomeiChatTurn[],
   memory: XiaomeiMemoryContext,
+  napkin?: XiaomeiNapkin | null,
 ): Promise<Response> {
   return fetch(target.url, {
     method: "POST",
@@ -352,7 +358,7 @@ export async function requestXiaomeiUpstream(
       stream: true,
       max_tokens: xiaomeiOutputLimit(messages),
       temperature: XIAOMEI_TEMPERATURE,
-      messages: await xiaomeiUpstreamMessagesGrounded(messages, memory),
+      messages: await xiaomeiUpstreamMessagesGrounded(messages, memory, napkin),
     }),
     signal: AbortSignal.timeout(25_000),
   });

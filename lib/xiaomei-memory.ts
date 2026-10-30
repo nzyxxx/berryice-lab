@@ -148,6 +148,12 @@ export function isXiaomeiFact(note: Pick<XiaomeiMemoryNote, "kind">): boolean {
   return note.kind === "nickname" || note.kind === "preference";
 }
 
+/** 抽屉里的一句人话。去掉存档前缀，不把「偏好：」这种记号念给用户看。 */
+export function plainMemoryLine(summary: string): string {
+  const stripped = summary.replace(/^(?:偏好|心情)：/, "").trim();
+  return stripped || summary.trim();
+}
+
 function readAt(value: unknown, now: number): number | undefined {
   let at: number | null = null;
   if (typeof value === "number" && Number.isFinite(value)) at = value;

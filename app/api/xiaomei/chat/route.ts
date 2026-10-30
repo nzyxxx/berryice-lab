@@ -13,6 +13,7 @@ import {
   shouldRetryUpstream,
 } from "@/lib/xiaomei-chat";
 import { sanitizeXiaomeiMemory } from "@/lib/xiaomei-memory";
+import { sanitizeXiaomeiNapkin } from "@/lib/xiaomei-napkin";
 import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import {
   XIAOMEI_REFUSAL,
@@ -110,11 +111,12 @@ export async function POST(request: Request) {
 
   const record =
     body.payload && typeof body.payload === "object"
-      ? (body.payload as { messages?: unknown; memory?: unknown })
+      ? (body.payload as { messages?: unknown; memory?: unknown; napkin?: unknown })
       : null;
   const messages = sanitizeXiaomeiMessages(record?.messages);
   if (!messages) return jsonError("你倒是说句话。", 400);
   const memory = sanitizeXiaomeiMemory(record?.memory);
+  const napkin = sanitizeXiaomeiNapkin(record?.napkin);
 
   const ip = clientAddress(request);
   const ipDecision = buckets.allow(`ip:${ip}`);
@@ -144,11 +146,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    let upstream = await requestXiaomeiUpstream(config, config.primary, messages, memory);
+    let upstream = await requestXiaomeiUpstream(config, config.primary, messages, memory, napkin);
     if (!upstream.ok && config.backup && shouldRetryUpstream(upstream.status)) {
       await upstream.body?.cancel().catch(() => undefined);
       console.error("[xiaomei] upstream retry", upstream.status);
-      upstream = await requestXiaomeiUpstream(config, config.backup, messages, memory);
+      upstream = await requestXiaomeiUpstream(config, config.backup, messages, memory, napkin);
     }
     if (!upstream.ok || !upstream.body) {
       await upstream.body?.cancel().catch(() => undefined);
