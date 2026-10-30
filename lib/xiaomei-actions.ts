@@ -364,16 +364,18 @@ export function expressionTrail(
 export function xiaomeiMotionClass(beat: XiaomeiIdleBeat | null, dragging: boolean): string | null {
   if (dragging) return null;
   if (beat === "blink" || beat === "blink2" || beat === "slowblink") return "xiaomei-float";
+  // 散步只做轻起步/收步，不搬大位移（迈步已画在姿势帧里）。
+  if (beat === "walk") return "xiaomei-walk";
+  // 喝水/点心/伞/转圈：全身帧自己带动作，只补软进软出。
   if (
     beat === "drink" ||
     beat === "sip" ||
     beat === "hold" ||
     beat === "snack" ||
     beat === "umbrella" ||
-    beat === "spin" ||
-    beat === "walk"
+    beat === "spin"
   ) {
-    return null;
+    return "xiaomei-activity-soft";
   }
   // 这些姿势已经画在图里。再压扁、翻转或滑步会和画面抢。哈欠和伸懒腰仍轻轻呼吸。
   if (beat === "yawn" || beat === "stretch" || beat === "peek" || beat === "tilt") return "xiaomei-float";
