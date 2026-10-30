@@ -43,6 +43,155 @@ export function canChangeAfterHold(heldSinceMs: number, nowMs: number, minHoldMs
 }
 
 /**
+ * 活动边沿钉忙。跟立绘最短驻留（XIAOMEI_MIN_HOLD_MS，脸的防闪）不是同一只计数器。
+ * 打字停手后再钉约 1.2s；流式答完后再钉约 1.5s。
+ */
+export const XIAOMEI_TYPE_BUSY_HOLD_MS = 1200;
+export const XIAOMEI_STREAM_BUSY_HOLD_MS = 1500;
+
+export type XiaomeiBusyHoldKind = "typing" | "stream";
+
+/** 这只 until 只服务活动边沿，调用方不得拿它去挡换脸。 */
+export function busyHoldUntil(kind: XiaomeiBusyHoldKind, atMs: number): number {
+  const span = kind === "typing" ? XIAOMEI_TYPE_BUSY_HOLD_MS : XIAOMEI_STREAM_BUSY_HOLD_MS;
+  if (!Number.isFinite(atMs)) return span;
+  return atMs + span;
+}
+
+export function busyHoldActive(untilMs: number, nowMs: number): boolean {
+  if (!Number.isFinite(untilMs) || !Number.isFinite(nowMs)) return false;
+  return nowMs < untilMs;
+}
+
+const PRIORITY_RANK: Record<XiaomeiPriorityState, number> = {
+  drag: 80,
+  pulse: 70,
+  transient: 60,
+  wake: 50,
+  pinned: 40,
+  activity: 30,
+  micro: 20,
+  sleep: 10,
+  idle: 0,
+};
+
+/** 待机钩子里的占位：醒 > 睡 > 强制活动 > 点击引子 > 正在播的微动 > 空。 */
+export function schedulingHolder(input: {
+  sleepPhase: XiaomeiSleepPhase;
+  forced?: boolean;
+  lead?: boolean;
+  active?: boolean;
+}): XiaomeiPriorityState {
+  if (input.sleepPhase === "wake") return "wake";
+  if (isVisuallySleeping(input.sleepPhase)) return "sleep";
+  if (input.forced) return "activity";
+  if (input.lead) return "transient";
+  if (input.active) return "micro";
+  return "idle";
+}
+
+/**
+ * 态/mood 切换门。随机低优先拍在驻留未满时一律不进，哪怕它自己的档看起来不低。
+ * 非随机且优先级更高（出错、钉脸、醒）可以立刻打断。
+ */
+export function admitScheduledSwitch(input: {
+  holder: XiaomeiPriorityState | null;
+  heldSinceMs: number;
+  nowMs: number;
+  incoming: XiaomeiPriorityState;
+  randomBeat?: boolean;
+  minHoldMs?: number;
+}): boolean {
+  if (!input.holder) return true;
+  const held = canChangeAfterHold(input.heldSinceMs, input.nowMs, input.minHoldMs);
+  if (input.randomBeat) return held;
+  const holderRank = PRIORITY_RANK[input.holder];
+  const incomingRank = PRIORITY_RANK[input.incoming];
+  if (incomingRank > holderRank) return true;
+  return held;
+}
+
+/** 同一句用户话连续失败。新的一句从 0 再计；成功清零。 */
+export function nextFailureStreak(input: { streak: number; sameTurn: boolean; failed: boolean }): number {
+  if (!input.failed) return 0;
+  const prior = input.sameTurn && Number.isFinite(input.streak) ? Math.max(0, Math.floor(input.streak)) : 0;
+  return prior + 1;
+}
+
+/** 1 次仍是叹气；同一回合 ≥2 升到更烦，不再同一强度。 */
+export function errorIntensity(consecutiveFailures: number): "sigh" | "annoyed" {
+  const n = Number.isFinite(consecutiveFailures) ? consecutiveFailures : 0;
+  return n >= 2 ? "annoyed" : "sigh";
+}
+
+/** 指针在身上停够才有一次小概率看一眼 / 轻笑，之后进入冷却。 */
+export const XIAOMEI_HOVER_DWELL_MS = 1500;
+export const XIAOMEI_HOVER_COOLDOWN_MS = 30_000;
+export const XIAOMEI_HOVER_CHANCE = 0.35;
+
+export function hoverAttentionDecision(input: {
+  dwellMs: number;
+  sinceLastMs: number;
+  roll: number;
+  blocked?: boolean;
+}): "glance" | "smile" | null {
+  if (input.blocked) return null;
+  if (!Number.isFinite(input.dwellMs) || input.dwellMs < XIAOMEI_HOVER_DWELL_MS) return null;
+  if (!Number.isFinite(input.sinceLastMs) || input.sinceLastMs < XIAOMEI_HOVER_COOLDOWN_MS) return null;
+  const roll = !Number.isFinite(input.roll) ? 1 : Math.min(1, Math.max(0, input.roll));
+  if (roll >= XIAOMEI_HOVER_CHANCE) return null;
+  return roll < XIAOMEI_HOVER_CHANCE / 2 ? "glance" : "smile";
+}
+
+/** 凝视只动瞳孔和微倾。movesPlace 恒为 false：身体锚点不跟光标。 */
+export const XIAOMEI_GAZE_MAX_PX = 3;
+export const XIAOMEI_GAZE_MAX_TILT = 2.5;
+
+export type XiaomeiAttentionSource = "pointer" | "composer" | "dialogue" | "none";
+
+export type XiaomeiGaze = {
+  pupilX: number;
+  pupilY: number;
+  tiltDeg: number;
+  movesPlace: false;
+};
+
+function clampGaze(n: number, limit: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(-limit, Math.min(limit, n));
+}
+
+export function attentionGaze(input: {
+  source: XiaomeiAttentionSource;
+  dx?: number;
+  dy?: number;
+  reducedMotion?: boolean;
+}): XiaomeiGaze {
+  if (input.reducedMotion || input.source === "none") {
+    return { pupilX: 0, pupilY: 0, tiltDeg: 0, movesPlace: false };
+  }
+  const dx = clampGaze(input.dx ?? 0, 120);
+  const dy = clampGaze(input.dy ?? 0, 120);
+  let pupilX = (dx / 120) * XIAOMEI_GAZE_MAX_PX;
+  let pupilY = (dy / 120) * XIAOMEI_GAZE_MAX_PX;
+  let tiltDeg = (dx / 120) * XIAOMEI_GAZE_MAX_TILT;
+  if (input.source === "composer") {
+    pupilY = XIAOMEI_GAZE_MAX_PX * 0.85;
+    tiltDeg = Math.sign(dx || 1) * 1.2;
+  } else if (input.source === "dialogue") {
+    pupilY = -XIAOMEI_GAZE_MAX_PX * 0.45;
+    tiltDeg = Math.sign(dx || -1) * 1.5;
+  }
+  const round = (n: number) => Math.round(n * 100) / 100;
+  return {
+    pupilX: round(clampGaze(pupilX, XIAOMEI_GAZE_MAX_PX)),
+    pupilY: round(clampGaze(pupilY, XIAOMEI_GAZE_MAX_PX)),
+    tiltDeg: round(clampGaze(tiltDeg, XIAOMEI_GAZE_MAX_TILT)),
+    movesPlace: false,
+  };
+}
+
+/**
  * 优先级表（文法单源）。行序即优先级：越靠前越高。
  * drag > pulse > transient > wake > pinned(chat) > activity > micro > sleep > idle
  * 单测锁行序；加态只改这张表。
@@ -216,10 +365,14 @@ export function quietChatCue(input: {
   status: XiaomeiChatStatus;
   celebrate: "cheer" | "sigh" | null;
   chatOpen: boolean;
-}): "cheer" | "sigh" | null {
+  /** 同一回合连续失败。缺省或 1 仍是叹气；≥2 换成鼓一下，不跟叹气同一强度。 */
+  errorStreak?: number;
+}): "cheer" | "sigh" | "pout" | null {
   if (shouldSuppressIdleChatter(input.status)) return null;
   if (input.celebrate) return input.celebrate;
-  if (input.chatOpen && input.status === "error") return "sigh";
+  if (input.chatOpen && input.status === "error") {
+    return errorIntensity(input.errorStreak ?? 0) === "annoyed" ? "pout" : "sigh";
+  }
   return null;
 }
 

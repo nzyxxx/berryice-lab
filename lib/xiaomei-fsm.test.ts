@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { readFile } from "node:fs/promises";
+
 import {
   XIAOMEI_PULSE_MS,
   XIAOMEI_SLEEP_AFTER_MS,
@@ -31,6 +33,21 @@ import {
   canChangeAfterHold,
   XIAOMEI_BLINK_ARM_MS,
   XIAOMEI_MIN_HOLD_MS,
+  XIAOMEI_GAZE_MAX_PX,
+  XIAOMEI_GAZE_MAX_TILT,
+  XIAOMEI_HOVER_CHANCE,
+  XIAOMEI_HOVER_COOLDOWN_MS,
+  XIAOMEI_HOVER_DWELL_MS,
+  XIAOMEI_STREAM_BUSY_HOLD_MS,
+  XIAOMEI_TYPE_BUSY_HOLD_MS,
+  admitScheduledSwitch,
+  attentionGaze,
+  busyHoldActive,
+  busyHoldUntil,
+  errorIntensity,
+  hoverAttentionDecision,
+  nextFailureStreak,
+  schedulingHolder,
 } from "./xiaomei-fsm.ts";
 import { XIAOMEI_SCENE_LINES } from "./xiaomei-lines.ts";
 
@@ -231,4 +248,158 @@ test("Round4 防闪：最短驻留与眨眼武装区间", () => {
   assert.equal(blinkArmDelayMs(1), XIAOMEI_BLINK_ARM_MS.max);
   assert.ok(blinkArmDelayMs(0.5) > XIAOMEI_BLINK_ARM_MS.min);
   assert.ok(blinkArmDelayMs(0.5) < XIAOMEI_BLINK_ARM_MS.max);
+});
+
+test("Round4 调度门：低优先随机拍不打断未满 hold 的高优先", () => {
+  assert.equal(schedulingHolder({ sleepPhase: "wake" }), "wake");
+  assert.equal(schedulingHolder({ sleepPhase: "sleep" }), "sleep");
+  assert.equal(schedulingHolder({ sleepPhase: "awake", forced: true }), "activity");
+  assert.equal(schedulingHolder({ sleepPhase: "awake", lead: true }), "transient");
+  assert.equal(schedulingHolder({ sleepPhase: "awake", active: true }), "micro");
+  assert.equal(schedulingHolder({ sleepPhase: "awake" }), "idle");
+
+  assert.equal(
+    admitScheduledSwitch({
+      holder: "transient",
+      heldSinceMs: 0,
+      nowMs: XIAOMEI_MIN_HOLD_MS - 1,
+      incoming: "idle",
+      randomBeat: true,
+    }),
+    false,
+  );
+  assert.equal(
+    admitScheduledSwitch({
+      holder: "activity",
+      heldSinceMs: 0,
+      nowMs: XIAOMEI_MIN_HOLD_MS,
+      incoming: "idle",
+      randomBeat: true,
+    }),
+    true,
+  );
+  assert.equal(
+    admitScheduledSwitch({
+      holder: "idle",
+      heldSinceMs: 0,
+      nowMs: 100,
+      incoming: "pinned",
+      randomBeat: false,
+    }),
+    true,
+  );
+  assert.equal(
+    admitScheduledSwitch({
+      holder: "micro",
+      heldSinceMs: 0,
+      nowMs: 100,
+      incoming: "micro",
+      randomBeat: false,
+    }),
+    false,
+  );
+  assert.equal(admitScheduledSwitch({ holder: null, heldSinceMs: 0, nowMs: 0, incoming: "idle" }), true);
+});
+
+test("同一回合连续失败：第一次叹气，第二次更烦", () => {
+  assert.equal(nextFailureStreak({ streak: 0, sameTurn: false, failed: true }), 1);
+  assert.equal(nextFailureStreak({ streak: 1, sameTurn: true, failed: true }), 2);
+  assert.equal(nextFailureStreak({ streak: 4, sameTurn: false, failed: true }), 1);
+  assert.equal(nextFailureStreak({ streak: 2, sameTurn: true, failed: false }), 0);
+  assert.equal(errorIntensity(1), "sigh");
+  assert.equal(errorIntensity(2), "annoyed");
+  assert.equal(quietChatCue({ status: "error", celebrate: null, chatOpen: true }), "sigh");
+  assert.equal(quietChatCue({ status: "error", celebrate: null, chatOpen: true, errorStreak: 1 }), "sigh");
+  assert.equal(quietChatCue({ status: "error", celebrate: null, chatOpen: true, errorStreak: 2 }), "pout");
+  assert.equal(quietChatCue({ status: "thinking", celebrate: "sigh", chatOpen: true, errorStreak: 3 }), null);
+});
+
+test("悬停要停够、冷却过了、roll 够小才看一眼", () => {
+  assert.equal(
+    hoverAttentionDecision({
+      dwellMs: XIAOMEI_HOVER_DWELL_MS - 1,
+      sinceLastMs: XIAOMEI_HOVER_COOLDOWN_MS,
+      roll: 0,
+    }),
+    null,
+  );
+  assert.equal(
+    hoverAttentionDecision({
+      dwellMs: XIAOMEI_HOVER_DWELL_MS,
+      sinceLastMs: XIAOMEI_HOVER_COOLDOWN_MS - 1,
+      roll: 0,
+    }),
+    null,
+  );
+  assert.equal(
+    hoverAttentionDecision({
+      dwellMs: XIAOMEI_HOVER_DWELL_MS,
+      sinceLastMs: XIAOMEI_HOVER_COOLDOWN_MS,
+      roll: XIAOMEI_HOVER_CHANCE,
+    }),
+    null,
+  );
+  assert.equal(
+    hoverAttentionDecision({
+      dwellMs: XIAOMEI_HOVER_DWELL_MS,
+      sinceLastMs: XIAOMEI_HOVER_COOLDOWN_MS,
+      roll: 0.01,
+    }),
+    "glance",
+  );
+  assert.equal(
+    hoverAttentionDecision({
+      dwellMs: XIAOMEI_HOVER_DWELL_MS,
+      sinceLastMs: XIAOMEI_HOVER_COOLDOWN_MS,
+      roll: XIAOMEI_HOVER_CHANCE / 2,
+    }),
+    "smile",
+  );
+  assert.equal(
+    hoverAttentionDecision({
+      dwellMs: XIAOMEI_HOVER_DWELL_MS,
+      sinceLastMs: XIAOMEI_HOVER_COOLDOWN_MS,
+      roll: 0,
+      blocked: true,
+    }),
+    null,
+  );
+});
+
+test("凝视不改坐标；活动边沿钉忙跟换脸驻留分开计", () => {
+  const look = attentionGaze({ source: "pointer", dx: 120, dy: -120 });
+  assert.equal(look.movesPlace, false);
+  assert.equal(look.pupilX, XIAOMEI_GAZE_MAX_PX);
+  assert.equal(look.pupilY, -XIAOMEI_GAZE_MAX_PX);
+  assert.equal(look.tiltDeg, XIAOMEI_GAZE_MAX_TILT);
+  const down = attentionGaze({ source: "composer", dx: 0, dy: 0 });
+  assert.ok(down.pupilY > 0);
+  assert.equal(down.movesPlace, false);
+  const up = attentionGaze({ source: "dialogue", dx: -40, dy: 10 });
+  assert.ok(up.pupilY < 0);
+  assert.equal(attentionGaze({ source: "pointer", dx: 80, reducedMotion: true }).pupilX, 0);
+  assert.equal(attentionGaze({ source: "none", dx: 80 }).tiltDeg, 0);
+
+  assert.equal(XIAOMEI_TYPE_BUSY_HOLD_MS, 1200);
+  assert.equal(XIAOMEI_STREAM_BUSY_HOLD_MS, 1500);
+  assert.notEqual(XIAOMEI_TYPE_BUSY_HOLD_MS, XIAOMEI_MIN_HOLD_MS);
+  assert.notEqual(XIAOMEI_STREAM_BUSY_HOLD_MS, XIAOMEI_MIN_HOLD_MS);
+  assert.equal(busyHoldUntil("typing", 10_000), 10_000 + XIAOMEI_TYPE_BUSY_HOLD_MS);
+  assert.equal(busyHoldUntil("stream", 10_000), 10_000 + XIAOMEI_STREAM_BUSY_HOLD_MS);
+  assert.equal(busyHoldActive(busyHoldUntil("typing", 0), XIAOMEI_TYPE_BUSY_HOLD_MS - 1), true);
+  assert.equal(busyHoldActive(busyHoldUntil("stream", 0), XIAOMEI_STREAM_BUSY_HOLD_MS), false);
+});
+
+test("活动边沿计时器写在聊天钩子里，不复用换脸最短驻留", async () => {
+  const chatHook = await readFile(new URL("../components/xiaomei/use-xiaomei-chat.ts", import.meta.url), "utf8");
+  assert.match(chatHook, /XIAOMEI_TYPE_BUSY_HOLD_MS/);
+  assert.match(chatHook, /XIAOMEI_STREAM_BUSY_HOLD_MS/);
+  assert.match(chatHook, /nextFailureStreak/);
+  assert.match(chatHook, /pinStatus\("thinking"\)/);
+  assert.doesNotMatch(chatHook, /XIAOMEI_MIN_HOLD_MS/);
+  const companion = await readFile(new URL("../components/xiaomei/xiaomei-companion.tsx", import.meta.url), "utf8");
+  assert.match(companion, /attentionGaze/);
+  assert.match(companion, /data-xiaomei-anchor="pinned"/);
+  assert.match(companion, /hoverAttentionDecision/);
+  assert.doesNotMatch(companion, /requestAnimationFrame/);
 });

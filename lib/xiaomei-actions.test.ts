@@ -403,6 +403,21 @@ test("脸的优先级：聊天盖过引子，引子盖过台词；悬停不硬�
     "mood_puff",
   );
   assert.equal(
+    resolveXiaomeiFace({ ...base, chatOpen: true, status: "error", replyMood: "annoyed", errorStreak: 2 }),
+    "annoyed",
+  );
+  assert.equal(resolveXiaomeiFace({ ...base, busyHold: true }), "mood_thinking");
+  assert.equal(resolveXiaomeiFace({ ...base, perch: true }), "pose_cheek");
+  assert.equal(resolveXiaomeiFace({ ...base, peekHeld: true }), "pose_peek");
+  assert.equal(
+    resolveXiaomeiFace({ ...base, sleepPhase: "sleep", poseFace: "mood_sleepy" }),
+    "mood_sleepy",
+  );
+  assert.equal(
+    resolveXiaomeiFace({ ...base, sleepPhase: "sleep", poseFace: "mood_sleepy", hover: true }),
+    "pose_peek",
+  );
+  assert.equal(
     resolveXiaomeiFace({ ...base, chatOpen: true, status: "done", replyMood: "happy" }),
     "mood_eager",
   );
@@ -563,6 +578,24 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   }
   assert.doesNotMatch(presence, /requestAnimationFrame|speechSynthesis|DEEPSEEK|API_KEY/);
   assert.doesNotMatch(presence, /鲸鱼|大肥鱼|猫耳|狐耳/);
+});
+
+test("靠近输入区时微动更常落到托腮、空白、端着", () => {
+  assert.equal(nextIdleBeat(0.24, null, false), "peek");
+  assert.equal(nextIdleBeat(0.1, null, false, true), "smile");
+  assert.equal(nextIdleBeat(0.3, null, false, true), "note");
+  assert.equal(nextIdleBeat(0.5, null, false, true), "hold");
+  assert.equal(nextIdleBeat(0.99, null, false, true), "walk");
+  let perched = 0;
+  let plain = 0;
+  for (let step = 0; step < 20; step += 1) {
+    const roll = step / 20;
+    const near = nextIdleBeat(roll, null, false, true);
+    const far = nextIdleBeat(roll, null, false, false);
+    if (near === "smile" || near === "note" || near === "hold") perched += 1;
+    if (far === "smile" || far === "note" || far === "hold") plain += 1;
+  }
+  assert.ok(perched > plain);
 });
 
 test("发量分层待机：眨眼映射脸层，交叉淡入 90ms，资源带缓存版本", () => {

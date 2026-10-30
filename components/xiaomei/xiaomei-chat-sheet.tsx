@@ -26,6 +26,8 @@ export function XiaomeiChatSheet({
   onSend,
   onRetry,
   onClose,
+  onTyping,
+  onComposerNear,
 }: {
   messages: SheetMessage[];
   pending: boolean;
@@ -38,6 +40,10 @@ export function XiaomeiChatSheet({
   onSend: (text: string) => Promise<boolean>;
   onRetry: () => Promise<boolean>;
   onClose: () => void;
+  /** 用户还在打字。钉忙走另一只计时器，不在这里换脸。 */
+  onTyping?: () => void;
+  /** 指针或焦点靠近输入条。 */
+  onComposerNear?: (near: boolean) => void;
 }) {
   const [draft, setDraft] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -159,10 +165,19 @@ export function XiaomeiChatSheet({
       </div>
 
       <form
+        data-xiaomei-composer=""
         className="mt-2 flex items-center gap-2"
         onSubmit={(event) => {
           event.preventDefault();
           void submit();
+        }}
+        onPointerEnter={() => onComposerNear?.(true)}
+        onPointerLeave={() => onComposerNear?.(false)}
+        onFocus={() => onComposerNear?.(true)}
+        onBlur={(event) => {
+          const next = event.relatedTarget;
+          if (next instanceof Node && event.currentTarget.contains(next)) return;
+          onComposerNear?.(false);
         }}
       >
         <input
@@ -174,7 +189,10 @@ export function XiaomeiChatSheet({
           placeholder="想说就说嘛"
           disabled={pending}
           aria-label={`对${XIAOMEI_NAME}说`}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            onTyping?.();
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault();
           }}

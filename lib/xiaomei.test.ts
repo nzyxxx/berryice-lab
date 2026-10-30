@@ -120,6 +120,7 @@ import {
 import { XIAOMEI_ACTIVITY_POSES, XIAOMEI_ITEM_POSES, XIAOMEI_STAND_POSES } from "./xiaomei-faces.ts";
 import {
   classifyHitZone,
+  pointerEntersHitZone,
   clampPlace,
   defaultPlace,
   dockXiaomeiChat,
@@ -1055,6 +1056,9 @@ test("命中区头身上 40%，弹簧步进与松手估速可测", () => {
   assert.equal(classifyHitZone(100 * XIAOMEI_HIT_HEAD_RATIO, 100), "body");
   assert.equal(classifyHitZone(99, 100), "body");
   assert.equal(classifyHitZone(-5, 96), "head");
+  assert.equal(pointerEntersHitZone("pass"), false);
+  assert.equal(pointerEntersHitZone("click"), true);
+  assert.equal(pointerEntersHitZone("long-press"), true);
   const v0 = springStep(0, 0, 100, 1 / 60);
   assert.ok(v0 > 0);
   const v1 = springStep(v0, 10, 100, 1 / 60);

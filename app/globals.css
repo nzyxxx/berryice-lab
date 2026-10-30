@@ -640,6 +640,11 @@ html.home-motion [data-reveal].is-shown {
   transform-origin: 50% 82%;
 }
 
+/* 凝视：只过渡脸层/绕脚的 transform，不跟光标改坐标。 */
+.xiaomei-gaze {
+  transition: transform 180ms ease-out;
+}
+
 .xiaomei-ground {
   position: absolute;
   z-index: 0;
@@ -1778,6 +1783,7 @@ html.home-motion [data-reveal].is-shown {
 
 @media (prefers-reduced-motion: reduce) {
   .xiaomei-float,
+  .xiaomei-gaze,
   .xiaomei-glance,
   .xiaomei-caret,
   .xiaomei-ground,
