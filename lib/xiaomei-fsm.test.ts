@@ -18,8 +18,11 @@ import {
   resolveBaseKind,
   sceneBucket,
   sceneBucketAllowsIdleHappy,
+  quietChatCue,
   shouldCelebrate,
   shouldEnterSleep,
+  shouldStartCelebratePulse,
+  shouldSuppressIdleChatter,
   sleepPhaseFace,
   statePriorityOrder,
   underlayAfterOverlay,
@@ -162,6 +165,24 @@ test("真回合边沿庆祝：只在 thinking→done 成功边沿一次；取消
   assert.equal(edge.observe("error"), null);
   assert.equal(edge.observe("thinking"), null);
   assert.equal(edge.observe("done", { aborted: true }), null);
+});
+
+test("忙时闭嘴：思考不抽甜句、不挂音符；庆祝窗口不重开", () => {
+  assert.equal(shouldSuppressIdleChatter("thinking"), true);
+  assert.equal(shouldSuppressIdleChatter("done"), false);
+  assert.equal(shouldSuppressIdleChatter("error"), false);
+  assert.equal(shouldSuppressIdleChatter("idle"), false);
+
+  assert.equal(quietChatCue({ status: "thinking", celebrate: "cheer", chatOpen: true }), null);
+  assert.equal(quietChatCue({ status: "done", celebrate: "cheer", chatOpen: true }), "cheer");
+  assert.equal(quietChatCue({ status: "done", celebrate: null, chatOpen: true }), null);
+  assert.equal(quietChatCue({ status: "error", celebrate: null, chatOpen: true }), "sigh");
+  assert.equal(quietChatCue({ status: "idle", celebrate: "cheer", chatOpen: false }), "cheer");
+
+  assert.equal(shouldStartCelebratePulse("cheer", false), true);
+  assert.equal(shouldStartCelebratePulse("cheer", true), false);
+  assert.equal(shouldStartCelebratePulse(null, false), false);
+  assert.equal(shouldStartCelebratePulse(null, true), false);
 });
 
 test("场景桶钉脸钉词：thinking 不许开心 idle；done/error 各有池", () => {

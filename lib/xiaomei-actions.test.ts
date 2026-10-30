@@ -25,6 +25,7 @@ import {
   idleGapMs,
   nextIdleBeat,
   resolveXiaomeiFace,
+  xiaomeiChatCue,
   xiaomeiMotionClass,
   xiaomeiPropKind,
   type XiaomeiIdleBeat,
@@ -451,6 +452,33 @@ test("脸的优先级：聊天盖过引子，引子盖过台词；悬停不硬�
     }),
     "mood_thinking",
   );
+  assert.equal(
+    resolveXiaomeiFace({ ...base, chatOpen: true, status: "thinking", sleepPhase: "sleep" }),
+    "mood_thinking",
+  );
+  assert.equal(
+    resolveXiaomeiFace({
+      ...base,
+      chatOpen: true,
+      status: "thinking",
+      sleepPhase: "yawn",
+      poseFace: "pose_yawn",
+    }),
+    "mood_thinking",
+  );
+  assert.equal(
+    resolveXiaomeiFace({
+      ...base,
+      chatOpen: true,
+      status: "thinking",
+      sleepPhase: "wake",
+      poseFace: "pose_stretch",
+    }),
+    "pose_stretch",
+  );
+  assert.equal(xiaomeiChatCue(true, "thinking", "happy"), null);
+  assert.equal(xiaomeiChatCue(true, "done", "happy"), null);
+  assert.equal(xiaomeiChatCue(true, "error", "annoyed"), "sigh");
   assert.equal(
     resolveXiaomeiFace({ ...base, sleepPhase: "sleep", beatMood: "happy" }),
     "mood_sleepy",

@@ -397,16 +397,17 @@ export function xiaomeiCueKind(beat: XiaomeiIdleBeat | null): XiaomeiCueKind | n
   return null;
 }
 
-/** 聊天状态脸旁边的轻量记号。思考是音符，说完开心是欢呼，没接上是叹气。 */
+/**
+ * 聊天记号。忙时不挂音符。完成的欢呼只走边沿脉冲，这里不再为 done 给第二次。
+ */
 export function xiaomeiChatCue(
   chatOpen: boolean,
   status: "idle" | "thinking" | "done" | "error",
   replyMood: "happy" | "annoyed",
 ): XiaomeiCueKind | null {
-  if (!chatOpen || status === "idle") return null;
-  if (status === "thinking") return "note";
+  void replyMood;
+  if (!chatOpen || status === "idle" || status === "thinking" || status === "done") return null;
   if (status === "error") return "sigh";
-  if (status === "done") return replyMood === "happy" ? "cheer" : "sigh";
   return null;
 }
 
@@ -455,11 +456,12 @@ export function resolveXiaomeiFace(input: {
   sleepPhase?: "awake" | "yawn" | "blank" | "sleep" | "wake";
 }): XiaomeiFace {
   const phase = input.sleepPhase ?? "awake";
-  if (phase === "wake" || phase === "yawn") {
-    if (input.poseFace) return input.poseFace;
-  }
-  if (phase === "blank") return input.poseFace ?? "blank";
-  if (phase === "sleep") return input.poseFace ?? "mood_sleepy";
+  const busy = input.status === "thinking";
+  // 醒觉高于钉脸。忙的时候哈欠和睡脸让开，工作脸钉住。
+  if (phase === "wake" && input.poseFace) return input.poseFace;
+  if (!busy && phase === "yawn" && input.poseFace) return input.poseFace;
+  if (!busy && phase === "blank") return input.poseFace ?? "blank";
+  if (!busy && phase === "sleep") return input.poseFace ?? "mood_sleepy";
 
   // 短罩层：播完由调用方清 overlayActive，再解析时回到最新聊天/待机底座。
   if (input.overlayActive) {
@@ -467,6 +469,7 @@ export function resolveXiaomeiFace(input: {
     if (input.leadMood) return input.leadMood;
   }
 
+  if (busy) return "mood_thinking";
   if (input.chatOpen && input.status !== "idle") return xiaomeiChatFace(input.status, input.replyMood);
   if (input.poseFace) return input.poseFace;
   if (input.chatOpen) return "content";

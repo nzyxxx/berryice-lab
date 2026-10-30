@@ -1,9 +1,10 @@
 "use client";
 
 import { isXiaomeiJailbreak, moodAfterReply, pullSseEvents, type XiaomeiChatTurn } from "@/lib/xiaomei-chat";
-import { createCelebrateEdge, sceneBucket } from "@/lib/xiaomei-fsm";
+import { createCelebrateEdge, sceneBucket, shouldStartCelebratePulse } from "@/lib/xiaomei-fsm";
 import { pickXiaomeiLine, XIAOMEI_SCENE_PIN_MS } from "@/lib/xiaomei-lines";
 import { readXiaomeiMemory, rememberThread, writeXiaomeiMemory } from "@/lib/xiaomei-memory";
+import { readXiaomeiNapkin } from "@/lib/xiaomei-napkin";
 import { XIAOMEI_METER_DEFAULT } from "@/lib/xiaomei-meters";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -71,36 +72,48 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
   const pinStatus = useCallback(
     (next: "thinking" | "done" | "error", opts?: { aborted?: boolean; replyMood?: "happy" | "annoyed" }) => {
       clearFaceTimer();
-      clearPulseTimer();
-      // Round2 Knife B：场景桶钉词；thinking 不抽 idle 开心句。
       const bucket = sceneBucket(next, opts?.replyMood ?? "happy");
-      const text = pickXiaomeiLine(bucket.lines, sceneLineRef.current ?? undefined);
-      sceneLineRef.current = text;
-      setSceneLine(text);
       const pulse = celebrateEdge.current.observe(next, {
         aborted: opts?.aborted ?? abortedRef.current,
         replyMood: opts?.replyMood,
       });
-      // 脉冲窗口未结束不叠第二下，避免 cue class 连闪。
-      if (pulse && pulseTimer.current == null) {
+      // 忙时闭嘴：钉工作脸，不抽甜句，并清掉上一轮还在播的脉冲。
+      if (next === "thinking") {
+        clearPulseTimer();
+        setCelebratePulse(null);
+        sceneLineRef.current = null;
+        setSceneLine(null);
+        setStatus("thinking");
+        abortedRef.current = false;
+        return;
+      }
+      if (next === "error") {
+        clearPulseTimer();
+        setCelebratePulse(null);
+        const text = pickXiaomeiLine(bucket.lines, sceneLineRef.current ?? undefined);
+        sceneLineRef.current = text;
+        setSceneLine(text);
+      } else {
+        // done：不另抽甜句。庆祝只走边沿那一次。
+        sceneLineRef.current = null;
+        setSceneLine(null);
+      }
+      // 先清计时器会让「窗口未结束」永远为假，脉冲会重开。这里窗口还在就不重启。
+      if (shouldStartCelebratePulse(pulse, pulseTimer.current != null)) {
         setCelebratePulse(pulse);
         pulseTimer.current = window.setTimeout(() => {
           pulseTimer.current = null;
           setCelebratePulse(null);
         }, XIAOMEI_SCENE_PIN_MS);
-      } else if (!pulse) {
+      } else if (!pulse && pulseTimer.current == null) {
         setCelebratePulse(null);
       }
       setStatus(next);
-      if (next === "thinking") {
-        abortedRef.current = false;
-        return;
-      }
       faceTimer.current = window.setTimeout(() => {
         faceTimer.current = null;
         sceneLineRef.current = null;
         setSceneLine(null);
-        setCelebratePulse(null);
+        if (pulseTimer.current == null) setCelebratePulse(null);
         setStatus("idle");
         celebrateEdge.current.observe("idle");
       }, XIAOMEI_SCENE_PIN_MS);
@@ -179,6 +192,7 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
               topics: stored.topics,
             };
           })(),
+          napkin: readXiaomeiNapkin(),
         }),
         signal: controller.signal,
       });

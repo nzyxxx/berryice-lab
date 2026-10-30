@@ -68,7 +68,8 @@ import {
   xiaomeiPopoverOffsetStyle,
   xiaomeiVisibleView,
 } from "@/lib/xiaomei-place";
-import { placeBubbleBox } from "@/lib/xiaomei-fsm";
+import { placeBubbleBox, quietChatCue, shouldSuppressIdleChatter } from "@/lib/xiaomei-fsm";
+import { readXiaomeiNapkin, writeXiaomeiNapkin, type XiaomeiNapkin } from "@/lib/xiaomei-napkin";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
@@ -260,6 +261,8 @@ export function XiaomeiCompanion() {
   const [chatOpen, setChatOpen] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [memoryRecord, setMemoryRecord] = useState<XiaomeiMemoryRecord | null>(null);
+  const [napkin, setNapkin] = useState<XiaomeiNapkin | null>(null);
+  const [napkinBusy, setNapkinBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const muted = useSyncExternalStore(subscribeMute, readMuted, () => false);
   const [speech, setSpeech] = useState<Speech | null>(null);
@@ -274,6 +277,8 @@ export function XiaomeiCompanion() {
   const memoryOpenRef = useRef(false);
   const memoryRecordRef = useRef<XiaomeiMemoryRecord | null>(null);
   const forgetLock = useRef(false);
+  const napkinLock = useRef(false);
+  const statusRef = useRef(chat.status);
   const spriteRef = useRef<HTMLButtonElement>(null);
   const mutedRef = useRef(false);
   const speechRef = useRef<Speech | null>(null);
@@ -289,9 +294,11 @@ export function XiaomeiCompanion() {
     memoryRecordRef.current = memoryRecord;
     mutedRef.current = muted;
     speechRef.current = speech;
+    statusRef.current = chat.status;
   });
 
   const speak = useCallback((mood: XiaomeiMood, text: string, source: Speech["source"]) => {
+    if (shouldSuppressIdleChatter(statusRef.current)) return;
     pinSource.current = source;
     setMoodPin(mood);
     if (mutedRef.current) {
@@ -303,6 +310,7 @@ export function XiaomeiCompanion() {
 
   const onTap = useCallback((zone: XiaomeiHitZone) => {
     noteInteractionRef.current();
+    if (shouldSuppressIdleChatter(statusRef.current)) return;
     if (chatOpenRef.current || menuOpenRef.current) return;
     setSquashPulse((n) => n + 1);
     const now = Date.now();
@@ -367,10 +375,20 @@ export function XiaomeiCompanion() {
     allowPeek: !chatOpen && !menuOpen && !memoryOpen,
   });
   const presence = useXiaomeiPresence({
-    enabled: place.ready && !place.hidden && !chatOpen && !menuOpen && !memoryOpen,
+    enabled:
+      place.ready &&
+      !place.hidden &&
+      !chatOpen &&
+      !menuOpen &&
+      !memoryOpen &&
+      !shouldSuppressIdleChatter(chat.status),
     hungry: isXiaomeiHungry(meters.meters.fullness),
     paused: () =>
-      speechRef.current != null || chatOpenRef.current || menuOpenRef.current || memoryOpenRef.current,
+      speechRef.current != null ||
+      chatOpenRef.current ||
+      menuOpenRef.current ||
+      memoryOpenRef.current ||
+      shouldSuppressIdleChatter(statusRef.current),
   });
 
   useEffect(() => {
@@ -391,6 +409,7 @@ export function XiaomeiCompanion() {
     if (!place.ready || place.hidden || muted) return;
     const id = window.setTimeout(() => {
       if (
+        shouldSuppressIdleChatter(statusRef.current) ||
         chatOpenRef.current ||
         menuOpenRef.current ||
         memoryOpenRef.current ||
@@ -413,6 +432,13 @@ export function XiaomeiCompanion() {
     }, 900);
     return () => window.clearTimeout(id);
   }, [muted, place.hidden, place.ready, presence.playGreet]);
+
+  useEffect(() => {
+    if (!shouldSuppressIdleChatter(chat.status)) return;
+    pinSource.current = null;
+    setSpeech(null);
+    setMoodPin(null);
+  }, [chat.status]);
 
   useEffect(() => {
     if (!moodPin || speech?.source === "hover") return;
@@ -486,6 +512,7 @@ export function XiaomeiCompanion() {
     const record = readXiaomeiMemory();
     memoryRecordRef.current = record;
     setMemoryRecord(record);
+    setNapkin(readXiaomeiNapkin());
     setMenuOpen(false);
     setChatOpen(false);
     chat.stop();
@@ -509,6 +536,18 @@ export function XiaomeiCompanion() {
       setMemoryRecord(next);
     } finally {
       forgetLock.current = false;
+    }
+  }, []);
+
+  const saveNapkin = useCallback((next: XiaomeiNapkin) => {
+    if (napkinLock.current) return;
+    napkinLock.current = true;
+    setNapkinBusy(true);
+    try {
+      setNapkin(writeXiaomeiNapkin(next));
+    } finally {
+      napkinLock.current = false;
+      setNapkinBusy(false);
     }
   }, []);
 
@@ -542,14 +581,12 @@ export function XiaomeiCompanion() {
     );
   }
 
-  // 真回合边沿庆祝：仅 celebratePulse；thinking 仍用 note；error 用 sigh。重复 done 不 cheer。
-  const chatCue =
-    chat.celebratePulse ??
-    (chatOpen && chat.status === "thinking"
-      ? ("note" as const)
-      : chatOpen && chat.status === "error"
-        ? ("sigh" as const)
-        : null);
+  // 忙时闭嘴钉工作脸：不挂音符。完成只播边沿那一次，不因为 done 再叠一记。
+  const chatCue = quietChatCue({
+    status: chat.status,
+    celebrate: chat.celebratePulse,
+    chatOpen,
+  });
   const overlayActive = Boolean(presence.lead) && !place.dragging;
   const face = resolveXiaomeiFace({
     chatOpen,
@@ -653,6 +690,7 @@ export function XiaomeiCompanion() {
         place.onEnter();
         const currentSpeech = speechRef.current;
         if (
+          !shouldSuppressIdleChatter(chat.status) &&
           !chatOpenRef.current &&
           !menuOpenRef.current &&
           !memoryOpenRef.current &&
@@ -728,16 +766,20 @@ export function XiaomeiCompanion() {
         />
       ) : null}
 
-      {memoryOpen && memoryRecord ? (
+      {memoryOpen && memoryRecord && napkin ? (
         <XiaomeiMemorySheet
           facts={memoryView.facts}
           events={memoryView.events}
+          napkin={napkin}
+          userName={memoryRecord.userName}
+          savingNapkin={napkinBusy}
           align={align}
           placement={placement}
           shiftX={pop.shiftX}
           shiftY={pop.shiftY}
           maxHeight={pop.maxHeight}
           onForget={forgetNote}
+          onSaveNapkin={saveNapkin}
           onClose={closeMemory}
         />
       ) : null}

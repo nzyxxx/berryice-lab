@@ -2,11 +2,17 @@
 
 import { trapTab } from "@/components/xiaomei/trap-tab";
 import { xiaomeiWhisperClass } from "@/components/xiaomei/xiaomei-surface";
-import type { XiaomeiMemoryNote } from "@/lib/xiaomei-memory";
+import { plainMemoryLine, type XiaomeiMemoryNote } from "@/lib/xiaomei-memory";
+import {
+  napkinPlainLines,
+  XIAOMEI_NAPKIN_ADDRESS_CHARS,
+  XIAOMEI_NAPKIN_CHARS,
+  type XiaomeiNapkin,
+} from "@/lib/xiaomei-napkin";
 import { xiaomeiPopoverOffsetStyle } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const KIND_LABEL: Record<XiaomeiMemoryNote["kind"], string> = {
   nickname: "称呼",
@@ -36,7 +42,7 @@ function NoteList({
         return (
           <li key={note.summary} className="flex items-center gap-2 rounded-xl px-1 py-0.5">
             <div className="min-w-0 flex-1">
-              <p className="break-words text-[13px] leading-relaxed text-lab-ink">{note.summary}</p>
+              <p className="break-words text-[13px] leading-relaxed text-lab-ink">{plainMemoryLine(note.summary)}</p>
               <p className="text-[11px] leading-4 text-lab-ink-subtle">
                 {KIND_LABEL[note.kind]}
                 {day ? ` · ${day}` : ""}
@@ -57,34 +63,53 @@ function NoteList({
   );
 }
 
+const FIELD =
+  "mt-1 h-11 w-full rounded-xl border border-white/15 bg-white/[0.06] px-3 text-[13px] text-lab-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40";
+
 /**
- * 只读。列出这台浏览器里的永久事实和最近的事，一次只能忘掉一条。
- * 不写账号，也不在这里改句子。
+ * 只读列出这台浏览器里的手记、永久事实和最近的事。
+ * 手记改完交给外面记下。一次只能忘掉一条。不写账号。
  */
 export function XiaomeiMemorySheet({
   facts,
   events,
+  napkin,
+  userName,
+  savingNapkin,
   align,
   placement,
   shiftX = 0,
   shiftY = 0,
   maxHeight,
   onForget,
+  onSaveNapkin,
   onClose,
 }: {
   facts: readonly XiaomeiMemoryNote[];
   events: readonly XiaomeiMemoryNote[];
+  napkin: XiaomeiNapkin;
+  userName: string;
+  savingNapkin: boolean;
   align: "left" | "right";
   placement: "up" | "down";
   shiftX?: number;
   shiftY?: number;
   maxHeight?: number;
   onForget: (summary: string) => void;
+  onSaveNapkin: (next: XiaomeiNapkin) => void;
   onClose: () => void;
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(napkin);
   const empty = facts.length === 0 && events.length === 0;
+  const lines = napkinPlainLines(napkin, userName);
+
+  useEffect(() => {
+    if (editing) return;
+    setDraft(napkin);
+  }, [editing, napkin]);
 
   useEffect(() => {
     const root = sectionRef.current;
@@ -130,8 +155,93 @@ export function XiaomeiMemorySheet({
         </button>
       </div>
 
+      <div className="mb-3 rounded-xl px-1">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <p className="text-[11px] text-lab-ink-subtle">开工手记</p>
+          {editing ? null : (
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(napkin);
+                setEditing(true);
+              }}
+              className="h-11 rounded-full px-3 text-sm text-lab-ink-subtle hover:text-lab-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
+            >
+              改一下
+            </button>
+          )}
+        </div>
+        {editing ? (
+          <form
+            className="space-y-2 pb-1"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (savingNapkin) return;
+              onSaveNapkin(draft);
+              setEditing(false);
+            }}
+          >
+            <label className="block">
+              <span className="text-[11px] text-lab-ink-subtle">称呼</span>
+              <input
+                value={draft.address}
+                maxLength={XIAOMEI_NAPKIN_ADDRESS_CHARS}
+                autoComplete="off"
+                className={FIELD}
+                onChange={(event) => setDraft((current) => ({ ...current, address: event.target.value }))}
+              />
+            </label>
+            <label className="block">
+              <span className="text-[11px] text-lab-ink-subtle">站规</span>
+              <input
+                value={draft.redLines}
+                maxLength={XIAOMEI_NAPKIN_CHARS}
+                autoComplete="off"
+                className={FIELD}
+                onChange={(event) => setDraft((current) => ({ ...current, redLines: event.target.value }))}
+              />
+            </label>
+            <label className="block">
+              <span className="text-[11px] text-lab-ink-subtle">上次坑</span>
+              <input
+                value={draft.lastPit}
+                maxLength={XIAOMEI_NAPKIN_CHARS}
+                autoComplete="off"
+                className={FIELD}
+                onChange={(event) => setDraft((current) => ({ ...current, lastPit: event.target.value }))}
+              />
+            </label>
+            <label className="block">
+              <span className="text-[11px] text-lab-ink-subtle">不喜欢</span>
+              <input
+                value={draft.dislike}
+                maxLength={XIAOMEI_NAPKIN_CHARS}
+                autoComplete="off"
+                className={FIELD}
+                onChange={(event) => setDraft((current) => ({ ...current, dislike: event.target.value }))}
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={savingNapkin}
+              className="h-11 rounded-full border border-white/15 bg-white/[0.06] px-3 text-sm text-lab-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40 disabled:opacity-50"
+            >
+              记下
+            </button>
+          </form>
+        ) : (
+          <ul className="space-y-1 pb-1">
+            {lines.map((line) => (
+              <li key={line} className="text-[13px] leading-relaxed text-lab-ink">
+                {line}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {empty ? (
-        <p className="pb-2 text-[13px] leading-relaxed text-lab-ink-subtle">还没记住什么。跟她说说话就好。</p>
+        <p className="pb-2 text-[13px] leading-relaxed text-lab-ink-subtle">聊天里还没记下别的。跟她说说话就好。</p>
       ) : (
         <div className="space-y-3 pb-1">
           {facts.length > 0 ? (
