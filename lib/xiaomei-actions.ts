@@ -475,6 +475,8 @@ export function resolveXiaomeiFace(input: {
   if (input.moodPin) return input.moodPin;
   if (input.beatMood) return input.beatMood;
   if (input.blinkFace) return input.blinkFace;
-  if (input.hover) return "annoyed";
+  // hover 不再硬切 annoyed 全身：悬停反应走 flashClick 引子；
+  // 否则悬停时眨眼会在 volume 分层与旧全身之间来回切，看起来不停闪。
+  void input.hover;
   return "blink_open";
 }
