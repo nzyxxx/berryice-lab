@@ -374,7 +374,7 @@ test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () =>
   }
 });
 
-test("脸的优先级：聊天盖过引子，引子盖过台词，待机拍盖过悬浮", () => {
+test("脸的优先级：聊天盖过引子，引子盖过台词；悬停不硬切全身", () => {
   const base = {
     chatOpen: false,
     status: "idle" as const,
@@ -386,7 +386,8 @@ test("脸的优先级：聊天盖过引子，引子盖过台词，待机拍盖�
     hover: false,
   };
   assert.equal(resolveXiaomeiFace(base), "blink_open");
-  assert.equal(resolveXiaomeiFace({ ...base, hover: true }), "annoyed");
+  // hover 不再整身切 annoyed（会与分层眨眼互闪）；悬停表情靠 lead/flashClick。
+  assert.equal(resolveXiaomeiFace({ ...base, hover: true }), "blink_open");
   assert.equal(resolveXiaomeiFace({ ...base, hover: true, beatMood: "blank" }), "blank");
   assert.equal(resolveXiaomeiFace({ ...base, beatMood: "happy", moodPin: "sad" }), "sad");
   assert.equal(resolveXiaomeiFace({ ...base, moodPin: "sad", speechMood: "content" }), "content");
@@ -496,6 +497,9 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   assert.match(css, /scale\(1\.02, 0\.96\)/);
   assert.match(css, /\.xiaomei-activity-soft\s*\{[^}]*animation:\s*xiaomei-activity-soft/);
   assert.match(css, /xiaomei-crossfade-in 90ms/);
+  assert.match(css, /xiaomei-crossfade-out 90ms/);
+  assert.match(css, /\.xiaomei-stack-face\.is-active/);
+  assert.match(css, /\.xiaomei-stack-face\.is-idle/);
   assert.match(css, /\.xiaomei-ground-walk\s*\{[^}]*animation:\s*xiaomei-ground-walk 2\.4s/);
   assert.match(css, /\.xiaomei-prop-cup\s*\{[^}]*width:\s*22px/);
   assert.match(css, /\.xiaomei-prop-snack\s*\{[^}]*width:\s*22px/);
