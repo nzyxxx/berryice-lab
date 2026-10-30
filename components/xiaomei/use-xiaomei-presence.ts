@@ -23,10 +23,22 @@ import {
 } from "@/lib/xiaomei-actions";
 import type { XiaomeiFace } from "@/lib/xiaomei-faces";
 import type { XiaomeiMood } from "@/lib/xiaomei-lines";
+import {
+  XIAOMEI_SLEEP_AFTER_MS,
+  XIAOMEI_SLEEP_BLANK_MS,
+  XIAOMEI_SLEEP_YAWN_MS,
+  XIAOMEI_WAKE_MS,
+  isVisuallySleeping,
+  shouldEnterSleep,
+  sleepPhaseFace,
+  wakeFromInteraction,
+  type XiaomeiSleepPhase,
+} from "@/lib/xiaomei-fsm";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * 待机拍、眨眼和点击/投喂的引子脸。只排 setTimeout，不挂 rAF。
+ * Round3：久闲入睡三连（哈欠→空白→困脸呼吸）；任意交互重置 idleSince，睡着先醒再回底座。
  * 聊天、菜单、记忆打开时停掉下一拍。台词还在时不新开一拍，但喝水姿势可以盖过台词。
  * 进场招呼先招手再鞠躬，盖过这句的脸，短于台词。喝水和喂食进行中不打断。
  * 转圈三帧、散步左右换步都走姿势脸。不压扁，也不把右脚镜像成左脚。
@@ -39,6 +51,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
   const [lead, setLead] = useState<XiaomeiFace | null>(null);
   const [blinkFace, setBlinkFace] = useState<XiaomeiFace | null>(null);
   const [poseFace, setPoseFace] = useState<XiaomeiFace | null>(null);
+  const [sleepPhase, setSleepPhase] = useState<XiaomeiSleepPhase>("awake");
   const [shown, setShown] = useState(options.enabled);
   if (options.enabled !== shown) {
     setShown(options.enabled);
@@ -48,6 +61,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
       setLead(null);
       setBlinkFace(null);
       setPoseFace(null);
+      setSleepPhase("awake");
     }
   }
 
@@ -62,6 +76,10 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
   const lastRef = useRef<XiaomeiIdleBeat | null>(null);
   const activeRef = useRef(false);
   const forcedRef = useRef(false);
+  const idleSinceRef = useRef(typeof performance !== "undefined" ? performance.now() : Date.now());
+  const sleepPhaseRef = useRef<XiaomeiSleepPhase>("awake");
+  const sleepTimer = useRef(0);
+  const sleepWatch = useRef(0);
 
   const clearBeatTimers = useCallback(() => {
     for (const id of beatTimers.current) window.clearTimeout(id);
@@ -88,8 +106,11 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     clearLeadTimer();
     clearBlink();
     window.clearTimeout(blinkArm.current);
+    window.clearTimeout(sleepTimer.current);
     activeRef.current = false;
     forcedRef.current = false;
+    sleepPhaseRef.current = "awake";
+    setSleepPhase("awake");
     setBeat(null);
     setBeatMood(null);
     setLead(null);
@@ -242,8 +263,103 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     );
   }, [clearBeatTimers, clearBlink, clearLeadTimer]);
 
+  const applySleepFace = useCallback((phase: XiaomeiSleepPhase) => {
+    sleepPhaseRef.current = phase;
+    setSleepPhase(phase);
+    const face = sleepPhaseFace(phase);
+    if (phase === "sleep") {
+      setBeat(null);
+      setBeatMood(null);
+      setLead(null);
+      setPoseFace(face);
+      return;
+    }
+    if (phase === "blank") {
+      setBeat(null);
+      setBeatMood(face);
+      setPoseFace(null);
+      return;
+    }
+    if (phase === "yawn") {
+      setBeat("yawn");
+      setBeatMood(null);
+      setPoseFace(face);
+      return;
+    }
+    if (phase === "wake") {
+      setBeat("stretch");
+      setBeatMood(null);
+      setPoseFace(face);
+      return;
+    }
+    setBeat(null);
+    setBeatMood(null);
+    setPoseFace(null);
+  }, []);
+
+  const playWake = useCallback(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      applySleepFace("awake");
+      return;
+    }
+    clearBlink();
+    clearBeatTimers();
+    clearLeadTimer();
+    window.clearTimeout(sleepTimer.current);
+    activeRef.current = true;
+    forcedRef.current = true;
+    applySleepFace("wake");
+    sleepTimer.current = window.setTimeout(() => {
+      activeRef.current = false;
+      forcedRef.current = false;
+      applySleepFace("awake");
+    }, XIAOMEI_WAKE_MS);
+  }, [applySleepFace, clearBeatTimers, clearBlink, clearLeadTimer]);
+
+  const beginSleep = useCallback(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (pausedRef.current() || activeRef.current || forcedRef.current) return;
+    if (sleepPhaseRef.current !== "awake") return;
+    clearBlink();
+    clearBeatTimers();
+    clearLeadTimer();
+    window.clearTimeout(sleepTimer.current);
+    activeRef.current = true;
+    forcedRef.current = true;
+    applySleepFace("yawn");
+    sleepTimer.current = window.setTimeout(() => {
+      applySleepFace("blank");
+      sleepTimer.current = window.setTimeout(() => {
+        activeRef.current = false;
+        forcedRef.current = false;
+        applySleepFace("sleep");
+      }, XIAOMEI_SLEEP_BLANK_MS);
+    }, XIAOMEI_SLEEP_YAWN_MS);
+  }, [applySleepFace, clearBeatTimers, clearBlink, clearLeadTimer]);
+
+  /** 任意交互：重置空闲；睡着则先播醒再回底座。 */
+  const noteInteraction = useCallback(() => {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    idleSinceRef.current = now;
+    const decision = wakeFromInteraction({
+      visuallySleeping: isVisuallySleeping(sleepPhaseRef.current),
+    });
+    if (decision.wake) {
+      playWake();
+      return;
+    }
+    if (sleepPhaseRef.current === "wake") return;
+    if (sleepPhaseRef.current !== "awake") {
+      window.clearTimeout(sleepTimer.current);
+      activeRef.current = false;
+      forcedRef.current = false;
+      applySleepFace("awake");
+    }
+  }, [applySleepFace, playWake]);
+
   const beginIdle = useCallback(
     (next: XiaomeiIdleBeat) => {
+      if (isVisuallySleeping(sleepPhaseRef.current) || sleepPhaseRef.current === "wake") return;
       clearBlink();
       if (next === "drink") {
         startDrink();
@@ -348,11 +464,17 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
       window.clearTimeout(blinkArm.current);
       blinkArm.current = window.setTimeout(() => {
         if (cancelled || pausedRef.current() || activeRef.current || forcedRef.current) return;
+        if (isVisuallySleeping(sleepPhaseRef.current) || sleepPhaseRef.current === "wake") return;
         startBlink();
       }, 480 + Math.round(Math.random() * 900));
       gapTimer.current = window.setTimeout(() => {
         if (cancelled) return;
-        if (!pausedRef.current() && !activeRef.current && !forcedRef.current) {
+        if (
+          !pausedRef.current() &&
+          !activeRef.current &&
+          !forcedRef.current &&
+          sleepPhaseRef.current === "awake"
+        ) {
           beginIdle(nextIdleBeat(Math.random(), lastRef.current, hungryRef.current));
         }
         loop();
@@ -366,10 +488,39 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     };
   }, [beginIdle, options.enabled, startBlink]);
 
+  // 久闲入睡看守：周期性检查 idleSince，到期走哈欠→空白→睡。
+  useEffect(() => {
+    if (!options.enabled) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    idleSinceRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const tick = () => {
+      const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+      if (
+        shouldEnterSleep({
+          idleSince: idleSinceRef.current,
+          now,
+          sleepPhase: sleepPhaseRef.current,
+          reducedMotion: false,
+          chatPinned: pausedRef.current(),
+        })
+      ) {
+        beginSleep();
+      }
+      sleepWatch.current = window.setTimeout(tick, 4000);
+    };
+    sleepWatch.current = window.setTimeout(tick, 4000);
+    return () => {
+      window.clearTimeout(sleepWatch.current);
+      window.clearTimeout(sleepTimer.current);
+    };
+  }, [beginSleep, options.enabled]);
+
   useEffect(
     () => () => {
       window.clearTimeout(gapTimer.current);
       window.clearTimeout(blinkArm.current);
+      window.clearTimeout(sleepTimer.current);
+      window.clearTimeout(sleepWatch.current);
       clearBeatTimers();
       clearBlinkTimers();
       clearLeadTimer();
@@ -383,10 +534,12 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     lead,
     blinkFace,
     poseFace,
+    sleepPhase,
     flashClick,
     playFeed,
     playDrink: startDrink,
     playGreet,
+    noteInteraction,
     clear: stopVisual,
   };
 }

@@ -38,7 +38,6 @@ import {
 } from "@/lib/xiaomei-lines";
 import {
   resolveXiaomeiFace,
-  xiaomeiChatCue,
   xiaomeiCueKind,
   xiaomeiMotionClass,
   xiaomeiPropKind,
@@ -69,6 +68,7 @@ import {
   xiaomeiPopoverOffsetStyle,
   xiaomeiVisibleView,
 } from "@/lib/xiaomei-place";
+import { placeBubbleBox } from "@/lib/xiaomei-fsm";
 import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
@@ -278,6 +278,7 @@ export function XiaomeiCompanion() {
   const mutedRef = useRef(false);
   const speechRef = useRef<Speech | null>(null);
   const flashClickRef = useRef<(mood: XiaomeiMood, context?: "click" | "pet" | "mutter") => void>(() => {});
+  const noteInteractionRef = useRef<() => void>(() => {});
   const taps = useRef<number[]>([]);
   const pinSource = useRef<Speech["source"] | null>(null);
 
@@ -301,6 +302,7 @@ export function XiaomeiCompanion() {
   }, []);
 
   const onTap = useCallback((zone: XiaomeiHitZone) => {
+    noteInteractionRef.current();
     if (chatOpenRef.current || menuOpenRef.current) return;
     setSquashPulse((n) => n + 1);
     const now = Date.now();
@@ -349,6 +351,7 @@ export function XiaomeiCompanion() {
   }, [meters, speak]);
 
   const openMenu = useCallback(() => {
+    noteInteractionRef.current();
     markHintSeen();
     setMemoryOpen(false);
     setMenuOpen(true);
@@ -357,7 +360,10 @@ export function XiaomeiCompanion() {
   const place = useXiaomeiPlace({
     onTap,
     onHold: openMenu,
-    onDragStart: () => setMenuOpen(false),
+    onDragStart: () => {
+      noteInteractionRef.current();
+      setMenuOpen(false);
+    },
     allowPeek: !chatOpen && !menuOpen && !memoryOpen,
   });
   const presence = useXiaomeiPresence({
@@ -378,6 +384,7 @@ export function XiaomeiCompanion() {
 
   useEffect(() => {
     flashClickRef.current = presence.flashClick;
+    noteInteractionRef.current = presence.noteInteraction;
   });
 
   useEffect(() => {
@@ -465,6 +472,7 @@ export function XiaomeiCompanion() {
   }, [chatOpen, closeChat, memoryOpen, menuOpen]);
 
   const openChat = useCallback(() => {
+    noteInteractionRef.current();
     markHintSeen();
     setMenuOpen(false);
     setMemoryOpen(false);
@@ -534,7 +542,15 @@ export function XiaomeiCompanion() {
     );
   }
 
-  const chatCue = xiaomeiChatCue(chatOpen, chat.status, chat.replyMood);
+  // 真回合边沿庆祝：仅 celebratePulse；thinking 仍用 note；error 用 sigh。重复 done 不 cheer。
+  const chatCue =
+    chat.celebratePulse ??
+    (chatOpen && chat.status === "thinking"
+      ? ("note" as const)
+      : chatOpen && chat.status === "error"
+        ? ("sigh" as const)
+        : null);
+  const overlayActive = Boolean(presence.lead) && !place.dragging;
   const face = resolveXiaomeiFace({
     chatOpen,
     status: chat.status,
@@ -546,6 +562,8 @@ export function XiaomeiCompanion() {
     poseFace: presence.poseFace,
     blinkFace: presence.blinkFace,
     hover: hover && !memoryOpen,
+    overlayActive,
+    sleepPhase: presence.sleepPhase,
   });
   const showSpeech = speech && !chatOpen && !menuOpen && !memoryOpen && !muted;
   const peekApplied = chatOpen || menuOpen || memoryOpen ? null : place.peek;
@@ -590,10 +608,21 @@ export function XiaomeiCompanion() {
           ? XIAOMEI_SPEECH_PANEL
           : XIAOMEI_HINT_PANEL;
   const pop = placeXiaomeiPopover({ anchor, view, panel });
-  const align = pop.align;
-  const placement = pop.placement;
   const roomAbove = Math.max(0, anchor.y - (view.top + view.safeTop + 8));
   const roomBelow = Math.max(0, view.top + view.height - view.safeBottom - 8 - anchor.y - anchor.height);
+  // 说话气泡变高只翻上下，不改 place.pos（角色坐标不动）。
+  const speechBubble = showSpeech
+    ? placeBubbleBox({
+        spaceAbove: roomAbove,
+        spaceBelow: roomBelow,
+        bubbleHeight: Math.min(
+          XIAOMEI_SPEECH_PANEL.height,
+          Math.max(40, Math.ceil((speech?.text.length ?? 0) / 14) * 22 + 24),
+        ),
+      })
+    : null;
+  const align = pop.align;
+  const placement = speechBubble && !menuOpen && !memoryOpen && !chatOpen ? speechBubble.placement : pop.placement;
   const dock = dockXiaomeiChat({
     y: place.pos.y,
     boxHeight: place.box.height,
@@ -619,6 +648,7 @@ export function XiaomeiCompanion() {
         transition: place.dragging ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
       }}
       onPointerEnter={() => {
+        noteInteractionRef.current();
         setHover(true);
         place.onEnter();
         const currentSpeech = speechRef.current;
@@ -782,9 +812,17 @@ export function XiaomeiCompanion() {
         <XiaomeiStage
           mood={face}
           motionClass={
-            chatCue
-              ? xiaomeiMotionClass(chatCue, place.dragging)
-              : xiaomeiMotionClass(presence.beat, place.dragging)
+            place.dragging
+              ? null
+              : presence.sleepPhase === "sleep"
+                ? "xiaomei-float"
+                : presence.sleepPhase === "wake"
+                  ? xiaomeiMotionClass("stretch", false)
+                  : presence.sleepPhase === "yawn"
+                    ? xiaomeiMotionClass("yawn", false)
+                    : chatCue
+                      ? xiaomeiMotionClass(chatCue, false)
+                      : xiaomeiMotionClass(presence.beat, false)
           }
           prop={xiaomeiPropKind(presence.beat)}
           pose={xiaomeiPropPose(presence.beat)}
