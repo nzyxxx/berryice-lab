@@ -175,6 +175,14 @@ test("冷却没到、被挡住、或思考中，环境碎碎念不出声", () =>
   const home = nextAmbientChatter({ ...ready, status: "idle", pathname: "/" });
   assert.ok(home);
   assert.equal(home.bucket, "idle");
+
+  const dnd = nextAmbientChatter({ ...ready, status: "idle", pathname: "/", dnd: true });
+  assert.equal(dnd, null);
+  const dndBack = nextAmbientChatter({ ...ready, status: "done", pathname: "/about", reawaken: true, dnd: true });
+  assert.equal(dndBack, null);
+  const dndOff = nextAmbientChatter({ ...ready, status: "idle", pathname: "/", dnd: false });
+  assert.ok(dndOff);
+  assert.equal(dndOff.bucket, "idle");
   assert.ok(XIAOMEI_MUTTER_LINES.some((line) => line.text === home.line.text));
 
   const wikiTexts = new Set(XIAOMEI_PAGE_MUTTER_LINES.wiki.map((line) => line.text));

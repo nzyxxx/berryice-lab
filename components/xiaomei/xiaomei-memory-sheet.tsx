@@ -67,7 +67,7 @@ const FIELD =
   "mt-1 h-11 w-full rounded-xl border border-white/15 bg-white/[0.06] px-3 text-[13px] text-lab-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40";
 
 /**
- * 只读列出这台浏览器里的手记、永久事实和最近的事。
+ * 只读列出这台浏览器里的共同经历、手记、永久事实和最近的事。
  * 手记改完交给外面记下。一次只能忘掉一条。不写账号。
  */
 export function XiaomeiMemorySheet({
@@ -75,6 +75,7 @@ export function XiaomeiMemorySheet({
   events,
   napkin,
   userName,
+  sharedMoment,
   savingNapkin,
   align,
   placement,
@@ -89,6 +90,8 @@ export function XiaomeiMemorySheet({
   events: readonly XiaomeiMemoryNote[];
   napkin: XiaomeiNapkin;
   userName: string;
+  /** 最近一条共同经历。没有就 null，抽屉自己说还没有。 */
+  sharedMoment: string | null;
   savingNapkin: boolean;
   align: "left" | "right";
   placement: "up" | "down";
@@ -153,6 +156,13 @@ export function XiaomeiMemorySheet({
         >
           <X className="size-4" />
         </button>
+      </div>
+
+      <div className="mb-3 px-1">
+        <p className="text-[11px] text-lab-ink-subtle">一起经历</p>
+        <p data-xiaomei-moment="" className="mt-1 break-words text-[13px] leading-relaxed text-lab-ink">
+          {sharedMoment ?? "还没有。跟她说一句，这里会留一句。"}
+        </p>
       </div>
 
       <div className="mb-3 rounded-xl px-1">

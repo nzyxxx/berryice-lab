@@ -129,7 +129,10 @@ export function nextAmbientChatter(input: {
   avoid?: string;
   tone?: XiaomeiTone;
   minGapMs?: number;
+  /** 免打扰。只压这次环境碎碎念，不改忙时闭嘴，也不挡用户点开的聊天。 */
+  dnd?: boolean;
 }): AmbientChatter | null {
+  if (input.dnd === true) return null;
   const minGapMs = input.minGapMs ?? XIAOMEI_CHATTER_GAP_MS.min;
   if (!canChatter({ now: input.now, lastAt: input.lastAt, minGapMs, blocked: input.blocked })) return null;
   const route = resolveChatterBucket({

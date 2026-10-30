@@ -855,6 +855,8 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
     "./xiaomei-faces.ts",
     "./xiaomei-meters.ts",
     "./xiaomei-memory.ts",
+    "./xiaomei-dnd.ts",
+    "./xiaomei-moment.ts",
   ];
   for (const file of files) {
     const source = await readFile(new URL(file, import.meta.url), "utf8");

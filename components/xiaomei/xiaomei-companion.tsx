@@ -80,6 +80,14 @@ import {
   shouldSuppressIdleChatter,
   type XiaomeiSleepPhase,
 } from "@/lib/xiaomei-fsm";
+import {
+  dndBlocksAmbient,
+  dndSilencesSource,
+  readXiaomeiDnd,
+  subscribeXiaomeiDnd,
+  writeXiaomeiDnd,
+} from "@/lib/xiaomei-dnd";
+import { latestSharedMoment } from "@/lib/xiaomei-moment";
 import { readXiaomeiNapkin, writeXiaomeiNapkin, type XiaomeiNapkin } from "@/lib/xiaomei-napkin";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -278,6 +286,7 @@ export function XiaomeiCompanion() {
   const [napkinBusy, setNapkinBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const muted = useSyncExternalStore(subscribeMute, readMuted, () => false);
+  const dnd = useSyncExternalStore(subscribeXiaomeiDnd, readXiaomeiDnd, () => false);
   const [speech, setSpeech] = useState<Speech | null>(null);
   const [moodPin, setMoodPin] = useState<XiaomeiMood | null>(null);
   const [hover, setHover] = useState(false);
@@ -294,6 +303,7 @@ export function XiaomeiCompanion() {
   const statusRef = useRef(chat.status);
   const spriteRef = useRef<HTMLButtonElement>(null);
   const mutedRef = useRef(false);
+  const dndRef = useRef(false);
   const speechRef = useRef<Speech | null>(null);
   const flashClickRef = useRef<(mood: XiaomeiMood, context?: "click" | "pet" | "mutter") => void>(() => {});
   const noteInteractionRef = useRef<() => void>(() => {});
@@ -313,6 +323,7 @@ export function XiaomeiCompanion() {
     memoryOpenRef.current = memoryOpen;
     memoryRecordRef.current = memoryRecord;
     mutedRef.current = muted;
+    dndRef.current = dnd;
     speechRef.current = speech;
     statusRef.current = chat.status;
   });
@@ -453,6 +464,7 @@ export function XiaomeiCompanion() {
         avoid: lastSpokenRef.current,
         tone: toneFromAffection(metersRef.current.affection),
         minGapMs: XIAOMEI_CHATTER_GAP_MS.min,
+        dnd: dndBlocksAmbient(dndRef.current),
       });
       if (!next) return;
       if (next.bucket === "reawaken") reawakenPendingRef.current = false;
@@ -467,7 +479,7 @@ export function XiaomeiCompanion() {
   });
 
   useEffect(() => {
-    if (!place.ready || place.hidden || muted) return;
+    if (!place.ready || place.hidden || muted || dndBlocksAmbient(dnd)) return;
     let cancelled = false;
     let timer = 0;
     const arm = () => {
@@ -482,7 +494,7 @@ export function XiaomeiCompanion() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [muted, place.hidden, place.ready]);
+  }, [dnd, muted, place.hidden, place.ready]);
 
   // 思考钉过之后，等聊天窗合上再回神一句。再次思考会把还没说的回神清掉。
   useEffect(() => {
@@ -494,9 +506,13 @@ export function XiaomeiCompanion() {
     if (!busyLatchRef.current) return;
     if (!place.ready || place.hidden || chatOpen || menuOpen || memoryOpen) return;
     busyLatchRef.current = false;
+    if (dndBlocksAmbient(dnd)) {
+      reawakenPendingRef.current = false;
+      return;
+    }
     reawakenPendingRef.current = true;
     mutterAmbientRef.current();
-  }, [chat.status, chatOpen, memoryOpen, menuOpen, place.hidden, place.ready]);
+  }, [chat.status, chatOpen, dnd, memoryOpen, menuOpen, place.hidden, place.ready]);
 
   useEffect(() => {
     if (!place.ready || place.hidden || muted) return;
@@ -511,6 +527,7 @@ export function XiaomeiCompanion() {
         return;
       }
       presence.playGreet();
+      if (dndBlocksAmbient(dndRef.current)) return;
       const remembered = readXiaomeiMemory();
       const tone = toneFromAffection(metersRef.current.affection);
       if (remembered.topics.length > 0) {
@@ -547,6 +564,7 @@ export function XiaomeiCompanion() {
     const onSay = (event: Event) => {
       const detail = (event as CustomEvent<XiaomeiSayDetail>).detail;
       if (!detail || !isXiaomeiMood(detail.mood) || place.hidden) return;
+      if (dndBlocksAmbient(dndRef.current)) return;
       const text = (detail.text?.trim() || pickXiaomeiLine(XIAOMEI_LINES[detail.mood])).slice(0, 48);
       speak(detail.mood, text, "event");
       place.clearPeek();
@@ -653,6 +671,21 @@ export function XiaomeiCompanion() {
     const next = !mutedRef.current;
     if (next) setSpeech(null);
     writeMuted(next);
+    setMenuOpen(false);
+  }, []);
+
+  const toggleDnd = useCallback(() => {
+    const next = !dndRef.current;
+    if (next) {
+      reawakenPendingRef.current = false;
+      const source = speechRef.current?.source;
+      if (source && dndSilencesSource(source, true)) {
+        pinSource.current = null;
+        setSpeech(null);
+        setMoodPin(null);
+      }
+    }
+    writeXiaomeiDnd(next);
     setMenuOpen(false);
   }, []);
 
@@ -783,6 +816,7 @@ export function XiaomeiCompanion() {
         place.onEnter();
         const currentSpeech = speechRef.current;
         if (
+          !dndBlocksAmbient(dndRef.current) &&
           !shouldSuppressIdleChatter(chat.status) &&
           !chatOpenRef.current &&
           !menuOpenRef.current &&
@@ -808,6 +842,7 @@ export function XiaomeiCompanion() {
       {menuOpen ? (
         <XiaomeiMenu
           muted={muted}
+          dnd={dnd}
           align={align}
           placement={placement}
           shiftX={pop.shiftX}
@@ -849,6 +884,7 @@ export function XiaomeiCompanion() {
             presence.playDrink();
           }}
           onMute={toggleMute}
+          onToggleDnd={toggleDnd}
           onCorner={() => {
             place.resetCorner();
             setMenuOpen(false);
@@ -874,6 +910,14 @@ export function XiaomeiCompanion() {
           events={memoryView.events}
           napkin={napkin}
           userName={memoryRecord.userName}
+          sharedMoment={
+            latestSharedMoment({
+              turns: memoryRecord.turns,
+              topics: memoryRecord.topics,
+              userName: memoryRecord.userName,
+              napkin,
+            })?.text ?? null
+          }
           savingNapkin={napkinBusy}
           align={align}
           placement={placement}
@@ -936,7 +980,7 @@ export function XiaomeiCompanion() {
         ref={spriteRef}
         type="button"
         data-xiaomei-beat={presence.beat ?? "rest"}
-        aria-label={`${XIAOMEI_NAME}。点头摸一下，点身子听她说，长按打开菜单`}
+        aria-label={`${XIAOMEI_NAME}。点头摸一下，点身子听她说，长按打开菜单${dnd ? "。免打扰开着" : ""}`}
         aria-expanded={chatOpen || menuOpen || memoryOpen}
         aria-haspopup="menu"
         aria-controls={chatOpen ? "xiaomei-chat" : memoryOpen ? "xiaomei-memory" : undefined}
@@ -978,6 +1022,15 @@ export function XiaomeiCompanion() {
           squashPulse={squashPulse}
           heartBurst={heartBurst}
         />
+        {dnd ? (
+          <span
+            role="status"
+            aria-label="免打扰开着"
+            className="pointer-events-none absolute top-0 right-0 z-20 rounded-full border border-white/[0.08] bg-lab-canvas/80 px-1.5 text-[10px] leading-5 text-lab-ink-muted"
+          >
+            免打扰
+          </span>
+        ) : null}
       </button>
     </div>
   );

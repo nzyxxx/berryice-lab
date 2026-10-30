@@ -14,6 +14,7 @@ const ITEM =
 /** 小莓菜单。长按立绘或右键打开。只抛动作，不自己改位置、不写存储、不去请求。 */
 export function XiaomeiMenu({
   muted,
+  dnd,
   align,
   placement,
   shiftX = 0,
@@ -24,12 +25,14 @@ export function XiaomeiMenu({
   onFeed,
   onDrink,
   onMute,
+  onToggleDnd,
   onCorner,
   onAbout,
   onMemory,
   onHide,
 }: {
   muted: boolean;
+  dnd: boolean;
   align: "left" | "right";
   placement: "up" | "down";
   shiftX?: number;
@@ -40,6 +43,7 @@ export function XiaomeiMenu({
   onFeed: () => void;
   onDrink: () => void;
   onMute: () => void;
+  onToggleDnd: () => void;
   onCorner: () => void;
   onAbout: () => void;
   onMemory: () => void;
@@ -50,7 +54,7 @@ export function XiaomeiMenu({
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    root.querySelector<HTMLElement>("[role='menuitem']")?.focus({ preventScroll: true });
+    root.querySelector<HTMLElement>("[role='menuitem'], [role='menuitemcheckbox']")?.focus({ preventScroll: true });
     const onKey = (event: KeyboardEvent) => trapTab(event, root);
     root.addEventListener("keydown", onKey);
     return () => root.removeEventListener("keydown", onKey);
@@ -64,7 +68,7 @@ export function XiaomeiMenu({
       className={cn(
         xiaomeiWhisperClass("overflow-y-auto backdrop-blur-md"),
         "absolute z-20 w-52 rounded-2xl p-1.5",
-        "max-h-[min(24rem,calc(100dvh-5rem))]",
+        "max-h-[min(28.5rem,calc(100dvh-5rem))]",
         align === "right" ? "right-0" : "left-0",
         placement === "up" ? "bottom-full mb-2" : "top-full mt-2",
       )}
@@ -92,6 +96,20 @@ export function XiaomeiMenu({
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onMute}>
         {muted ? "取消静音" : "静音"}
+      </button>
+      <button
+        type="button"
+        role="menuitemcheckbox"
+        aria-checked={dnd}
+        className={ITEM}
+        onClick={onToggleDnd}
+      >
+        <span className="flex flex-col items-start py-1">
+          <span>免打扰</span>
+          <span className="text-[11px] leading-4 text-lab-ink-subtle">
+            {dnd ? "开着，不主动找你" : "关着"}
+          </span>
+        </span>
       </button>
       <button type="button" role="menuitem" className={ITEM} onClick={onCorner}>
         回到角落
