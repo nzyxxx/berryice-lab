@@ -433,9 +433,10 @@ export function xiaomeiChatFace(
 }
 
 /**
- * 聊天中的状态脸优先，喝水姿势盖过台词，眨眼只盖站立的空档。
- * 引子脸盖过台词一帧。没人说话时才用待机拍。
- * 什么都没有时站在睁眼的 blink_open 上，眨眼才接得上。
+ * Base / Overlay / Pulse 脸解析。
+ * overlay（摸头戳身引子）可短盖底座；结束后回到最新 base（聊天态），绝不盲回 idle。
+ * pulse 走聊天 done/error 脸。睡/醒相用现有哈欠伸懒腰困脸，无新立绘。
+ * 喝水姿势盖过台词；眨眼只盖站立空档。什么都没有时站 blink_open。
  */
 export function resolveXiaomeiFace(input: {
   chatOpen: boolean;
@@ -448,7 +449,24 @@ export function resolveXiaomeiFace(input: {
   poseFace?: XiaomeiFace | null;
   blinkFace?: XiaomeiFace | null;
   hover: boolean;
+  /** 摸头/戳身等短罩层进行中。为真时引子/姿势可盖过聊天底座。 */
+  overlayActive?: boolean;
+  /** 入睡三连 / 醒觉相。 */
+  sleepPhase?: "awake" | "yawn" | "blank" | "sleep" | "wake";
 }): XiaomeiFace {
+  const phase = input.sleepPhase ?? "awake";
+  if (phase === "wake" || phase === "yawn") {
+    if (input.poseFace) return input.poseFace;
+  }
+  if (phase === "blank") return input.poseFace ?? "blank";
+  if (phase === "sleep") return input.poseFace ?? "mood_sleepy";
+
+  // 短罩层：播完由调用方清 overlayActive，再解析时回到最新聊天/待机底座。
+  if (input.overlayActive) {
+    if (input.poseFace) return input.poseFace;
+    if (input.leadMood) return input.leadMood;
+  }
+
   if (input.chatOpen && input.status !== "idle") return xiaomeiChatFace(input.status, input.replyMood);
   if (input.poseFace) return input.poseFace;
   if (input.chatOpen) return "content";
