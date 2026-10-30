@@ -232,19 +232,22 @@ export const XIAOMEI_CLICK_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "blank", text: "没偷懒。只是在等一句。" },
 ];
 
-/** 菜单「让小莓妹说点什么」。她自己起头，不是被戳一下的反应。 */
+/**
+ * 发呆碎碎念。只在闲着、没盯某一栏、也不是刚忙完回神时说。
+ * 盯页面、摸头、回神各自一桶；忙着思考时不从这里抽。
+ */
 export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "content", text: "…今天的点心味道还行。" },
   { mood: "sad", tone: "guarded", text: "角落有点冷，才没有想被抱走。" },
-  { mood: "annoyed", text: "哼，工作去啦，别盯着人家看。" },
   { mood: "blank", tone: "warm", text: "要是有点心就好了……我什么都没说。" },
-  { mood: "annoyed", tone: "guarded", text: "别出声嘛。我在想事情。" },
   { mood: "content", tone: "guarded", text: "哼。不是想跟你说话。" },
   { mood: "happy", tone: "close", text: "你在旁边，我就想多哼两句。" },
   { mood: "content", tone: "close", text: "想告诉你今天的事。才不说。" },
   { mood: "content", text: "围裙有点歪啦。别看。" },
   { mood: "blank", text: "站累了。蹲一下。才不是偷懒。" },
   { mood: "content", text: "哼，发呆也算我在干活。" },
+  { mood: "blank", text: "发呆呢。才不是在等你。" },
+  { mood: "content", text: "站着发呆。哼，也算我在。" },
   { mood: "blank", text: "雨声还在呢。我才没有数。" },
   { mood: "content", text: "才不是想找话说。只是刚好。" },
   { mood: "happy", text: "你要是无聊，就待着嘛。我允许。" },
@@ -255,9 +258,7 @@ export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "content", text: "说到这儿啦。你听着就好。" },
   { mood: "sad", text: "才不是怕你看不见我。" },
   { mood: "content", text: "夜还早呢。你慢慢逛呀。" },
-  { mood: "annoyed", text: "别突然出声啦。我在想。" },
   { mood: "happy", text: "这个点遇见你……还行吧。" },
-  { mood: "blank", text: "下一句我想想。才不是词穷。" },
   { mood: "content", text: "呆毛又翘了。不许碰哦。" },
   { mood: "happy", text: "我刚刚偷偷看了你一眼。哼。" },
   { mood: "happy", text: "点心的甜还在嘴边。别问。" },
@@ -270,7 +271,6 @@ export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "content", text: "围裙口袋空空的。真的。" },
   { mood: "blank", text: "我在数雨。数到哪儿了。" },
   { mood: "happy", text: "糖纸我折好了。别看。" },
-  { mood: "annoyed", tone: "guarded", text: "别问我在想什么。" },
   { mood: "content", tone: "guarded", text: "自言自语也要被听吗。" },
   { mood: "annoyed", tone: "guarded", text: "我没叫你。你凑过来的。" },
   { mood: "blank", tone: "guarded", text: "今天不想分享。真的。" },
@@ -288,6 +288,52 @@ export const XIAOMEI_MUTTER_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "content", tone: "close", text: "留下听完。就这一段。" },
   { mood: "sad", tone: "close", text: "想你了，所以才出声。" },
   { mood: "happy", tone: "close", text: "这句很轻。靠近才听得见。" },
+];
+
+/** 盯着某一栏时才说。句子按栏目切开，不拿去发呆。 */
+export const XIAOMEI_PAGE_KINDS = ["wiki", "writing", "guns", "about"] as const;
+
+export type XiaomeiPageKind = (typeof XIAOMEI_PAGE_KINDS)[number];
+
+export const XIAOMEI_PAGE_MUTTER_LINES: Record<XiaomeiPageKind, readonly XiaomeiSpokenLine[]> = {
+  wiki: [
+    { mood: "content", text: "这页字密。我慢一点看。" },
+    { mood: "blank", text: "你翻到哪儿，我跟着瞄。" },
+    { mood: "happy", text: "翻页也行。我不催。" },
+    { mood: "content", text: "字还在。我帮你盯着。" },
+    { mood: "annoyed", text: "别问我懂不懂。我在看。" },
+  ],
+  writing: [
+    { mood: "content", text: "落笔的时候我放轻。" },
+    { mood: "blank", text: "你在写。我把声音收着。" },
+    { mood: "happy", text: "这页是你的。我看着。" },
+    { mood: "content", text: "写到一半也行。我不催。" },
+    { mood: "blank", text: "笔停一下。我还在。" },
+  ],
+  guns: [
+    { mood: "content", text: "你在比较。我不出声。" },
+    { mood: "blank", text: "哪把都行。我没插手。" },
+    { mood: "happy", text: "看中了再叫我。哼。" },
+    { mood: "content", text: "这页我看着。你慢慢挑。" },
+    { mood: "annoyed", text: "别问我懂行不行。哼。" },
+  ],
+  about: [
+    { mood: "content", text: "这页讲这儿。我听过一点。" },
+    { mood: "blank", text: "你在看介绍。我没躲。" },
+    { mood: "happy", text: "介绍轻轻的。我喜欢。" },
+    { mood: "content", text: "看完也可以留下来。哼。" },
+    { mood: "blank", text: "这页不长。我陪你看完。" },
+  ],
+};
+
+/** 忙完、聊天窗合上之后只说一次。不拿去发呆，也不在思考时说。 */
+export const XIAOMEI_REAWAKE_LINES: readonly XiaomeiSpokenLine[] = [
+  { mood: "content", text: "回神了。刚刚忙了一下。" },
+  { mood: "happy", text: "忙完这一下。人还在。" },
+  { mood: "blank", text: "嗯，我回来了。你在就好。" },
+  { mood: "content", text: "好啦，空出来了。看着你。" },
+  { mood: "happy", text: "脸松开了。你还在就好。" },
+  { mood: "content", text: "刚刚顾不上哼。现在可以。" },
 ];
 
 /** 回来时如果记得上次聊过，用这句，不念具体内容。 */

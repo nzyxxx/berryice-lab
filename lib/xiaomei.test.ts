@@ -66,6 +66,8 @@ import {
   XIAOMEI_LINES,
   XIAOMEI_MUTTER_LINES,
   XIAOMEI_NAME,
+  XIAOMEI_PAGE_MUTTER_LINES,
+  XIAOMEI_REAWAKE_LINES,
   XIAOMEI_SPRITE_VERSION,
   XIAOMEI_PET_CAP_LINES,
   XIAOMEI_PET_FULL_LINES,
@@ -147,6 +149,8 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
     ...XIAOMEI_SPAM_LINES,
     ...XIAOMEI_CLICK_LINES.map((line) => line.text),
     ...XIAOMEI_MUTTER_LINES.map((line) => line.text),
+    ...Object.values(XIAOMEI_PAGE_MUTTER_LINES).flat().map((line) => line.text),
+    ...XIAOMEI_REAWAKE_LINES.map((line) => line.text),
     ...XIAOMEI_FEED_LINES,
     ...XIAOMEI_FEED_SOFT_LINES,
     ...XIAOMEI_FEED_FULL_LINES,
@@ -846,6 +850,7 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
     "../components/xiaomei/xiaomei-chat-sheet.tsx",
     "../components/lab/support-button.tsx",
     "./xiaomei-lines.ts",
+    "./xiaomei-chatter.ts",
     "./xiaomei-actions.ts",
     "./xiaomei-faces.ts",
     "./xiaomei-meters.ts",
@@ -1100,7 +1105,8 @@ test("Round2 刀：分区 Q 弹弹簧与 motion-hide 落在现有模块", async 
   const companion = await readFile(new URL("../components/xiaomei/xiaomei-companion.tsx", import.meta.url), "utf8");
   assert.match(companion, /zone === "head"/);
   assert.match(companion, /meters\.pet\(/);
-  assert.match(companion, /XIAOMEI_PET_LINES/);
+  assert.match(companion, /touch:\s*true/);
+  assert.match(companion, /pickChatterLine\(route/);
   assert.match(companion, /squashPulse/);
   assert.doesNotMatch(companion, /蓝莓/);
   assert.doesNotMatch(stage, /蓝莓/);
