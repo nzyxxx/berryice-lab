@@ -108,21 +108,26 @@ import {
 } from "./xiaomei-memory.ts";
 import { XIAOMEI_ACTIVITY_POSES, XIAOMEI_ITEM_POSES, XIAOMEI_STAND_POSES } from "./xiaomei-faces.ts";
 import {
+  classifyHitZone,
   clampPlace,
   defaultPlace,
   dockXiaomeiChat,
+  estimatePointerVelocity,
   liveAnchorBox,
   nearestPeek,
   placeAfterResize,
   placeFromStored,
   placeXiaomeiPopover,
+  springStep,
   xiaomeiSpriteBox,
   xiaomeiVisibleView,
   XIAOMEI_FRAME,
+  XIAOMEI_HIT_HEAD_RATIO,
   XIAOMEI_MENU_PANEL,
   XIAOMEI_PET_HOLD_MS,
   XIAOMEI_POPOVER_GAP,
   XIAOMEI_POPOVER_PAD,
+  XIAOMEI_RELEASE_SLOW_SPEED,
 } from "./xiaomei-place.ts";
 
 test("台词是短的第一人称，默认句就是那句格言", () => {
@@ -795,6 +800,11 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(companion, /pickTaggedLine\(pool/);
   assert.match(companion, /pickTaggedLine\(XIAOMEI_HOVER_LINES, speechRef\.current\?\.text, tone\)/);
   assert.match(companion, /resolveXiaomeiFace/);
+  assert.match(companion, /groundMode/);
+  const stage = await readFile(new URL("../components/xiaomei/xiaomei-stage.tsx", import.meta.url), "utf8");
+  assert.match(stage, /xiaomei-crossfade/);
+  assert.match(stage, /body_neutral|xiaomeiBodyNeutralSrc/);
+  assert.match(stage, /isXiaomeiLayeredBlinkFace/);
   assert.match(companion, /flashClick/);
   assert.match(companion, /playFeed/);
   assert.match(companion, /playDrink/);
@@ -850,11 +860,13 @@ test("菜单和投喂不把钥匙或别人的形象带进客户端", async () =>
   assert.match(placeHook, /XIAOMEI_PET_HOLD_MS/);
   assert.match(placeHook, /if \(holdFired\.current\) return/);
   const chatHook = await readFile(new URL("../components/xiaomei/use-xiaomei-chat.ts", import.meta.url), "utf8");
-  assert.match(chatHook, /XIAOMEI_SCENE_LINES/);
+  assert.match(chatHook, /sceneBucket/);
+  assert.match(chatHook, /createCelebrateEdge/);
+  assert.match(chatHook, /celebratePulse/);
   assert.match(chatHook, /XIAOMEI_SCENE_PIN_MS/);
   assert.match(chatHook, /pinStatus\("thinking"\)/);
-  assert.match(chatHook, /pinStatus\("done"\)/);
-  assert.match(chatHook, /pinStatus\("error"\)/);
+  assert.match(chatHook, /pinStatus\("done"/);
+  assert.match(chatHook, /pinStatus\("error"/);
   assert.match(chatHook, /setStatus\("idle"\)/);
   const sheet = await readFile(new URL("../components/xiaomei/xiaomei-chat-sheet.tsx", import.meta.url), "utf8");
   assert.match(sheet, /sceneLine/);
@@ -963,6 +975,82 @@ test("位置夹在视口里，贴边才探出，默认让开回到顶部", () =>
   assert.equal(high.maxHeight, 240);
 });
 
+test("命中区头身上 40%，弹簧步进与松手估速可测", () => {
+  assert.equal(classifyHitZone(0, 100), "head");
+  assert.equal(classifyHitZone(100 * XIAOMEI_HIT_HEAD_RATIO - 0.01, 100), "head");
+  assert.equal(classifyHitZone(100 * XIAOMEI_HIT_HEAD_RATIO, 100), "body");
+  assert.equal(classifyHitZone(99, 100), "body");
+  assert.equal(classifyHitZone(-5, 96), "head");
+  const v0 = springStep(0, 0, 100, 1 / 60);
+  assert.ok(v0 > 0);
+  const v1 = springStep(v0, 10, 100, 1 / 60);
+  assert.ok(v1 > 0);
+  const still = estimatePointerVelocity([
+    { t: 0, x: 10, y: 10 },
+    { t: 160, x: 12, y: 11 },
+  ]);
+  assert.ok(still.speed < XIAOMEI_RELEASE_SLOW_SPEED);
+  const flick = estimatePointerVelocity([
+    { t: 1000, x: 0, y: 0 },
+    { t: 1080, x: 40, y: 0 },
+  ]);
+  assert.ok(flick.speed > XIAOMEI_RELEASE_SLOW_SPEED);
+  assert.ok(flick.vx > 0);
+});
+
+test("Round2 刀：分区 Q 弹弹簧与 motion-hide 落在现有模块", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /xiaomei-click-squash/);
+  assert.match(css, /xiaomei-motion-hide/);
+  assert.match(css, /xiaomei-motion-show/);
+  assert.match(css, /xiaomei-heart/);
+  assert.match(css, /transform-origin:\s*bottom/);
+  const place = await readFile(new URL("../components/xiaomei/use-xiaomei-place.ts", import.meta.url), "utf8");
+  assert.match(place, /classifyHitZone/);
+  assert.match(place, /springStep/);
+  assert.match(place, /modeRef/);
+  assert.match(place, /inertia/);
+  const stage = await readFile(new URL("../components/xiaomei/xiaomei-stage.tsx", import.meta.url), "utf8");
+  assert.match(stage, /xiaomei-motion-hide/);
+  assert.match(stage, /XIAOMEI_MOTION_HIDE_TIMEOUT_MS/);
+  assert.match(stage, /isStandingExpression/);
+  const companion = await readFile(new URL("../components/xiaomei/xiaomei-companion.tsx", import.meta.url), "utf8");
+  assert.match(companion, /zone === "head"/);
+  assert.match(companion, /meters\.pet\(/);
+  assert.match(companion, /XIAOMEI_PET_LINES/);
+  assert.match(companion, /squashPulse/);
+  assert.doesNotMatch(companion, /蓝莓/);
+  assert.doesNotMatch(stage, /蓝莓/);
+});
+
+test("Round3 刀：睡眠醒觉 + 优先级表 + 边沿庆祝 + 气泡锚点落在现有模块", async () => {
+  const fsm = await readFile(new URL("./xiaomei-fsm.ts", import.meta.url), "utf8");
+  assert.match(fsm, /XIAOMEI_STATE_PRIORITY/);
+  assert.match(fsm, /wakeFromInteraction/);
+  assert.match(fsm, /shouldCelebrate/);
+  assert.match(fsm, /placeBubbleBox/);
+  assert.match(fsm, /sceneBucket/);
+  assert.match(fsm, /underlayAfterOverlay/);
+  assert.doesNotMatch(fsm, /蓝莓|whale-girl|dsh-pet|celebrate\.png|sleep\.png/i);
+  assert.doesNotMatch(fsm, /Moki|moki\./);
+
+  const presence = await readFile(new URL("../components/xiaomei/use-xiaomei-presence.ts", import.meta.url), "utf8");
+  assert.match(presence, /noteInteraction/);
+  assert.match(presence, /sleepPhase/);
+  assert.match(presence, /beginSleep/);
+  assert.match(presence, /playWake/);
+  assert.match(presence, /XIAOMEI_SLEEP_AFTER_MS/);
+
+  const companion = await readFile(new URL("../components/xiaomei/xiaomei-companion.tsx", import.meta.url), "utf8");
+  assert.match(companion, /noteInteractionRef/);
+  assert.match(companion, /celebratePulse/);
+  assert.match(companion, /placeBubbleBox/);
+  assert.match(companion, /sleepPhase/);
+  assert.match(companion, /overlayActive/);
+  assert.doesNotMatch(companion, /蓝莓/);
+});
+
+
 test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async () => {
   const names = [
     "blank",
@@ -973,6 +1061,11 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     "blink_open",
     "blink_half",
     "blink_closed",
+    "body_neutral",
+    "face_open",
+    "face_half",
+    "face_closed",
+    "static_idle_volume",
     "mood_surprised",
     "mood_thinking",
     "mood_sleepy",
@@ -991,7 +1084,7 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     ...XIAOMEI_ACTIVITY_POSES,
     ...XIAOMEI_ITEM_POSES,
   ] as const;
-  assert.equal(XIAOMEI_SPRITE_VERSION, 6);
+  assert.equal(XIAOMEI_SPRITE_VERSION, 7);
   for (const name of names) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.webp`, import.meta.url));
     assert.equal(data.subarray(0, 4).toString(), "RIFF", name);

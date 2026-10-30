@@ -32,11 +32,17 @@ import {
 import {
   XIAOMEI_A1_FACES,
   XIAOMEI_ACTIVITY_POSES,
+  XIAOMEI_CROSSFADE_MS,
   XIAOMEI_ITEM_POSES,
   XIAOMEI_SNACK_SRC,
   XIAOMEI_STAND_POSES,
   XIAOMEI_UMBRELLA_SRC,
+  isXiaomeiLayeredBlinkFace,
+  xiaomeiBlinkFaceLayer,
+  xiaomeiBodyNeutralSrc,
+  xiaomeiFaceLayerSrc,
   xiaomeiFaceSrc,
+  xiaomeiIdleVolumeSrc,
   type XiaomeiFace,
 } from "./xiaomei-faces.ts";
 import { XIAOMEI_MOODS, XIAOMEI_SPRITE_VERSION, type XiaomeiMood } from "./xiaomei-lines.ts";
@@ -322,8 +328,8 @@ test("眨眼四帧短于半秒，喝水先端后抿再回到空", () => {
   assert.equal(umbrellaFaceAt(0), "pose_umbrella_hold");
   assert.equal(umbrellaFaceAt(XIAOMEI_BEAT_MS.umbrella - 1), "pose_umbrella_hold");
   assert.equal(umbrellaFaceAt(XIAOMEI_BEAT_MS.umbrella), null);
-  assert.match(XIAOMEI_SNACK_SRC, /prop_snack\.png\?v=6/);
-  assert.match(XIAOMEI_UMBRELLA_SRC, /prop_umbrella\.png\?v=6/);
+  assert.match(XIAOMEI_SNACK_SRC, /prop_snack\.png\?v=7/);
+  assert.match(XIAOMEI_UMBRELLA_SRC, /prop_umbrella\.png\?v=7/);
 });
 
 test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () => {
@@ -335,8 +341,8 @@ test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () =>
   assert.equal(xiaomeiMotionClass("peek", false), "xiaomei-float");
   assert.equal(xiaomeiMotionClass("tilt", false), "xiaomei-float");
   assert.equal(xiaomeiMotionClass("nod", false), "xiaomei-nod");
-  assert.equal(xiaomeiMotionClass("sip", false), null);
-  assert.equal(xiaomeiMotionClass("hold", false), null);
+  assert.equal(xiaomeiMotionClass("sip", false), "xiaomei-activity-soft");
+  assert.equal(xiaomeiMotionClass("hold", false), "xiaomei-activity-soft");
   assert.equal(xiaomeiMotionClass("wipe", false), "xiaomei-wipe");
   assert.equal(xiaomeiMotionClass("hum", false), "xiaomei-hum");
   assert.equal(xiaomeiMotionClass("sway", false), "xiaomei-sway");
@@ -346,11 +352,11 @@ test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () =>
   assert.equal(xiaomeiMotionClass("cheer", false), "xiaomei-cheer");
   assert.equal(xiaomeiMotionClass("sigh", false), "xiaomei-sigh");
   assert.equal(xiaomeiMotionClass("glance", false), "xiaomei-glance");
-  assert.equal(xiaomeiMotionClass("drink", false), null);
-  assert.equal(xiaomeiMotionClass("snack", false), null);
-  assert.equal(xiaomeiMotionClass("umbrella", false), null);
-  assert.equal(xiaomeiMotionClass("spin", false), null);
-  assert.equal(xiaomeiMotionClass("walk", false), null);
+  assert.equal(xiaomeiMotionClass("drink", false), "xiaomei-activity-soft");
+  assert.equal(xiaomeiMotionClass("snack", false), "xiaomei-activity-soft");
+  assert.equal(xiaomeiMotionClass("umbrella", false), "xiaomei-activity-soft");
+  assert.equal(xiaomeiMotionClass("spin", false), "xiaomei-activity-soft");
+  assert.equal(xiaomeiMotionClass("walk", false), "xiaomei-walk");
   assert.equal(xiaomeiMotionClass("walk", true), null);
   assert.equal(xiaomeiPropKind(null), null);
   assert.equal(xiaomeiPropKind("glance"), null);
@@ -423,6 +429,35 @@ test("脸的优先级：聊天盖过引子，引子盖过台词，待机拍盖�
     resolveXiaomeiFace({ ...base, chatOpen: true, status: "thinking", blinkFace: "blink_half" }),
     "mood_thinking",
   );
+  // Round3：罩层可短盖 thinking，罩层结束后仍回 thinking 底座（无 overlayActive）。
+  assert.equal(
+    resolveXiaomeiFace({
+      ...base,
+      chatOpen: true,
+      status: "thinking",
+      leadMood: "mood_love",
+      overlayActive: true,
+    }),
+    "mood_love",
+  );
+  assert.equal(
+    resolveXiaomeiFace({
+      ...base,
+      chatOpen: true,
+      status: "thinking",
+      leadMood: "mood_love",
+      overlayActive: false,
+    }),
+    "mood_thinking",
+  );
+  assert.equal(
+    resolveXiaomeiFace({ ...base, sleepPhase: "sleep", beatMood: "happy" }),
+    "mood_sleepy",
+  );
+  assert.equal(
+    resolveXiaomeiFace({ ...base, sleepPhase: "wake", poseFace: "pose_stretch" }),
+    "pose_stretch",
+  );
 });
 
 test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async () => {
@@ -458,7 +493,10 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   assert.match(css, /@keyframes xiaomei-umbrella-prop/);
   assert.match(css, /scaleX\(-1\)/);
   assert.match(css, /scale\(1\.2\)/);
-  assert.match(css, /translate3d\(-32px/);
+  assert.match(css, /scale\(1\.02, 0\.96\)/);
+  assert.match(css, /\.xiaomei-activity-soft\s*\{[^}]*animation:\s*xiaomei-activity-soft/);
+  assert.match(css, /xiaomei-crossfade-in 90ms/);
+  assert.match(css, /\.xiaomei-ground-walk\s*\{[^}]*animation:\s*xiaomei-ground-walk 2\.4s/);
   assert.match(css, /\.xiaomei-prop-cup\s*\{[^}]*width:\s*22px/);
   assert.match(css, /\.xiaomei-prop-snack\s*\{[^}]*width:\s*22px/);
   assert.match(css, /\.xiaomei-prop-umbrella\s*\{[^}]*width:\s*20px/);
@@ -487,10 +525,22 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   assert.match(presence, /walkFaceAt/);
   assert.match(presence, /snackFaceAt/);
   assert.match(presence, /umbrellaFaceAt/);
-  assert.equal(XIAOMEI_SPRITE_VERSION, 6);
+  assert.equal(XIAOMEI_SPRITE_VERSION, 7);
   for (const pose of [...XIAOMEI_STAND_POSES, ...XIAOMEI_ACTIVITY_POSES, ...XIAOMEI_ITEM_POSES]) {
     assert.equal(xiaomeiFaceSrc(pose), `/xiaomei/${pose}.webp?v=${XIAOMEI_SPRITE_VERSION}`);
   }
   assert.doesNotMatch(presence, /requestAnimationFrame|speechSynthesis|DEEPSEEK|API_KEY/);
   assert.doesNotMatch(presence, /鲸鱼|大肥鱼|猫耳|狐耳/);
+});
+
+test("发量分层待机：眨眼映射脸层，交叉淡入 90ms，资源带缓存版本", () => {
+  assert.equal(XIAOMEI_CROSSFADE_MS, 90);
+  assert.equal(isXiaomeiLayeredBlinkFace("blink_open"), true);
+  assert.equal(isXiaomeiLayeredBlinkFace("pose_wave"), false);
+  assert.equal(xiaomeiBlinkFaceLayer("blink_open"), "face_open");
+  assert.equal(xiaomeiBlinkFaceLayer("blink_half"), "face_half");
+  assert.equal(xiaomeiBlinkFaceLayer("blink_closed"), "face_closed");
+  assert.equal(xiaomeiBodyNeutralSrc(), `/xiaomei/body_neutral.webp?v=${XIAOMEI_SPRITE_VERSION}`);
+  assert.equal(xiaomeiFaceLayerSrc("face_open"), `/xiaomei/face_open.webp?v=${XIAOMEI_SPRITE_VERSION}`);
+  assert.equal(xiaomeiIdleVolumeSrc(), `/xiaomei/static_idle_volume.webp?v=${XIAOMEI_SPRITE_VERSION}`);
 });

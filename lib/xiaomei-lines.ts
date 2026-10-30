@@ -30,7 +30,7 @@ export type XiaomeiSpokenLine = {
 export const XIAOMEI_CATCHPHRASE = "哼……人家才不会随便甜给你。";
 
 /** 换图时把 v 加一，浏览器缓存才会失效。眨眼、情绪、喝水、站姿、活动和点心伞跟这五张共用。 */
-export const XIAOMEI_SPRITE_VERSION = 6;
+export const XIAOMEI_SPRITE_VERSION = 7;
 
 export const XIAOMEI_SPRITE: Record<XiaomeiMood, string> = {
   happy: `/xiaomei/happy.webp?v=${XIAOMEI_SPRITE_VERSION}`,
@@ -346,7 +346,7 @@ export const XIAOMEI_FEED_FULL_LINES = [
   "嘴巴合不上了。停一下嘛。",
 ] as const;
 
-/** 摸头短句。长按已经改成打开菜单，这些句子没有手势入口。 */
+/** 摸头短句。短点头区触发；长按仍只开菜单，不抢手势。 */
 export const XIAOMEI_PET_LINES: readonly XiaomeiSpokenLine[] = [
   { mood: "happy", text: "摸头就这一下。哼。" },
   { mood: "content", text: "手好暖。我没躲。" },

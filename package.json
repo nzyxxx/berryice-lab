@@ -8,10 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/register-ts-test.mjs --test lib/xiaomei.test.ts lib/xiaomei-wiki-ground.test.ts lib/xiaomei-actions.test.ts",
+    "test": "node scripts/materialize-xiaomei-feel-volume.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/register-ts-test.mjs --test lib/xiaomei.test.ts lib/xiaomei-wiki-ground.test.ts lib/xiaomei-actions.test.ts lib/xiaomei-fsm.test.ts",
     "sync:weapons": "tsx scripts/sync-weapons.ts",
     "sync:wiki": "node scripts/sync-wiki.mjs",
-    "test:wiki": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/content/wiki-parse.test.ts lib/content/wiki-markdown.test.ts"
+    "test:wiki": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/content/wiki-parse.test.ts lib/content/wiki-markdown.test.ts",
+    "materialize:xiaomei-feel-volume": "node scripts/materialize-xiaomei-feel-volume.mjs",
+    "prebuild": "node scripts/materialize-xiaomei-feel-volume.mjs"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.26",
