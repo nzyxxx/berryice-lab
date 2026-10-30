@@ -983,7 +983,7 @@ html.home-motion [data-reveal].is-shown {
   }
 }
 
-/* 全身 / 姿势 src 交叉淡入。约 90ms smoothstep 近似。 */
+/* 全身 / 姿势交叉淡入：进出同时渐变，绝不两层同时近 0（整身闪空）。 */
 .xiaomei-crossfade {
   position: absolute;
   inset: 0;
@@ -998,8 +998,8 @@ html.home-motion [data-reveal].is-shown {
 
 .xiaomei-crossfade-layer.is-out {
   z-index: 1;
-  opacity: 0;
-  transition: opacity 90ms cubic-bezier(0.45, 0, 0.55, 1);
+  opacity: 1;
+  animation: xiaomei-crossfade-out 90ms cubic-bezier(0.45, 0, 0.55, 1) forwards;
   pointer-events: none;
 }
 
@@ -1018,13 +1018,35 @@ html.home-motion [data-reveal].is-shown {
   }
 }
 
+@keyframes xiaomei-crossfade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 .xiaomei-stack {
   display: block;
 }
 
-.xiaomei-stack-body,
+.xiaomei-stack-body {
+  display: block;
+}
+
 .xiaomei-stack-face {
   display: block;
+  opacity: 0;
+}
+
+/* 分层眨眼：三张脸层常驻，只切可见性。 */
+.xiaomei-stack-face.is-idle {
+  opacity: 0;
+}
+
+.xiaomei-stack-face.is-active {
+  opacity: 1;
 }
 
 /* 杯子和点心跟着身体。伞的贴纸继续藏着。 */

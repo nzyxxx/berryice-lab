@@ -24,10 +24,13 @@ import {
 import type { XiaomeiFace } from "@/lib/xiaomei-faces";
 import type { XiaomeiMood } from "@/lib/xiaomei-lines";
 import {
+  XIAOMEI_MIN_HOLD_MS,
   XIAOMEI_SLEEP_AFTER_MS,
   XIAOMEI_SLEEP_BLANK_MS,
   XIAOMEI_SLEEP_YAWN_MS,
   XIAOMEI_WAKE_MS,
+  blinkArmDelayMs,
+  canChangeAfterHold,
   isVisuallySleeping,
   shouldEnterSleep,
   sleepPhaseFace,
@@ -80,6 +83,8 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
   const sleepPhaseRef = useRef<XiaomeiSleepPhase>("awake");
   const sleepTimer = useRef(0);
   const sleepWatch = useRef(0);
+  const holdSinceRef = useRef(typeof performance !== "undefined" ? performance.now() : Date.now());
+  const lastBlinkAtRef = useRef(0);
 
   const clearBeatTimers = useCallback(() => {
     for (const id of beatTimers.current) window.clearTimeout(id);
@@ -118,12 +123,19 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
   }, [clearBeatTimers, clearBlink, clearLeadTimer]);
 
   const startBlink = useCallback(() => {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (!canChangeAfterHold(lastBlinkAtRef.current, now, XIAOMEI_MIN_HOLD_MS * 2)) return;
+    lastBlinkAtRef.current = now;
+    holdSinceRef.current = now;
     clearBlinkTimers();
     let elapsed = 0;
     for (let index = 0; index < XIAOMEI_BLINK_CYCLE.length; index += 1) {
       const frame = XIAOMEI_BLINK_CYCLE[index];
       const at = elapsed;
-      blinkTimers.current.push(window.setTimeout(() => setBlinkFace(frame ?? null), at));
+      // 待机底已是 blink_open：跳过首帧 setState，少一次无意义切脸。
+      if (!(index === 0 && frame === "blink_open")) {
+        blinkTimers.current.push(window.setTimeout(() => setBlinkFace(frame ?? null), at));
+      }
       elapsed += XIAOMEI_BLINK_FRAME_MS[index] ?? 0;
     }
     blinkTimers.current.push(window.setTimeout(() => setBlinkFace(null), elapsed));
@@ -341,6 +353,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
   const noteInteraction = useCallback(() => {
     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     idleSinceRef.current = now;
+    holdSinceRef.current = now;
     const decision = wakeFromInteraction({
       visuallySleeping: isVisuallySleeping(sleepPhaseRef.current),
     });
@@ -360,6 +373,9 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
   const beginIdle = useCallback(
     (next: XiaomeiIdleBeat) => {
       if (isVisuallySleeping(sleepPhaseRef.current) || sleepPhaseRef.current === "wake") return;
+      const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+      if (!canChangeAfterHold(holdSinceRef.current, now, XIAOMEI_MIN_HOLD_MS)) return;
+      holdSinceRef.current = now;
       clearBlink();
       if (next === "drink") {
         startDrink();
@@ -462,11 +478,12 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     const loop = () => {
       const gap = idleGapMs(Math.random());
       window.clearTimeout(blinkArm.current);
+      // 自由眨眼走 Round4 武装区间，避免半秒一眨叠在换脸上像「不停闪」。
       blinkArm.current = window.setTimeout(() => {
         if (cancelled || pausedRef.current() || activeRef.current || forcedRef.current) return;
         if (isVisuallySleeping(sleepPhaseRef.current) || sleepPhaseRef.current === "wake") return;
         startBlink();
-      }, 480 + Math.round(Math.random() * 900));
+      }, blinkArmDelayMs(Math.random()));
       gapTimer.current = window.setTimeout(() => {
         if (cancelled) return;
         if (

@@ -81,12 +81,15 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
         aborted: opts?.aborted ?? abortedRef.current,
         replyMood: opts?.replyMood,
       });
-      setCelebratePulse(pulse);
-      if (pulse) {
+      // 脉冲窗口未结束不叠第二下，避免 cue class 连闪。
+      if (pulse && pulseTimer.current == null) {
+        setCelebratePulse(pulse);
         pulseTimer.current = window.setTimeout(() => {
           pulseTimer.current = null;
           setCelebratePulse(null);
         }, XIAOMEI_SCENE_PIN_MS);
+      } else if (!pulse) {
+        setCelebratePulse(null);
       }
       setStatus(next);
       if (next === "thinking") {
