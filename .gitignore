@@ -43,7 +43,7 @@ content/wiki/.*.tmp
 *.tsbuildinfo
 next-env.d.ts
 
-# feel_volume_v1 webps materialized from scripts/xiaomei-feel-volume-assets.json
+# volume rest webps materialized from scripts/xiaomei-feel-volume-assets.json
 public/xiaomei/body_neutral.webp
 public/xiaomei/face_open.webp
 public/xiaomei/face_half.webp

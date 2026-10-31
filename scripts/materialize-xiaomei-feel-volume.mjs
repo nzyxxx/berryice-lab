@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Write feel_volume_v1 webps into public/xiaomei/ from base64 JSON.
+ * Write volume rest webps into public/xiaomei/ from base64 JSON.
  * Kept as text so box agents can push without binary git auth.
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";

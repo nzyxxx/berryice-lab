@@ -1,6 +1,7 @@
 /**
  * A1 立绘。都是 256×438 全身，文件名就是脸的 id。
  * 待机眨眼走分层：body_neutral + face_*，不再整身硬切 blink_*。
+ * 睁眼休息是 volume_v2.1：身体用这张画（眼窝填平），脸从同一帧裁。减动效整张用 static_idle_volume。
  * blink_open / half / closed 仍是逻辑 id，舞台映射到脸层。
  * 情绪、站姿、活动和点心伞仍是全身换 src。
  * 喝水 / 点心 / 伞已经画在全身里，不再叠第二只道具。
@@ -125,7 +126,7 @@ export function xiaomeiFaceSrc(face: XiaomeiFace): string {
   return `/xiaomei/${face}.webp?v=${XIAOMEI_SPRITE_VERSION}`;
 }
 
-/** 分层待机身体。眼窝清掉，给 face_* 叠。 */
+/** 分层待机身体。volume_v2.1，眼窝填平给 face_* 叠。耳尾与批准帧一致，不重压。 */
 export function xiaomeiBodyNeutralSrc(): string {
   return `/xiaomei/body_neutral.webp?v=${XIAOMEI_SPRITE_VERSION}`;
 }
@@ -134,7 +135,7 @@ export function xiaomeiFaceLayerSrc(layer: XiaomeiFaceLayer): string {
   return `/xiaomei/${layer}.webp?v=${XIAOMEI_SPRITE_VERSION}`;
 }
 
-/** 烘焙好的发量待机全身。减动效或不分层时的回落。 */
+/** 批准的 volume_v2.1 待机全身。减动效时整张显示，耳尾锁在这张上。 */
 export function xiaomeiIdleVolumeSrc(): string {
   return `/xiaomei/static_idle_volume.webp?v=${XIAOMEI_SPRITE_VERSION}`;
 }

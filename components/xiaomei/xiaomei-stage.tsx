@@ -58,7 +58,7 @@ function XiaomeiSprite({
   className?: string;
   gaze?: XiaomeiGaze | null;
 }) {
-  // 减动效：不分层眨眼，落回烘焙发量全身。
+  // 减动效：不分层眨眼，整张用批准的 volume_v2.1。
   if (reducedMotion && isXiaomeiLayeredBlinkFace(face)) {
     return (
       // eslint-disable-next-line @next/next/no-img-element

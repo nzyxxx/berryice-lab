@@ -36,7 +36,7 @@ test("免打扰只认存着的开，主动气泡才收", () => {
 });
 
 test("最近一条共同经历：对话优先，然后记忆，然后上次坑", () => {
-  assert.equal(XIAOMEI_SPRITE_VERSION, 7);
+  assert.equal(XIAOMEI_SPRITE_VERSION, 8);
   const now = new Date(2026, 9, 28, 12).getTime();
   const named = rememberThread(emptyXiaomeiMemory(), "叫我阿冰", "哼", new Date(now));
   const withEvent = rememberThread(named, "今天去看了枪码呀", "在顶栏", new Date(now + 1000));
