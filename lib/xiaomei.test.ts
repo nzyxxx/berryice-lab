@@ -188,8 +188,10 @@ test("台词是短的第一人称，默认句就是那句格言", () => {
   ]) {
     assert.ok(pools.includes(sample), sample);
   }
-  assert.equal(XIAOMEI_NAME, "小莓妹");
-  assert.match(XIAOMEI_ABOUT, /人家是女仆小莓妹/);
+  assert.equal(XIAOMEI_NAME, "小莓");
+  assert.equal([...XIAOMEI_NAME].length, 2);
+  assert.match(XIAOMEI_ABOUT, /人家是女仆小莓。/);
+  assert.equal(XIAOMEI_ABOUT.includes(`${XIAOMEI_NAME}妹`), false);
   assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI|角标/);
   const again = pickXiaomeiLine(["只有一句"]);
   assert.equal(again, "只有一句");
@@ -476,7 +478,13 @@ test("记忆抽屉列出事实和最近的事，忘掉一条不会把别的也�
 
 test("开工手记每轮都在，坏句子进不了提示", () => {
   const base = defaultXiaomeiNapkin();
-  assert.match(base.redLines, /小莓妹/);
+  assert.match(base.redLines, /名字只报小莓。/);
+  assert.equal(base.redLines.includes(`${XIAOMEI_NAME}妹`), false);
+  const legacyName = napkinFromStored(
+    JSON.stringify({ ...base, redLines: base.redLines.replace(XIAOMEI_NAME, `${XIAOMEI_NAME}妹`) }),
+  );
+  assert.equal(legacyName.redLines, base.redLines);
+  assert.equal(legacyName.address, "");
   assert.doesNotMatch(base.redLines, /蓝莓|饱腹|好感/);
   assert.deepEqual(napkinPlainLines(base, "阿冰"), [
     "称呼：阿冰",
@@ -599,9 +607,11 @@ test("亲密度决定口气，记忆只留短碎片并且丢掉越狱", () => {
   );
 
   const neutral = buildXiaomeiSystemPrompt(sanitizeXiaomeiMemory(undefined));
-  assert.match(neutral, /小莓妹/);
+  assert.match(neutral, /「小莓」/);
+  assert.match(neutral, /两个字都留着/);
+  assert.doesNotMatch(neutral, /三个字/);
+  assert.equal(neutral.includes(`${XIAOMEI_NAME}妹`), false);
   assert.match(neutral, /小莓流冰/);
-  assert.equal(neutral.match(/小莓(?!妹|流)/g), null);
   assert.match(neutral, /【状态】/);
   assert.match(neutral, /经典傲娇/);
   assert.match(neutral, /（还没有特别记住的事）/);
@@ -678,7 +688,8 @@ test("问你是谁时不念性格卡，也不撇清", () => {
   assert.doesNotMatch(prompt, /【性格三词】/);
   assert.doesNotMatch(prompt, /你不是客服机器人/);
   assert.doesNotMatch(XIAOMEI_ABOUT, /傲娇|嘴硬|心软|AI|角标/);
-  assert.match(XIAOMEI_ABOUT, /人家是女仆小莓妹/);
+  assert.match(XIAOMEI_ABOUT, /人家是女仆小莓。/);
+  assert.equal(XIAOMEI_ABOUT.includes(`${XIAOMEI_NAME}妹`), false);
   assert.ok(hanCount(XIAOMEI_ABOUT) <= 16);
   assert.match(prompt, /Q 版围裙女仆/);
   assert.match(prompt, /女仆小妹/);
@@ -689,7 +700,8 @@ test("问你是谁时不念性格卡，也不撇清", () => {
   const exit = prompt.slice(prompt.lastIndexOf("【出口】"));
   assert.match(exit, /不要说「角标」「伙伴」「网站角色」/);
   const who = prompt.slice(prompt.indexOf("用户问「你是谁」"), prompt.indexOf("用户说「你好」"));
-  assert.match(who, /人家是小莓妹/);
+  assert.match(who, /人家是小莓。/);
+  assert.equal(who.includes(`${XIAOMEI_NAME}妹`), false);
   assert.match(who, /围裙女仆/);
   assert.match(who, /别一上来就盘问/);
   assert.doesNotMatch(who, /角标/);
@@ -832,7 +844,8 @@ test("基础教育 few-shot 在提示里，你是谁的例子不带职能词", (
   assert.match(prompt, /「傲娇」「嘴硬」「心软」「人设」「性格」/);
   const shot = prompt.slice(prompt.indexOf("【基础教育对照 · 勿原句复读】"));
   const who = shot.slice(shot.indexOf("用户：你是谁"), shot.indexOf("用户：饿不饿"));
-  assert.match(who, /哼，人家是小莓妹。/);
+  assert.match(who, /哼，人家是小莓。/);
+  assert.equal(who.includes(`${XIAOMEI_NAME}妹`), false);
   assert.doesNotMatch(who, /角标|伙伴|网站角色|傲娇|嘴硬|心软/);
   assert.match(shot, /不要整段复读/);
 });

@@ -23,6 +23,13 @@ function clip(text: string, max: number): string {
   return [...text.replace(/\s+/g, " ").trim()].slice(0, max).join("").trim();
 }
 
+/** 这台浏览器里已经写下的站规。旧称呼收成现在的两个字，不改用户自己起的称呼。 */
+function currentDisplayName(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const retired = `${XIAOMEI_NAME}妹`;
+  return value.includes(retired) ? value.split(retired).join(XIAOMEI_NAME) : value;
+}
+
 function isSecret(text: string): boolean {
   return /密钥|密码|api[_-]?key|\bsk-[a-z0-9]/i.test(text);
 }
@@ -50,7 +57,7 @@ export function sanitizeXiaomeiNapkin(input: unknown): XiaomeiNapkin {
   const record = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
   return {
     address: keepField(record.address, XIAOMEI_NAPKIN_ADDRESS_CHARS, ""),
-    redLines: keepField(record.redLines, XIAOMEI_NAPKIN_CHARS, base.redLines),
+    redLines: keepField(currentDisplayName(record.redLines), XIAOMEI_NAPKIN_CHARS, base.redLines),
     lastPit: keepField(record.lastPit, XIAOMEI_NAPKIN_CHARS, ""),
     dislike: keepField(record.dislike, XIAOMEI_NAPKIN_CHARS, base.dislike),
   };
