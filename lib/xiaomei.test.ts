@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -1163,6 +1164,30 @@ test("Round3 刀：睡眠醒觉 + 优先级表 + 边沿庆祝 + 气泡锚点落�
 });
 
 
+/** VP8X 带 ALPH。volume 休息帧是 VP8L 无损，耳尾不重压。 */
+function readXiaomeiWebpFrame(data, name) {
+  assert.equal(data.subarray(0, 4).toString(), "RIFF", name);
+  assert.equal(data.subarray(8, 12).toString(), "WEBP", name);
+  const kind = data.subarray(12, 16).toString();
+  if (kind === "VP8X") {
+    assert.ok(data.includes(Buffer.from("ALPH")), name);
+    return {
+      width: 1 + data.readUIntLE(24, 3),
+      height: 1 + data.readUIntLE(27, 3),
+    };
+  }
+  if (kind === "VP8L") {
+    assert.equal(data[20], 0x2f, name);
+    const bits = data.readUInt32LE(21);
+    assert.equal((bits >>> 28) & 1, 1, name);
+    return {
+      width: (bits & 0x3fff) + 1,
+      height: ((bits >>> 14) & 0x3fff) + 1,
+    };
+  }
+  assert.fail(`${name} webp fourcc ${kind}`);
+}
+
 test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async () => {
   const names = [
     "blank",
@@ -1196,18 +1221,17 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     ...XIAOMEI_ACTIVITY_POSES,
     ...XIAOMEI_ITEM_POSES,
   ] as const;
-  assert.equal(XIAOMEI_SPRITE_VERSION, 7);
+  assert.equal(XIAOMEI_SPRITE_VERSION, 8);
   for (const name of names) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.webp`, import.meta.url));
-    assert.equal(data.subarray(0, 4).toString(), "RIFF", name);
-    assert.equal(data.subarray(8, 12).toString(), "WEBP", name);
-    assert.equal(data.subarray(12, 16).toString(), "VP8X", name);
-    const width = 1 + data.readUIntLE(24, 3);
-    const height = 1 + data.readUIntLE(27, 3);
-    assert.equal(width, XIAOMEI_FRAME.width, name);
-    assert.equal(height, XIAOMEI_FRAME.height, name);
-    assert.ok(data.includes(Buffer.from("ALPH")), name);
+    const frame = readXiaomeiWebpFrame(data, name);
+    assert.equal(frame.width, XIAOMEI_FRAME.width, name);
+    assert.equal(frame.height, XIAOMEI_FRAME.height, name);
   }
+  const idle = await readFile(new URL("../public/xiaomei/static_idle_volume.webp", import.meta.url));
+  const body = await readFile(new URL("../public/xiaomei/body_neutral.webp", import.meta.url));
+  assert.equal(createHash("md5").update(idle).digest("hex"), "c8853681c7dbd9f754f1b1eb8ee0f19f");
+  assert.equal(createHash("md5").update(body).digest("hex"), "0a9d04a47bf926295080e77b4717b0be");
   for (const name of ["prop_snack", "prop_umbrella"] as const) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.png`, import.meta.url));
     assert.equal(data.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", name);

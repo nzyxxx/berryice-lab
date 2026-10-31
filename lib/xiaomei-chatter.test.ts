@@ -78,7 +78,7 @@ test("碎碎念按状态分桶，句子不跨桶", () => {
   for (const crossed of CROSSED) {
     assert.equal(all.includes(crossed), false, crossed);
   }
-  assert.equal(XIAOMEI_SPRITE_VERSION, 7);
+  assert.equal(XIAOMEI_SPRITE_VERSION, 8);
 });
 
 test("盯页只认现成路径，首页和预览仍是发呆", () => {

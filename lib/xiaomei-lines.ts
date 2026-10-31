@@ -30,7 +30,7 @@ export type XiaomeiSpokenLine = {
 export const XIAOMEI_CATCHPHRASE = "哼……人家才不会随便甜给你。";
 
 /** 换图时把 v 加一，浏览器缓存才会失效。眨眼、情绪、喝水、站姿、活动和点心伞跟这五张共用。 */
-export const XIAOMEI_SPRITE_VERSION = 7;
+export const XIAOMEI_SPRITE_VERSION = 8;
 
 export const XIAOMEI_SPRITE: Record<XiaomeiMood, string> = {
   happy: `/xiaomei/happy.webp?v=${XIAOMEI_SPRITE_VERSION}`,
