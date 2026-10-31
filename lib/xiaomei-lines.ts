@@ -1,13 +1,13 @@
 /**
- * 小莓妹的台词。对外就叫这个名字。性格是傲娇·嘴硬·心软。
+ * 小莓的台词。对外就叫这个名字。性格是傲娇·嘴硬·心软。
  * 格言来自签过的对话稿。口语短句，不讨好，也不骂人。
  * 没标档的是经典傲娇。guarded / warm / close 按好感档混进去。
  */
 
 import type { XiaomeiTone } from "./xiaomei-memory";
 
-/** 对外称呼。路径、存储键和接口仍用 xiaomei。签过的稿写「小莓」，后来定名小莓妹。 */
-export const XIAOMEI_NAME = "小莓妹";
+/** 对外称呼。路径、存储键和接口仍用 xiaomei。她自称小莓，两个字。 */
+export const XIAOMEI_NAME = "小莓";
 
 export const XIAOMEI_SAY_EVENT = "xiaomei:say";
 

@@ -38,14 +38,14 @@
 - `CRON_SECRET`
 - `DELTA_STATS_BASE_URL`
 - `DELTA_STATS_API_KEY`
-- `DEEPSEEK_API_KEY`（小莓妹对话的主钥匙。只放服务器环境，不要加 `NEXT_PUBLIC_`，页面、接口和日志里都不会出现这把钥匙）
+- `DEEPSEEK_API_KEY`（小莓对话的主钥匙。只放服务器环境，不要加 `NEXT_PUBLIC_`，页面、接口和日志里都不会出现这把钥匙）
 - `DEEPSEEK_API_KEY_2`（可选备用。主钥匙遇到 401、429 或 5xx 时换这一把再试一次。单独配备用、不配主钥匙，对话仍然是 503）
 - `DEEPSEEK_BASE_URL`（可选，默认 `https://api.deepseek.com`）
 - `DEEPSEEK_MODEL`（可选，默认 `deepseek-chat`）
 - `XIAO_MEI_CHAT_DISABLED`（设为 `1` 时关掉对话，不再请求上游）
 - `XIAO_MEI_DAILY_TOKEN_BUDGET`（可选。单机内存里的每日 token 软上限，用完返回 503）
 
-右下角的小莓妹要聊天时，浏览器只请求同源的 `POST /api/xiaomei/chat`。服务器再用上面的钥匙去调 DeepSeek 的 OpenAI 兼容接口。这台机器是 2 vCPU / 2 GiB，不要在上面跑本地模型，浏览器也不要直接请求 `api.deepseek.com`。
+右下角的小莓要聊天时，浏览器只请求同源的 `POST /api/xiaomei/chat`。服务器再用上面的钥匙去调 DeepSeek 的 OpenAI 兼容接口。这台机器是 2 vCPU / 2 GiB，不要在上面跑本地模型，浏览器也不要直接请求 `api.deepseek.com`。
 
 没配主钥匙，或 `XIAO_MEI_CHAT_DISABLED=1`，接口返回 503，不会出站。每人（按 IP，另加一个 HttpOnly cookie）大约每分钟 20 次、每天 100 次，超出返回 429。请求体大约限制在 24KB，一轮只留最近 8 个来回，模型输出封顶 180 token。
 
