@@ -1221,7 +1221,7 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
     ...XIAOMEI_ACTIVITY_POSES,
     ...XIAOMEI_ITEM_POSES,
   ] as const;
-  assert.equal(XIAOMEI_SPRITE_VERSION, 8);
+  assert.equal(XIAOMEI_SPRITE_VERSION, 9);
   for (const name of names) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.webp`, import.meta.url));
     const frame = readXiaomeiWebpFrame(data, name);
@@ -1231,7 +1231,8 @@ test("五张表情和 A1 全身帧都是 256×438，舞台读帧常量", async (
   const idle = await readFile(new URL("../public/xiaomei/static_idle_volume.webp", import.meta.url));
   const body = await readFile(new URL("../public/xiaomei/body_neutral.webp", import.meta.url));
   assert.equal(createHash("md5").update(idle).digest("hex"), "c8853681c7dbd9f754f1b1eb8ee0f19f");
-  assert.equal(createHash("md5").update(body).digest("hex"), "0a9d04a47bf926295080e77b4717b0be");
+  // 眼窝填平后的身体：虹膜/瞳孔不再画在 body 上，只由 face_* 提供。
+  assert.equal(createHash("md5").update(body).digest("hex"), "0156876682bdd0e0618e6edaeebed59b");
   for (const name of ["prop_snack", "prop_umbrella"] as const) {
     const data = await readFile(new URL(`../public/xiaomei/${name}.png`, import.meta.url));
     assert.equal(data.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", name);

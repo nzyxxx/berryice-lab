@@ -329,8 +329,8 @@ test("眨眼四帧短于半秒，喝水先端后抿再回到空", () => {
   assert.equal(umbrellaFaceAt(0), "pose_umbrella_hold");
   assert.equal(umbrellaFaceAt(XIAOMEI_BEAT_MS.umbrella - 1), "pose_umbrella_hold");
   assert.equal(umbrellaFaceAt(XIAOMEI_BEAT_MS.umbrella), null);
-  assert.match(XIAOMEI_SNACK_SRC, /prop_snack\.png\?v=8/);
-  assert.match(XIAOMEI_UMBRELLA_SRC, /prop_umbrella\.png\?v=8/);
+  assert.match(XIAOMEI_SNACK_SRC, /prop_snack\.png\?v=9/);
+  assert.match(XIAOMEI_UMBRELLA_SRC, /prop_umbrella\.png\?v=9/);
 });
 
 test("动作类名和道具：拖拽时身体不动，发呆不端杯子", () => {
@@ -572,7 +572,7 @@ test("短动作的 CSS 时长跟拍长一致，并且不走逐帧循环", async 
   assert.match(presence, /walkFaceAt/);
   assert.match(presence, /snackFaceAt/);
   assert.match(presence, /umbrellaFaceAt/);
-  assert.equal(XIAOMEI_SPRITE_VERSION, 8);
+  assert.equal(XIAOMEI_SPRITE_VERSION, 9);
   for (const pose of [...XIAOMEI_STAND_POSES, ...XIAOMEI_ACTIVITY_POSES, ...XIAOMEI_ITEM_POSES]) {
     assert.equal(xiaomeiFaceSrc(pose), `/xiaomei/${pose}.webp?v=${XIAOMEI_SPRITE_VERSION}`);
   }

@@ -893,17 +893,17 @@ html.home-motion [data-reveal].is-shown {
     opacity: 1;
   }
   to {
-    transform: translate3d(0, 10px, 0) scale3d(0.92, 0.78, 1);
-    opacity: 0.92;
+    transform: translate3d(0, 4px, 0) scale3d(0.98, 0.94, 1);
+    opacity: 0.96;
   }
 }
 
 @keyframes xiaomei-motion-show {
   from {
-    transform: translate3d(0, 12px, 0) scale3d(0.94, 0.82, 1);
+    transform: translate3d(0, 4px, 0) scale3d(0.98, 0.94, 1);
   }
   70% {
-    transform: translate3d(0, -2px, 0) scale3d(1.02, 1.04, 1);
+    transform: translate3d(0, -1px, 0) scale3d(1.01, 1.015, 1);
   }
   to {
     transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
