@@ -291,8 +291,37 @@ function avoidRepeat(beat: XiaomeiIdleBeat, previous: XiaomeiIdleBeat | null): X
  * 下一拍待机。roll 取 [0, 1]。
  * 不饿时微表情更多。饿的时候点心更常出现，喝水、伞、转圈、散步仍留着。
  */
-export function nextIdleBeat(roll: number, previous: XiaomeiIdleBeat | null, hungry: boolean): XiaomeiIdleBeat {
-  return avoidRepeat(pickBeat(unitRoll(roll), hungry), previous);
+/**
+ * 靠近聊天输入区时，把非位移的微动往栖息偏：托腮（smile）、空白（note）、端着（hold）。
+ * 散步、转圈、点心、喝水、伞不改，避免栖姿把大动作吃掉。
+ */
+function biasTowardPerch(beat: XiaomeiIdleBeat, roll: number): XiaomeiIdleBeat {
+  if (
+    beat === "walk" ||
+    beat === "spin" ||
+    beat === "snack" ||
+    beat === "drink" ||
+    beat === "sip" ||
+    beat === "umbrella" ||
+    beat === "sway"
+  ) {
+    return beat;
+  }
+  if (roll < 0.2) return "smile";
+  if (roll < 0.4) return "note";
+  if (roll < 0.6) return "hold";
+  return beat;
+}
+
+export function nextIdleBeat(
+  roll: number,
+  previous: XiaomeiIdleBeat | null,
+  hungry: boolean,
+  nearComposer = false,
+): XiaomeiIdleBeat {
+  const beat = avoidRepeat(pickBeat(unitRoll(roll), hungry), previous);
+  if (!nearComposer) return beat;
+  return biasTowardPerch(beat, unitRoll(roll));
 }
 
 export function idleGapMs(roll: number): number {
@@ -427,9 +456,10 @@ export function xiaomeiPropPose(beat: XiaomeiIdleBeat | null): XiaomeiPropPose |
 export function xiaomeiChatFace(
   status: "thinking" | "done" | "error",
   replyMood: "happy" | "annoyed" | "content" = "happy",
+  errorStreak = 0,
 ): XiaomeiFace {
   if (status === "thinking") return "mood_thinking";
-  if (status === "error") return "mood_puff";
+  if (status === "error") return errorStreak >= 2 ? "annoyed" : "mood_puff";
   return replyMood === "happy" ? "mood_eager" : "mood_cool";
 }
 
@@ -454,14 +484,26 @@ export function resolveXiaomeiFace(input: {
   overlayActive?: boolean;
   /** 入睡三连 / 醒觉相。 */
   sleepPhase?: "awake" | "yawn" | "blank" | "sleep" | "wake";
+  /** 同一回合连续失败。≥2 时出错脸从鼓一下升到 annoyed 全身。 */
+  errorStreak?: number;
+  /** 打字 / 答完边沿钉忙。跟换脸最短驻留不是同一只计数器。 */
+  busyHold?: boolean;
+  /** 贴边探着时，悬停保持探姿。 */
+  peekHeld?: boolean;
+  /** 靠近聊天输入区：托腮，复用 pose_cheek。 */
+  perch?: boolean;
 }): XiaomeiFace {
   const phase = input.sleepPhase ?? "awake";
-  const busy = input.status === "thinking";
+  const busy = input.status === "thinking" || input.busyHold === true;
   // 醒觉高于钉脸。忙的时候哈欠和睡脸让开，工作脸钉住。
   if (phase === "wake" && input.poseFace) return input.poseFace;
   if (!busy && phase === "yawn" && input.poseFace) return input.poseFace;
   if (!busy && phase === "blank") return input.poseFace ?? "blank";
-  if (!busy && phase === "sleep") return input.poseFace ?? "mood_sleepy";
+  if (!busy && phase === "sleep") {
+    // 睡着被悬停：探一下，松手回到困脸。不在这里醒。
+    if (input.hover) return "pose_peek";
+    return input.poseFace ?? "mood_sleepy";
+  }
 
   // 短罩层：播完由调用方清 overlayActive，再解析时回到最新聊天/待机底座。
   if (input.overlayActive) {
@@ -470,7 +512,11 @@ export function resolveXiaomeiFace(input: {
   }
 
   if (busy) return "mood_thinking";
-  if (input.chatOpen && input.status !== "idle") return xiaomeiChatFace(input.status, input.replyMood);
+  if (input.chatOpen && input.status !== "idle") {
+    return xiaomeiChatFace(input.status, input.replyMood, input.errorStreak ?? 0);
+  }
+  if (input.peekHeld) return "pose_peek";
+  if (input.perch) return "pose_cheek";
   if (input.poseFace) return input.poseFace;
   if (input.chatOpen) return "content";
   if (input.leadMood) return input.leadMood;

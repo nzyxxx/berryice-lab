@@ -6,6 +6,7 @@ import {
   XIAOMEI_PET_HOLD_MS,
   XIAOMEI_RELEASE_SLOW_SPEED,
   classifyHitZone,
+  pointerEntersHitZone,
   clampPlace,
   defaultPlace,
   estimatePointerVelocity,
@@ -371,6 +372,7 @@ export function useXiaomeiPlace(options: {
   const onPointerMove = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
       const drag = dragRef.current;
+      // 没按下的划过不是 poke / 摸头。分区只在 click / long-press 收口。
       if (!drag || drag.id !== event.pointerId) return;
       // 长按已经打开菜单。之后的手指抖动不能再当成拖拽，否则菜单会马上被拖走关掉。
       if (holdFired.current) return;
@@ -455,6 +457,8 @@ export function useXiaomeiPlace(options: {
         persist({ ...posRef.current, hidden: hiddenRef.current, peek: null });
         return;
       }
+      // 松手才是短点。划过（pointermove 且没按下）在 onPointerMove 开头就返回，进不了这里。
+      if (!pointerEntersHitZone("click")) return;
       const zone = classifyHitZone(drag.localY, boxRef.current.height);
       onTapRef.current(zone);
     },

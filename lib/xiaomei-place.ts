@@ -357,6 +357,13 @@ export const XIAOMEI_HIT_HEAD_RATIO = 0.4;
 
 export type XiaomeiHitZone = "head" | "body";
 
+/** 划过是路过。只有按下后的短点或长按才进头/身分区。 */
+export type XiaomeiPointerIntent = "pass" | "click" | "long-press";
+
+export function pointerEntersHitZone(intent: XiaomeiPointerIntent): boolean {
+  return intent === "click" || intent === "long-press";
+}
+
 /** 本地 y（相对命中框顶）→ 头 / 身。y 越界仍归最近一侧。 */
 export function classifyHitZone(localY: number, height: number): XiaomeiHitZone {
   const h = Math.max(1, height);

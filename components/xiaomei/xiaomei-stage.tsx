@@ -18,9 +18,10 @@ import {
   xiaomeiIdleVolumeSrc,
   type XiaomeiFace,
 } from "@/lib/xiaomei-faces";
+import type { XiaomeiGaze } from "@/lib/xiaomei-fsm";
 import { XIAOMEI_FRAME } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 const SPRITE_FILTER =
   "[filter:drop-shadow(0_0_1px_rgba(244,246,251,0.2))_drop-shadow(0_6px_5px_rgba(0,0,0,0.45))]";
@@ -34,14 +35,28 @@ function isStandingExpression(face: XiaomeiFace): boolean {
   return !face.startsWith("pose_");
 }
 
+/** 只挪脸层或绕脚微倾。不改外层 left/top。 */
+function gazeStyle(gaze: XiaomeiGaze | null | undefined, mode: "face" | "feet"): CSSProperties | undefined {
+  if (!gaze || gaze.movesPlace) return undefined;
+  const pupilX = mode === "face" ? gaze.pupilX : 0;
+  const pupilY = mode === "face" ? gaze.pupilY : 0;
+  if (pupilX === 0 && pupilY === 0 && gaze.tiltDeg === 0) return undefined;
+  return {
+    transform: `translate3d(${pupilX}px, ${pupilY}px, 0) rotate(${gaze.tiltDeg}deg)`,
+    transformOrigin: mode === "face" ? "50% 30%" : "50% 100%",
+  };
+}
+
 function XiaomeiSprite({
   face,
   reducedMotion,
   className,
+  gaze = null,
 }: {
   face: XiaomeiFace;
   reducedMotion: boolean;
   className?: string;
+  gaze?: XiaomeiGaze | null;
 }) {
   // 减动效：不分层眨眼，落回烘焙发量全身。
   if (reducedMotion && isXiaomeiLayeredBlinkFace(face)) {
@@ -97,9 +112,11 @@ function XiaomeiSprite({
             decoding="sync"
             data-xiaomei-layer={layer}
             className={cn(
-              "xiaomei-stack-face pointer-events-none absolute inset-0 z-[1] h-full w-full object-contain object-bottom",
+              "xiaomei-stack-face xiaomei-gaze pointer-events-none absolute inset-0 z-[1] h-full w-full object-contain object-bottom",
               layer === active ? "is-active" : "is-idle",
             )}
+            style={gazeStyle(gaze, "face")}
+            data-xiaomei-gaze={gaze && !gaze.movesPlace ? "face" : "off"}
           />
         ))}
       </span>
@@ -118,10 +135,12 @@ function XiaomeiSprite({
       data-xiaomei-face={face}
       data-xiaomei-sprite="fullbody"
       className={cn(
-        "pointer-events-none relative z-[1] h-full w-full object-contain object-bottom",
+        "xiaomei-gaze pointer-events-none relative z-[1] h-full w-full object-contain object-bottom",
         SPRITE_FILTER,
         className,
       )}
+      style={gazeStyle(gaze, "feet")}
+      data-xiaomei-gaze={gaze && !gaze.movesPlace ? "feet" : "off"}
     />
   );
 }
@@ -141,6 +160,7 @@ export function XiaomeiStage({
   groundMode = "float",
   squashPulse = 0,
   heartBurst = 0,
+  gaze = null,
 }: {
   mood: XiaomeiFace;
   motionClass: string | null;
@@ -153,6 +173,8 @@ export function XiaomeiStage({
   squashPulse?: number;
   /** 摸头时递增，冒一两颗 CSS 小心心。 */
   heartBurst?: number;
+  /** 瞳孔 / 微倾。不写角色坐标。 */
+  gaze?: XiaomeiGaze | null;
 }) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [current, setCurrent] = useState(mood);
@@ -335,11 +357,11 @@ export function XiaomeiStage({
         <span className="xiaomei-crossfade">
           {outgoing ? (
             <span key={`out-${outgoing}`} className="xiaomei-crossfade-layer is-out" aria-hidden>
-              <XiaomeiSprite face={outgoing} reducedMotion={reducedMotion} />
+              <XiaomeiSprite face={outgoing} reducedMotion={reducedMotion} gaze={gaze} />
             </span>
           ) : null}
           <span key="in" className={cn("xiaomei-crossfade-layer", outgoing && "is-in")}>
-            <XiaomeiSprite face={current} reducedMotion={reducedMotion} />
+            <XiaomeiSprite face={current} reducedMotion={reducedMotion} gaze={gaze} />
           </span>
         </span>
         {prop ? <XiaomeiProp kind={prop} pose={pose} /> : null}

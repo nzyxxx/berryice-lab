@@ -29,9 +29,11 @@ import {
   XIAOMEI_SLEEP_BLANK_MS,
   XIAOMEI_SLEEP_YAWN_MS,
   XIAOMEI_WAKE_MS,
+  admitScheduledSwitch,
   blinkArmDelayMs,
   canChangeAfterHold,
   isVisuallySleeping,
+  schedulingHolder,
   shouldEnterSleep,
   sleepPhaseFace,
   wakeFromInteraction,
@@ -48,7 +50,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * 点心先捧着再咬，伞撑开拿着。贴纸不再叠第二只。咬完回到这句原来的表情。
  * 喂食和喝水的动作在关菜单的同一轮排上，菜单合上后接着播，不会被清掉。
  */
-export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean; paused: () => boolean }) {
+export function useXiaomeiPresence(options: {
+  enabled: boolean;
+  hungry: boolean;
+  paused: () => boolean;
+  nearComposer?: () => boolean;
+}) {
   const [beat, setBeat] = useState<XiaomeiIdleBeat | null>(null);
   const [beatMood, setBeatMood] = useState<XiaomeiFace | null>(null);
   const [lead, setLead] = useState<XiaomeiFace | null>(null);
@@ -70,6 +77,8 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
 
   const hungryRef = useRef(options.hungry);
   const pausedRef = useRef(options.paused);
+  const nearComposerRef = useRef(options.nearComposer);
+  const leadOnRef = useRef(false);
 
   const gapTimer = useRef(0);
   const blinkArm = useRef(0);
@@ -94,6 +103,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
   const clearLeadTimer = useCallback(() => {
     window.clearTimeout(leadTimer.current);
     leadTimer.current = 0;
+    leadOnRef.current = false;
   }, []);
 
   const clearBlinkTimers = useCallback(() => {
@@ -122,9 +132,35 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     setPoseFace(null);
   }, [clearBeatTimers, clearBlink, clearLeadTimer]);
 
-  const startBlink = useCallback(() => {
+  const holderNow = useCallback(() => {
+    return schedulingHolder({
+      sleepPhase: sleepPhaseRef.current,
+      forced: forcedRef.current,
+      lead: leadOnRef.current,
+      active: activeRef.current,
+    });
+  }, []);
+
+  const stampHold = useCallback(() => {
+    holdSinceRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
+  }, []);
+
+  const startBlink = useCallback((opts?: { admitted?: boolean }) => {
     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     if (!canChangeAfterHold(lastBlinkAtRef.current, now, XIAOMEI_MIN_HOLD_MS * 2)) return;
+    // 眨眼是低优先随机拍。beginIdle 已经放过门时不再用刚盖上的 hold 把自己挡掉。
+    if (
+      !opts?.admitted &&
+      !admitScheduledSwitch({
+        holder: holderNow(),
+        heldSinceMs: holdSinceRef.current,
+        nowMs: now,
+        incoming: "micro",
+        randomBeat: true,
+      })
+    ) {
+      return;
+    }
     lastBlinkAtRef.current = now;
     holdSinceRef.current = now;
     clearBlinkTimers();
@@ -139,11 +175,12 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
       elapsed += XIAOMEI_BLINK_FRAME_MS[index] ?? 0;
     }
     blinkTimers.current.push(window.setTimeout(() => setBlinkFace(null), elapsed));
-  }, [clearBlinkTimers]);
+  }, [clearBlinkTimers, holderNow]);
 
   const playGreet = useCallback(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (forcedRef.current) return;
+    stampHold();
     clearBlink();
     clearBeatTimers();
     clearLeadTimer();
@@ -166,9 +203,10 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         setPoseFace(null);
       }, XIAOMEI_GREET_MS),
     );
-  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
+  }, [clearBeatTimers, clearBlink, clearLeadTimer, stampHold]);
 
   const startActivity = useCallback((beat: "spin" | "walk") => {
+    stampHold();
     clearBlink();
     clearBeatTimers();
     clearLeadTimer();
@@ -198,9 +236,10 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         setPoseFace(null);
       }, XIAOMEI_BEAT_MS[beat]),
     );
-  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
+  }, [clearBeatTimers, clearBlink, clearLeadTimer, stampHold]);
 
   const startSnack = useCallback(() => {
+    stampHold();
     clearBlink();
     clearBeatTimers();
     clearLeadTimer();
@@ -225,9 +264,10 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         setPoseFace(null);
       }, XIAOMEI_BEAT_MS.snack),
     );
-  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
+  }, [clearBeatTimers, clearBlink, clearLeadTimer, stampHold]);
 
   const startUmbrella = useCallback(() => {
+    stampHold();
     clearBlink();
     clearBeatTimers();
     clearLeadTimer();
@@ -246,9 +286,10 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         setPoseFace(null);
       }, XIAOMEI_BEAT_MS.umbrella),
     );
-  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
+  }, [clearBeatTimers, clearBlink, clearLeadTimer, stampHold]);
 
   const startDrink = useCallback(() => {
+    stampHold();
     clearBlink();
     clearBeatTimers();
     clearLeadTimer();
@@ -273,7 +314,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         setPoseFace(null);
       }, XIAOMEI_BEAT_MS.drink),
     );
-  }, [clearBeatTimers, clearBlink, clearLeadTimer]);
+  }, [clearBeatTimers, clearBlink, clearLeadTimer, stampHold]);
 
   const applySleepFace = useCallback((phase: XiaomeiSleepPhase) => {
     sleepPhaseRef.current = phase;
@@ -318,6 +359,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     clearBeatTimers();
     clearLeadTimer();
     window.clearTimeout(sleepTimer.current);
+    stampHold();
     activeRef.current = true;
     forcedRef.current = true;
     applySleepFace("wake");
@@ -326,7 +368,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
       forcedRef.current = false;
       applySleepFace("awake");
     }, XIAOMEI_WAKE_MS);
-  }, [applySleepFace, clearBeatTimers, clearBlink, clearLeadTimer]);
+  }, [applySleepFace, clearBeatTimers, clearBlink, clearLeadTimer, stampHold]);
 
   const beginSleep = useCallback(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -336,6 +378,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     clearBeatTimers();
     clearLeadTimer();
     window.clearTimeout(sleepTimer.current);
+    stampHold();
     activeRef.current = true;
     forcedRef.current = true;
     applySleepFace("yawn");
@@ -347,7 +390,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         applySleepFace("sleep");
       }, XIAOMEI_SLEEP_BLANK_MS);
     }, XIAOMEI_SLEEP_YAWN_MS);
-  }, [applySleepFace, clearBeatTimers, clearBlink, clearLeadTimer]);
+  }, [applySleepFace, clearBeatTimers, clearBlink, clearLeadTimer, stampHold]);
 
   /** 任意交互：重置空闲；睡着则先播醒再回底座。 */
   const noteInteraction = useCallback(() => {
@@ -374,7 +417,18 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     (next: XiaomeiIdleBeat) => {
       if (isVisuallySleeping(sleepPhaseRef.current) || sleepPhaseRef.current === "wake") return;
       const now = typeof performance !== "undefined" ? performance.now() : Date.now();
-      if (!canChangeAfterHold(holdSinceRef.current, now, XIAOMEI_MIN_HOLD_MS)) return;
+      // 低优先随机拍：高优先未满最短驻留时直接丢掉，不改 hold 起点。
+      if (
+        !admitScheduledSwitch({
+          holder: holderNow(),
+          heldSinceMs: holdSinceRef.current,
+          nowMs: now,
+          incoming: "idle",
+          randomBeat: true,
+        })
+      ) {
+        return;
+      }
       holdSinceRef.current = now;
       clearBlink();
       if (next === "drink") {
@@ -416,7 +470,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
       setPoseFace(null);
       if (next === "blink" || next === "blink2" || next === "slowblink") {
         setBeatMood(null);
-        startBlink();
+        startBlink({ admitted: true });
       } else {
         const trail = expressionTrail(next, "content");
         setBeatMood(trail[0]);
@@ -432,7 +486,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
         }, XIAOMEI_BEAT_MS[next]),
       );
     },
-    [clearBeatTimers, clearBlink, clearLeadTimer, startActivity, startBlink, startDrink, startSnack, startUmbrella],
+    [clearBeatTimers, clearBlink, clearLeadTimer, holderNow, startActivity, startBlink, startDrink, startSnack, startUmbrella],
   );
 
   const flashClick = useCallback(
@@ -446,10 +500,24 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
       setBeat(null);
       setBeatMood(null);
       setPoseFace(null);
+      leadOnRef.current = true;
+      stampHold();
       setLead(trail[0]);
-      leadTimer.current = window.setTimeout(() => setLead(null), XIAOMEI_TRAIL_MS);
+      leadTimer.current = window.setTimeout(() => {
+        leadOnRef.current = false;
+        setLead(null);
+      }, XIAOMEI_TRAIL_MS);
     },
-    [clearBeatTimers, clearBlink, clearLeadTimer],
+    [clearBeatTimers, clearBlink, clearLeadTimer, stampHold],
+  );
+
+  const nudgeAttention = useCallback(
+    (beat: "glance" | "smile") => {
+      if (pausedRef.current()) return;
+      if (activeRef.current || forcedRef.current) return;
+      beginIdle(beat);
+    },
+    [beginIdle],
   );
 
   const playFeed = useCallback((_settled: XiaomeiMood) => {
@@ -459,6 +527,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
   useEffect(() => {
     hungryRef.current = options.hungry;
     pausedRef.current = options.paused;
+    nearComposerRef.current = options.nearComposer;
   });
 
   useEffect(() => {
@@ -492,7 +561,14 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
           !forcedRef.current &&
           sleepPhaseRef.current === "awake"
         ) {
-          beginIdle(nextIdleBeat(Math.random(), lastRef.current, hungryRef.current));
+          beginIdle(
+            nextIdleBeat(
+              Math.random(),
+              lastRef.current,
+              hungryRef.current,
+              nearComposerRef.current?.() ?? false,
+            ),
+          );
         }
         loop();
       }, gap);
@@ -553,6 +629,7 @@ export function useXiaomeiPresence(options: { enabled: boolean; hungry: boolean;
     poseFace,
     sleepPhase,
     flashClick,
+    nudgeAttention,
     playFeed,
     playDrink: startDrink,
     playGreet,

@@ -74,6 +74,10 @@ import {
   resolveChatterBucket,
 } from "@/lib/xiaomei-chatter";
 import {
+  XIAOMEI_HOVER_COOLDOWN_MS,
+  XIAOMEI_HOVER_DWELL_MS,
+  attentionGaze,
+  hoverAttentionDecision,
   isVisuallySleeping,
   placeBubbleBox,
   quietChatCue,
@@ -108,6 +112,16 @@ const SPAM_WINDOW_MS = 2400;
 function subscribeMute(onChange: () => void) {
   window.addEventListener(MUTE_EVENT, onChange);
   return () => window.removeEventListener(MUTE_EVENT, onChange);
+}
+
+function subscribeReduced(onChange: () => void) {
+  const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function readReduced() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 let muteCache: { raw: string | null; value: boolean } = { raw: null, value: false };
@@ -290,6 +304,9 @@ export function XiaomeiCompanion() {
   const [speech, setSpeech] = useState<Speech | null>(null);
   const [moodPin, setMoodPin] = useState<XiaomeiMood | null>(null);
   const [hover, setHover] = useState(false);
+  const [composerNear, setComposerNear] = useState(false);
+  const [gazeSample, setGazeSample] = useState<{ dx: number; dy: number } | null>(null);
+  const reducedAttention = useSyncExternalStore(subscribeReduced, readReduced, () => true);
   const [squashPulse, setSquashPulse] = useState(0);
   const [heartBurst, setHeartBurst] = useState(0);
   const keyboardFrame = useKeyboardFrame(chatOpen || menuOpen || memoryOpen || Boolean(speech));
@@ -316,6 +333,12 @@ export function XiaomeiCompanion() {
   const reawakenPendingRef = useRef(false);
   const busyLatchRef = useRef(false);
   const mutterAmbientRef = useRef<() => void>(() => {});
+  const activityHoldRef = useRef(chat.activityHold);
+  const composerNearRef = useRef(false);
+  const hoverTimer = useRef(0);
+  const lastHoverAt = useRef(0);
+  const nudgeRef = useRef<(beat: "glance" | "smile") => void>(() => {});
+  composerNearRef.current = composerNear;
 
   useEffect(() => {
     chatOpenRef.current = chatOpen;
@@ -326,6 +349,7 @@ export function XiaomeiCompanion() {
     dndRef.current = dnd;
     speechRef.current = speech;
     statusRef.current = chat.status;
+    activityHoldRef.current = chat.activityHold;
   });
 
   const speak = useCallback((mood: XiaomeiMood, text: string, source: Speech["source"]) => {
@@ -421,14 +445,17 @@ export function XiaomeiCompanion() {
       !chatOpen &&
       !menuOpen &&
       !memoryOpen &&
-      !shouldSuppressIdleChatter(chat.status),
+      !shouldSuppressIdleChatter(chat.status) &&
+      chat.activityHold == null,
     hungry: isXiaomeiHungry(meters.meters.fullness),
+    nearComposer: () => composerNearRef.current,
     paused: () =>
       speechRef.current != null ||
       chatOpenRef.current ||
       menuOpenRef.current ||
       memoryOpenRef.current ||
-      shouldSuppressIdleChatter(statusRef.current),
+      shouldSuppressIdleChatter(statusRef.current) ||
+      activityHoldRef.current != null,
   });
 
   useEffect(() => {
@@ -476,6 +503,7 @@ export function XiaomeiCompanion() {
   useEffect(() => {
     flashClickRef.current = presence.flashClick;
     noteInteractionRef.current = presence.noteInteraction;
+    nudgeRef.current = presence.nudgeAttention;
   });
 
   useEffect(() => {
@@ -513,6 +541,34 @@ export function XiaomeiCompanion() {
     reawakenPendingRef.current = true;
     mutterAmbientRef.current();
   }, [chat.status, chatOpen, dnd, memoryOpen, menuOpen, place.hidden, place.ready]);
+
+  useEffect(() => {
+    if (chatOpen) return;
+    setComposerNear(false);
+  }, [chatOpen]);
+
+  useEffect(() => {
+    if (!place.ready || place.hidden || reducedAttention) {
+      setGazeSample(null);
+      return;
+    }
+    let bucket = "";
+    const onMove = (event: PointerEvent) => {
+      const node = spriteRef.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      const dx = event.clientX - (rect.left + rect.width / 2);
+      const dy = event.clientY - (rect.top + rect.height * 0.28);
+      const next = `${Math.round(dx / 16)}:${Math.round(dy / 16)}`;
+      if (next === bucket) return;
+      bucket = next;
+      setGazeSample({ dx, dy });
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [place.hidden, place.ready, reducedAttention]);
+
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   useEffect(() => {
     if (!place.ready || place.hidden || muted) return;
@@ -712,6 +768,23 @@ export function XiaomeiCompanion() {
     status: chat.status,
     celebrate: chat.celebratePulse,
     chatOpen,
+    errorStreak: chat.errorStreak,
+  });
+  const chatMotion = chatCue === "pout" ? "pout" : chatCue;
+  const chatMark = chatCue === "cheer" || chatCue === "sigh" ? chatCue : null;
+  const gaze = attentionGaze({
+    source: reducedAttention
+      ? "none"
+      : chat.activityHold === "stream" || (chatOpen && chat.status === "thinking")
+        ? "dialogue"
+        : composerNear
+          ? "composer"
+          : gazeSample
+            ? "pointer"
+            : "none",
+    dx: gazeSample?.dx,
+    dy: gazeSample?.dy,
+    reducedMotion: reducedAttention,
   });
   const overlayActive = Boolean(presence.lead) && !place.dragging;
   const face = resolveXiaomeiFace({
@@ -727,6 +800,10 @@ export function XiaomeiCompanion() {
     hover: hover && !memoryOpen,
     overlayActive,
     sleepPhase: presence.sleepPhase,
+    errorStreak: chat.errorStreak,
+    busyHold: chat.activityHold != null,
+    peekHeld: hover && place.peek != null && !chatOpen && !menuOpen && !memoryOpen,
+    perch: composerNear && chatOpen && chat.status === "idle" && chat.activityHold == null,
   });
   const showSpeech = speech && !chatOpen && !menuOpen && !memoryOpen && !muted;
   const peekApplied = chatOpen || menuOpen || memoryOpen ? null : place.peek;
@@ -810,29 +887,41 @@ export function XiaomeiCompanion() {
         transform: chatOpen || menuOpen || memoryOpen ? "translate3d(0, 0, 0)" : peekTransform(place.peek),
         transition: place.dragging ? "none" : "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
       }}
+      data-xiaomei-anchor="pinned"
       onPointerEnter={() => {
-        noteInteractionRef.current();
         setHover(true);
-        place.onEnter();
-        const currentSpeech = speechRef.current;
-        if (
-          !dndBlocksAmbient(dndRef.current) &&
-          !shouldSuppressIdleChatter(chat.status) &&
-          !chatOpenRef.current &&
-          !menuOpenRef.current &&
-          !memoryOpenRef.current &&
-          !currentSpeech &&
-          !presence.poseFace
-        ) {
+        window.clearTimeout(hoverTimer.current);
+        hoverTimer.current = window.setTimeout(() => {
+          if (isVisuallySleeping(sleepPhaseRef.current)) return;
+          const now = Date.now();
+          const sinceLast =
+            lastHoverAt.current === 0 ? XIAOMEI_HOVER_COOLDOWN_MS : now - lastHoverAt.current;
+          const decision = hoverAttentionDecision({
+            dwellMs: XIAOMEI_HOVER_DWELL_MS,
+            sinceLastMs: sinceLast,
+            roll: Math.random(),
+            blocked:
+              dndBlocksAmbient(dndRef.current) ||
+              shouldSuppressIdleChatter(statusRef.current) ||
+              chatOpenRef.current ||
+              menuOpenRef.current ||
+              memoryOpenRef.current ||
+              speechRef.current != null ||
+              activityHoldRef.current != null,
+          });
+          if (!decision) return;
+          lastHoverAt.current = now;
+          nudgeRef.current(decision);
+          if (dndBlocksAmbient(dndRef.current) || speechRef.current) return;
           const tone = toneFromAffection(metersRef.current.affection);
           const line = pickTaggedLine(XIAOMEI_HOVER_LINES, speechRef.current?.text, tone);
           reawakenPendingRef.current = false;
-          flashClickRef.current(line.mood, "click");
           speak(line.mood, line.text, "hover");
-        }
+        }, XIAOMEI_HOVER_DWELL_MS);
       }}
       onPointerLeave={() => {
         setHover(false);
+        window.clearTimeout(hoverTimer.current);
         if (pinSource.current !== "hover") return;
         pinSource.current = null;
         setSpeech(null);
@@ -942,6 +1031,8 @@ export function XiaomeiCompanion() {
           onSend={chat.send}
           onRetry={chat.retry}
           onClose={closeChat}
+          onTyping={chat.noteTyping}
+          onComposerNear={setComposerNear}
         />
       ) : null}
 
@@ -1008,13 +1099,14 @@ export function XiaomeiCompanion() {
                   ? xiaomeiMotionClass("stretch", false)
                   : presence.sleepPhase === "yawn"
                     ? xiaomeiMotionClass("yawn", false)
-                    : chatCue
-                      ? xiaomeiMotionClass(chatCue, false)
-                      : xiaomeiMotionClass(presence.beat, false)
+            : chatMotion
+              ? xiaomeiMotionClass(chatMotion, false)
+              : xiaomeiMotionClass(presence.beat, false)
           }
           prop={xiaomeiPropKind(presence.beat)}
           pose={xiaomeiPropPose(presence.beat)}
-          cue={chatCue ?? xiaomeiCueKind(presence.beat)}
+          cue={chatMark ?? xiaomeiCueKind(presence.beat)}
+          gaze={gaze.movesPlace ? null : gaze}
           liftShadow={!place.dragging}
           groundMode={
             place.dragging ? "still" : presence.beat === "walk" ? "walk" : "float"

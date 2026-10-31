@@ -1,7 +1,14 @@
 "use client";
 
 import { isXiaomeiJailbreak, moodAfterReply, pullSseEvents, type XiaomeiChatTurn } from "@/lib/xiaomei-chat";
-import { createCelebrateEdge, sceneBucket, shouldStartCelebratePulse } from "@/lib/xiaomei-fsm";
+import {
+  XIAOMEI_STREAM_BUSY_HOLD_MS,
+  XIAOMEI_TYPE_BUSY_HOLD_MS,
+  createCelebrateEdge,
+  nextFailureStreak,
+  sceneBucket,
+  shouldStartCelebratePulse,
+} from "@/lib/xiaomei-fsm";
 import { pickXiaomeiLine, XIAOMEI_SCENE_PIN_MS } from "@/lib/xiaomei-lines";
 import { readXiaomeiMemory, rememberThread, writeXiaomeiMemory } from "@/lib/xiaomei-memory";
 import { readXiaomeiNapkin } from "@/lib/xiaomei-napkin";
@@ -25,6 +32,10 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
   const [status, setStatus] = useState<XiaomeiChatStatus>("idle");
   const [sceneLine, setSceneLine] = useState<string | null>(null);
   const [replyMood, setReplyMood] = useState<"happy" | "annoyed">("happy");
+  /** 同一句用户话连续失败。成功或换一句就清。跟换脸驻留不是同一只计数器。 */
+  const [errorStreak, setErrorStreak] = useState(0);
+  /** 打字后 / 流式答完后的钉忙。不写立绘最短驻留。 */
+  const [activityHold, setActivityHold] = useState<"typing" | "stream" | null>(null);
   /** 真回合边沿庆祝脉冲：仅 thinking→done 成功一次；取消/断线为 null。 */
   const [celebratePulse, setCelebratePulse] = useState<"cheer" | "sigh" | null>(null);
   const lock = useRef(false);
@@ -34,6 +45,11 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
   const abortRef = useRef<AbortController | null>(null);
   const celebrateEdge = useRef(createCelebrateEdge());
   const abortedRef = useRef(false);
+  const errorStreakRef = useRef(0);
+  const failedTurnRef = useRef<string | null>(null);
+  const streamGen = useRef(0);
+  const streamTimer = useRef<number | null>(null);
+  const typeTimer = useRef<number | null>(null);
   const messagesRef = useRef(messages);
   const hooksRef = useRef(options);
   const hydrated = useRef(false);
@@ -68,6 +84,28 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     window.clearTimeout(pulseTimer.current);
     pulseTimer.current = null;
   }, []);
+
+  const clearStreamTimer = useCallback(() => {
+    if (streamTimer.current == null) return;
+    window.clearTimeout(streamTimer.current);
+    streamTimer.current = null;
+  }, []);
+
+  const clearTypeTimer = useCallback(() => {
+    if (typeTimer.current == null) return;
+    window.clearTimeout(typeTimer.current);
+    typeTimer.current = null;
+  }, []);
+
+  const noteTyping = useCallback(() => {
+    if (lock.current) return;
+    setActivityHold("typing");
+    clearTypeTimer();
+    typeTimer.current = window.setTimeout(() => {
+      typeTimer.current = null;
+      setActivityHold((current) => (current === "typing" ? null : current));
+    }, XIAOMEI_TYPE_BUSY_HOLD_MS);
+  }, [clearTypeTimer]);
 
   const pinStatus = useCallback(
     (next: "thinking" | "done" | "error", opts?: { aborted?: boolean; replyMood?: "happy" | "annoyed" }) => {
@@ -122,6 +160,10 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
   );
 
   const resetFace = useCallback(() => {
+    streamGen.current += 1;
+    clearStreamTimer();
+    clearTypeTimer();
+    setActivityHold(null);
     clearFaceTimer();
     clearPulseTimer();
     sceneLineRef.current = null;
@@ -130,14 +172,16 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     setStatus("idle");
     celebrateEdge.current.reset();
     abortedRef.current = false;
-  }, [clearFaceTimer, clearPulseTimer]);
+  }, [clearFaceTimer, clearPulseTimer, clearStreamTimer, clearTypeTimer]);
 
   useEffect(
     () => () => {
       clearFaceTimer();
       clearPulseTimer();
+      clearStreamTimer();
+      clearTypeTimer();
     },
-    [clearFaceTimer, clearPulseTimer],
+    [clearFaceTimer, clearPulseTimer, clearStreamTimer, clearTypeTimer],
   );
 
   const stop = useCallback(() => {
@@ -151,6 +195,11 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     pullStored();
     lock.current = true;
     setPending(true);
+    streamGen.current += 1;
+    clearStreamTimer();
+    clearTypeTimer();
+    setActivityHold(null);
+    const sameTurn = failedTurnRef.current === content;
     pinStatus("thinking");
 
     const history: ThreadMessage[] = [
@@ -224,10 +273,22 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
       if (!accumulated.trim()) throw new Error("……我听到了啦。你再说一遍？");
       const mood = moodAfterReply(accumulated);
       setReplyMood(mood);
-      pinStatus("done", { replyMood: mood, aborted: false });
+      errorStreakRef.current = 0;
+      failedTurnRef.current = null;
+      setErrorStreak(0);
       const stored = readXiaomeiMemory();
       writeXiaomeiMemory(rememberThread(stored, content, accumulated.trim()));
       if (!isXiaomeiJailbreak(content)) hooksRef.current?.onReplied?.();
+      // 答完先继续钉 thinking，1.5s 后再落到 done。这只计时器不碰换脸最短驻留。
+      const gen = streamGen.current;
+      setActivityHold("stream");
+      clearStreamTimer();
+      streamTimer.current = window.setTimeout(() => {
+        streamTimer.current = null;
+        if (streamGen.current !== gen) return;
+        setActivityHold((current) => (current === "stream" ? null : current));
+        pinStatus("done", { replyMood: mood, aborted: false });
+      }, XIAOMEI_STREAM_BUSY_HOLD_MS);
       return true;
     } catch (error) {
       const aborted = error instanceof DOMException && error.name === "AbortError";
@@ -237,6 +298,17 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
           ? error.message
           : FALLBACK;
       writeAssistant(accumulated.trim() ? `${accumulated}\n${message}` : message, true);
+      // 用户按停止不算这句又失败一次；超时和断线算。
+      if (!(aborted && abortedRef.current)) {
+        const next = nextFailureStreak({
+          streak: errorStreakRef.current,
+          sameTurn,
+          failed: true,
+        });
+        errorStreakRef.current = next;
+        failedTurnRef.current = content;
+        setErrorStreak(next);
+      }
       setReplyMood("annoyed");
       pinStatus("error", { replyMood: "annoyed", aborted: abortedRef.current });
       return true;
@@ -246,7 +318,7 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
       setPending(false);
       abortRef.current = null;
     }
-  }, [pinStatus, pullStored]);
+  }, [clearStreamTimer, clearTypeTimer, pinStatus, pullStored]);
 
   const send = useCallback((text: string) => begin(text), [begin]);
 
@@ -275,9 +347,12 @@ export function useXiaomeiChat(options?: XiaomeiChatOptions) {
     status,
     sceneLine,
     replyMood,
+    errorStreak,
+    activityHold,
     celebratePulse,
     send,
     retry,
+    noteTyping,
     stop,
     resetFace,
   };
