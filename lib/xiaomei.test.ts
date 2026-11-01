@@ -1106,6 +1106,25 @@ test("防闪：分层眨眼常驻脸层 + 交叉淡入进出同时渐变 + 进�
   assert.doesNotMatch(css, /\.xiaomei-crossfade-layer\.is-out\s*\{[^}]*opacity:\s*0;/);
 });
 
+test("换图收尾不被下一次 mood 取消，脸板不单独凝视", async () => {
+  const stage = await readFile(new URL("../components/xiaomei/xiaomei-stage.tsx", import.meta.url), "utf8");
+  assert.match(stage, /endTimer/);
+  assert.match(stage, /cutTimer/);
+  assert.match(stage, /flightRef/);
+  assert.match(stage, /xiaomei-crossfade-out/);
+  assert.match(stage, /xiaomei-motion-show/);
+  assert.match(stage, /\[phase\]/);
+  assert.match(stage, /data-xiaomei-gaze="off"/);
+  assert.match(stage, /transformOrigin: "50% 100%"/);
+  assert.doesNotMatch(stage, /50% 30%/);
+  assert.doesNotMatch(stage, /gazeStyle\(gaze,\s*"face"\)/);
+  assert.doesNotMatch(stage, /translate3d\(\$\{/);
+  // 飞行中的 early return 不能顺便清掉收尾定时器。
+  assert.doesNotMatch(stage, /clearTimeout\(timer\)/);
+  assert.doesNotMatch(stage, /clearTimeout\(down\)/);
+  assert.doesNotMatch(stage, /clearTimeout\(fallback\)/);
+});
+
 test("Round2 刀：分区 Q 弹弹簧与 motion-hide 落在现有模块", async () => {
   const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(css, /xiaomei-click-squash/);
