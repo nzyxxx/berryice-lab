@@ -21,7 +21,7 @@ import {
 import type { XiaomeiGaze } from "@/lib/xiaomei-fsm";
 import { XIAOMEI_FRAME } from "@/lib/xiaomei-place";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type AnimationEvent, type CSSProperties } from "react";
 
 const SPRITE_FILTER =
   "[filter:drop-shadow(0_0_1px_rgba(244,246,251,0.2))_drop-shadow(0_6px_5px_rgba(0,0,0,0.45))]";
@@ -35,15 +35,16 @@ function isStandingExpression(face: XiaomeiFace): boolean {
   return !face.startsWith("pose_");
 }
 
-/** 只挪脸层或绕脚微倾。不改外层 left/top。 */
-function gazeStyle(gaze: XiaomeiGaze | null | undefined, mode: "face" | "feet"): CSSProperties | undefined {
-  if (!gaze || gaze.movesPlace) return undefined;
-  const pupilX = mode === "face" ? gaze.pupilX : 0;
-  const pupilY = mode === "face" ? gaze.pupilY : 0;
-  if (pupilX === 0 && pupilY === 0 && gaze.tiltDeg === 0) return undefined;
+/**
+ * 整身绕脚微倾。脸板禁止单独 translate：身体不跟着走时，远光标的
+ * translate3d(-3px,-3px) rotate(-2.5deg) 会把五官抬到头罩左上。
+ * 不改外层 left/top。
+ */
+function gazeStyle(gaze: XiaomeiGaze | null | undefined): CSSProperties | undefined {
+  if (!gaze || gaze.movesPlace || gaze.tiltDeg === 0) return undefined;
   return {
-    transform: `translate3d(${pupilX}px, ${pupilY}px, 0) rotate(${gaze.tiltDeg}deg)`,
-    transformOrigin: mode === "face" ? "50% 30%" : "50% 100%",
+    transform: `rotate(${gaze.tiltDeg}deg)`,
+    transformOrigin: "50% 100%",
   };
 }
 
@@ -82,11 +83,19 @@ function XiaomeiSprite({
 
   if (isXiaomeiLayeredBlinkFace(face)) {
     const active = xiaomeiBlinkFaceLayer(face);
+    const look = gazeStyle(gaze);
     return (
       <span
-        className={cn("xiaomei-stack pointer-events-none relative z-[1] h-full w-full", SPRITE_FILTER, className)}
+        className={cn(
+          "xiaomei-stack pointer-events-none relative z-[1] h-full w-full",
+          look && "xiaomei-gaze",
+          SPRITE_FILTER,
+          className,
+        )}
         data-xiaomei-face={face}
         data-xiaomei-sprite="layered"
+        data-xiaomei-gaze={look ? "rigid" : "off"}
+        style={look}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -99,7 +108,8 @@ function XiaomeiSprite({
           data-xiaomei-layer="body"
           className="xiaomei-stack-body pointer-events-none absolute inset-0 h-full w-full object-contain object-bottom"
         />
-        {/* 三张脸层常驻，只切 is-active；绝不换 src / remount，避免眨眼空一拍。 */}
+        {/* 三张脸层常驻，只切 is-active；绝不换 src / remount，避免眨眼空一拍。
+            脸板不挂 transform，和身体同一套注册。 */}
         {XIAOMEI_FACE_LAYERS.map((layer) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -111,18 +121,18 @@ function XiaomeiSprite({
             draggable={false}
             decoding="sync"
             data-xiaomei-layer={layer}
+            data-xiaomei-gaze="off"
             className={cn(
-              "xiaomei-stack-face xiaomei-gaze pointer-events-none absolute inset-0 z-[1] h-full w-full object-contain object-bottom",
+              "xiaomei-stack-face pointer-events-none absolute inset-0 z-[1] h-full w-full object-contain object-bottom",
               layer === active ? "is-active" : "is-idle",
             )}
-            style={gazeStyle(gaze, "face")}
-            data-xiaomei-gaze={gaze && !gaze.movesPlace ? "face" : "off"}
           />
         ))}
       </span>
     );
   }
 
+  const look = gazeStyle(gaze);
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -135,12 +145,13 @@ function XiaomeiSprite({
       data-xiaomei-face={face}
       data-xiaomei-sprite="fullbody"
       className={cn(
-        "xiaomei-gaze pointer-events-none relative z-[1] h-full w-full object-contain object-bottom",
+        "pointer-events-none relative z-[1] h-full w-full object-contain object-bottom",
+        look && "xiaomei-gaze",
         SPRITE_FILTER,
         className,
       )}
-      style={gazeStyle(gaze, "feet")}
-      data-xiaomei-gaze={gaze && !gaze.movesPlace ? "feet" : "off"}
+      style={look}
+      data-xiaomei-gaze={look ? "rigid" : "off"}
     />
   );
 }
@@ -149,6 +160,8 @@ function XiaomeiSprite({
  * 立绘、接触阴影、道具。不决定下一拍，也不写存储。
  * 分层眨眼只亮常驻脸层；同姿短交叉淡入；异姿全身切走下压→切图→弹起。
  * 飞行中只记 pending，落地再对齐，避免 crossfade 中途重启导致 opacity 连闪。
+ * 收尾定时器挂在 ref 上：mood 再变只更新 pending，不能清掉这次的 timeout。
+ * 否则 cleanup 把 90ms / show 收尾取消，data-xiaomei-swap 会停在 crossfade 或 show。
  */
 export function XiaomeiStage({
   mood,
@@ -187,13 +200,40 @@ export function XiaomeiStage({
   const pendingMood = useRef(mood);
   const currentRef = useRef(current);
   const phaseRef = useRef(phase);
+  /** 飞行标记不跟 render 回写。phaseRef 若被旧 state 盖掉，这只仍挡住下一次换图。 */
+  const flightRef = useRef(false);
   const genRef = useRef(0);
   const lastSquash = useRef(0);
   const lastHeart = useRef(0);
   const lastCommitAt = useRef(0);
   const holdTimer = useRef(0);
+  /** 跟 mood effect 拆开。effect cleanup 不能清这三只，否则下一次换脸会把收尾取消。 */
+  const cutTimer = useRef(0);
+  const endTimer = useRef(0);
+  const fallbackTimer = useRef(0);
   currentRef.current = current;
-  phaseRef.current = phase;
+
+  const clearSwapTimers = () => {
+    window.clearTimeout(cutTimer.current);
+    window.clearTimeout(endTimer.current);
+    window.clearTimeout(fallbackTimer.current);
+    cutTimer.current = 0;
+    endTimer.current = 0;
+    fallbackTimer.current = 0;
+  };
+
+  const releaseToIdle = () => {
+    if (!flightRef.current && phaseRef.current === "idle") return;
+    genRef.current += 1;
+    clearSwapTimers();
+    flightRef.current = false;
+    phaseRef.current = "idle";
+    setOutgoing(null);
+    setPhase("idle");
+    if (pendingMood.current !== currentRef.current) setKick((n) => n + 1);
+  };
+  const releaseRef = useRef(releaseToIdle);
+  releaseRef.current = releaseToIdle;
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -228,14 +268,17 @@ export function XiaomeiStage({
   useEffect(() => {
     pendingMood.current = mood;
 
-    // 换图飞行中：只记 pending，绝不中途重启 crossfade / motion-hide（防 opacity 连闪）。
-    if (phaseRef.current !== "idle") return;
+    // 换图飞行中：只记 pending。这里不能 return cleanup 去清 endTimer，
+    // 否则下一次 mood 会把 90ms 淡出和 motion-show 收尾一起取消，相位永远停住。
+    if (flightRef.current || phaseRef.current !== "idle") return;
 
     const shown = currentRef.current;
     if (mood === shown) return;
 
     // 分层眨眼只亮常驻脸层，身体不动。
     if (isXiaomeiLayeredBlinkFace(mood) && isXiaomeiLayeredBlinkFace(shown)) {
+      flightRef.current = false;
+      phaseRef.current = "idle";
       setCurrent(mood);
       setOutgoing(null);
       setPhase("idle");
@@ -243,6 +286,8 @@ export function XiaomeiStage({
     }
 
     if (reducedMotion) {
+      flightRef.current = false;
+      phaseRef.current = "idle";
       setCurrent(mood);
       setOutgoing(null);
       setPhase("idle");
@@ -256,82 +301,107 @@ export function XiaomeiStage({
     if (lastCommitAt.current > 0 && held < XIAOMEI_MIN_HOLD_MS) {
       window.clearTimeout(holdTimer.current);
       holdTimer.current = window.setTimeout(() => {
-        if (phaseRef.current !== "idle") return;
+        if (flightRef.current || phaseRef.current !== "idle") return;
         if (pendingMood.current === currentRef.current) return;
         setKick((n) => n + 1);
       }, XIAOMEI_MIN_HOLD_MS - held);
       return;
     }
 
+    clearSwapTimers();
     const gen = ++genRef.current;
     lastCommitAt.current = now;
+    flightRef.current = true;
 
-    const finishIdle = () => {
-      if (genRef.current !== gen) return;
-      setOutgoing(null);
-      setPhase("idle");
-      const next = pendingMood.current;
-      if (next !== currentRef.current) {
-        window.setTimeout(() => {
-          if (genRef.current !== gen) return;
-          if (phaseRef.current !== "idle") return;
-          if (pendingMood.current === currentRef.current) return;
-          setKick((n) => n + 1);
-        }, 0);
-      }
-    };
+    const still = () => genRef.current === gen && flightRef.current;
+
+    fallbackTimer.current = window.setTimeout(() => {
+      if (!still()) return;
+      currentRef.current = pendingMood.current;
+      setCurrent(pendingMood.current);
+      releaseRef.current();
+    }, XIAOMEI_MOTION_HIDE_TIMEOUT_MS);
 
     // 同站姿（含分层眨眼↔站立情绪）：短交叉淡入，不压弹。
     if (isStandingExpression(mood) && isStandingExpression(shown)) {
+      phaseRef.current = "crossfade";
       setOutgoing(shown);
       setCurrent(mood);
       setPhase("crossfade");
-      const timer = window.setTimeout(finishIdle, XIAOMEI_CROSSFADE_MS);
-      const fallback = window.setTimeout(() => {
-        if (genRef.current !== gen) return;
-        setOutgoing(null);
-        setCurrent(pendingMood.current);
-        setPhase("idle");
-        setKick((n) => n + 1);
-      }, XIAOMEI_MOTION_HIDE_TIMEOUT_MS);
-      return () => {
-        window.clearTimeout(timer);
-        window.clearTimeout(fallback);
-      };
+      endTimer.current = window.setTimeout(() => {
+        if (!still()) return;
+        releaseRef.current();
+      }, XIAOMEI_CROSSFADE_MS);
+      return;
     }
 
     // 异姿全身切：下压 → 切图 → 弹起。单层，不叠两张全身。
+    phaseRef.current = "hide";
     setOutgoing(null);
     setPhase("hide");
-    const down = window.setTimeout(() => {
-      if (genRef.current !== gen) return;
+    cutTimer.current = window.setTimeout(() => {
+      if (!still() || phaseRef.current !== "hide") return;
+      phaseRef.current = "show";
       setCurrent(pendingMood.current);
       setPhase("show");
     }, XIAOMEI_MOTION_HIDE_DOWN_MS);
-    const up = window.setTimeout(() => {
-      if (genRef.current !== gen) return;
-      finishIdle();
+    endTimer.current = window.setTimeout(() => {
+      if (!still()) return;
+      releaseRef.current();
     }, XIAOMEI_MOTION_HIDE_DOWN_MS + XIAOMEI_MOTION_HIDE_UP_MS);
-    const fallback = window.setTimeout(() => {
-      if (genRef.current !== gen) return;
-      setOutgoing(null);
-      setCurrent(pendingMood.current);
-      setPhase("idle");
-      setKick((n) => n + 1);
-    }, XIAOMEI_MOTION_HIDE_TIMEOUT_MS);
-    return () => {
-      window.clearTimeout(down);
-      window.clearTimeout(up);
-      window.clearTimeout(fallback);
-    };
   }, [mood, reducedMotion, kick]);
+
+  // 相位自己的保底。mood 变化不会重跑这只，所以 crossfade / show 不可能停过各自的时长。
+  useEffect(() => {
+    if (phase === "idle") return;
+    const armed = phase;
+    const ms =
+      armed === "crossfade"
+        ? XIAOMEI_CROSSFADE_MS
+        : armed === "hide"
+          ? XIAOMEI_MOTION_HIDE_DOWN_MS
+          : XIAOMEI_MOTION_HIDE_UP_MS;
+    const id = window.setTimeout(() => {
+      if (phaseRef.current !== armed) return;
+      if (armed === "hide") {
+        phaseRef.current = "show";
+        setCurrent(pendingMood.current);
+        setPhase("show");
+        return;
+      }
+      releaseRef.current();
+    }, ms);
+    return () => window.clearTimeout(id);
+  }, [phase]);
 
   useEffect(
     () => () => {
       window.clearTimeout(holdTimer.current);
+      window.clearTimeout(cutTimer.current);
+      window.clearTimeout(endTimer.current);
+      window.clearTimeout(fallbackTimer.current);
     },
     [],
   );
+
+  const onActorAnimationEnd = (event: AnimationEvent<HTMLSpanElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.animationName === "xiaomei-motion-hide" && phaseRef.current === "hide") {
+      phaseRef.current = "show";
+      setCurrent(pendingMood.current);
+      setPhase("show");
+      return;
+    }
+    if (event.animationName === "xiaomei-motion-show" && phaseRef.current === "show") {
+      releaseRef.current();
+    }
+  };
+
+  const onCrossfadeEnd = (event: AnimationEvent<HTMLSpanElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.animationName !== "xiaomei-crossfade-out") return;
+    releaseRef.current();
+  };
 
   return (
     <>
@@ -353,10 +423,16 @@ export function XiaomeiStage({
           phase === "show" && "xiaomei-motion-show",
         )}
         data-xiaomei-swap={phase}
+        onAnimationEnd={onActorAnimationEnd}
       >
         <span className="xiaomei-crossfade">
           {outgoing ? (
-            <span key={`out-${outgoing}`} className="xiaomei-crossfade-layer is-out" aria-hidden>
+            <span
+              key={`out-${outgoing}`}
+              className="xiaomei-crossfade-layer is-out"
+              aria-hidden
+              onAnimationEnd={onCrossfadeEnd}
+            >
               <XiaomeiSprite face={outgoing} reducedMotion={reducedMotion} gaze={gaze} />
             </span>
           ) : null}
