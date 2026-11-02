@@ -24,7 +24,8 @@ export function DafeiyuStage() {
       const width = Math.round(node.clientWidth);
       const height = Math.round(node.clientHeight);
       if (width < 64 || height < 64) return;
-      setSrc((current) => current ?? dafeiyuHelperSrc(window.location.origin, width, height));
+      const ratio = window.devicePixelRatio || 1;
+      setSrc((current) => current ?? dafeiyuHelperSrc(window.location.origin, width, height, ratio));
       postGeometry(frameRef.current, width, height);
     };
     measure();

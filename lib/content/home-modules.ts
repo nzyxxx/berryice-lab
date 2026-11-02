@@ -49,7 +49,7 @@ export const homeModules: HomeModule[] = [
       },
       {
         title: "大肥鱼",
-        description: "浏览器里的 dsh-pet。不是小莓。",
+        description: "浏览器里的 dsh-pet。",
         href: "/dafeiyu",
       },
     ],
