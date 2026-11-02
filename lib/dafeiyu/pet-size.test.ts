@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
+import { atmosphereForPath } from "../atmosphere-routes.ts";
 import { dafeiyuHelperSrc, dafeiyuRestMargin, dafeiyuWorkArea, DAFEIYU_ASSET_WIDTH, DAFEIYU_DESKTOP_SIZE, DAFEIYU_GEOMETRY_MESSAGE, DAFEIYU_SCHEME_MESSAGE, petSizeForStage } from "./pet-size.ts";
 
 const require = createRequire(import.meta.url);
@@ -110,6 +111,16 @@ test("右键菜单夹在舞台可视区域内，贴着点击处", () => {
   assert.ok(placed.top >= 4);
   assert.ok(placed.top + 420 <= 700);
   assert.equal(menuViewportClamp(10, 700), null);
+});
+
+test("大肥鱼和首页共用夜雨，闪电不跟过来", () => {
+  assert.deepEqual(atmosphereForPath("/"), { rain: true, lightning: true });
+  assert.deepEqual(atmosphereForPath("/dafeiyu"), { rain: true, lightning: false });
+  assert.deepEqual(atmosphereForPath("/about"), { rain: false, lightning: false });
+  const atmosphere = readFileSync(new URL("../../components/atmosphere/site-atmosphere.tsx", import.meta.url), "utf8");
+  assert.match(atmosphere, /atmosphereForPath/);
+  assert.match(atmosphere, /<RainField \/>/);
+  assert.doesNotMatch(atmosphere, /pathname === "\/" \?/);
 });
 
 test("大肥鱼页不写说明，首页不再挂小莓", () => {
