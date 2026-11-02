@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
-import { dafeiyuHelperSrc, dafeiyuWorkArea, DAFEIYU_DESKTOP_SIZE, DAFEIYU_GEOMETRY_MESSAGE, petSizeForStage } from "./pet-size.ts";
+import { dafeiyuHelperSrc, dafeiyuRestMargin, dafeiyuWorkArea, DAFEIYU_ASSET_WIDTH, DAFEIYU_DESKTOP_SIZE, DAFEIYU_GEOMETRY_MESSAGE, DAFEIYU_SCHEME_MESSAGE, petSizeForStage } from "./pet-size.ts";
 
 const require = createRequire(import.meta.url);
-const { menuViewportClamp } = require("../../public/dafeiyu/helper/page-fit.js") as {
+const { menuViewportClamp, restingBeforeRelayout } = require("../../public/dafeiyu/helper/page-fit.js") as {
   menuViewportClamp: (width: number, height: number) => { x: number; y: number; w: number; h: number } | null;
+  restingBeforeRelayout: (sprite: {
+    customPos: unknown;
+    dragState: { active: boolean };
+    throwRef: unknown;
+    moveRef: unknown;
+  }) => boolean;
 };
 
 /** 与上游 mountContextMenu 同一条夹取。 */
@@ -31,10 +37,29 @@ test("窄舞台缩小，但不小于 280", () => {
 test("视网膜屏不超过素材的 640 像素，避免放大发虚", () => {
   assert.equal(petSizeForStage(1280, 1), DAFEIYU_DESKTOP_SIZE);
   assert.equal(petSizeForStage(1280, 2), 320);
-  assert.equal(petSizeForStage(1280, 3), 213);
+  assert.equal(petSizeForStage(1280, 3), DAFEIYU_ASSET_WIDTH / 3);
   const src = dafeiyuHelperSrc("https://berryice.cn", 1280, 700, 2);
   const url = new URL(src, "https://berryice.cn");
   assert.equal(url.searchParams.get("petSize"), "320");
+});
+
+test("设备像素是整数，并且不会超过 640", () => {
+  for (const dpr of [1, 1.25, 1.5, 2, 2.5, 3]) {
+    const css = petSizeForStage(1440, dpr);
+    const device = css * dpr;
+    assert.ok(device <= DAFEIYU_ASSET_WIDTH + 1e-6, `dpr ${dpr} device ${device}`);
+    assert.ok(Math.abs(device - Math.round(device)) < 1e-6, `dpr ${dpr} landed on ${device}`);
+    assert.ok(css <= DAFEIYU_DESKTOP_SIZE + 1e-6, `dpr ${dpr} css ${css}`);
+  }
+});
+
+test("没拖过的鱼站在舞台下沿正中", () => {
+  const rest = dafeiyuRestMargin(1280, 700, 320);
+  assert.equal(rest.marginX, 480);
+  assert.equal(rest.marginY, 70);
+  const tight = dafeiyuRestMargin(360, 400, 344);
+  assert.ok(tight.marginX + 344 <= 360);
+  assert.ok(tight.marginY + (344 * 9) / 16 <= 400);
 });
 
 test("助手地址带上台面尺寸和官方素材前缀", () => {
@@ -42,6 +67,8 @@ test("助手地址带上台面尺寸和官方素材前缀", () => {
   const url = new URL(src, "https://berryice.cn");
   assert.equal(url.pathname, "/dafeiyu/helper/index.html");
   assert.equal(url.searchParams.get("petSize"), "462");
+  assert.equal(url.searchParams.get("marginX"), "409");
+  assert.equal(url.searchParams.get("scheme"), "dark");
   assert.equal(url.searchParams.get("workAreaW"), "1280");
   assert.equal(url.searchParams.get("configUrl"), "https://berryice.cn/dsh-pet-7340/config");
 });
@@ -53,6 +80,24 @@ test("工作区是一块屏，消息名和桥一致", () => {
   assert.equal(area.primaryIndex, 0);
   const bridge = readFileSync(new URL("../../public/dafeiyu/helper/browser-bridge.js", import.meta.url), "utf8");
   assert.match(bridge, new RegExp(DAFEIYU_GEOMETRY_MESSAGE));
+  assert.match(bridge, /marginX/);
+  const scheme = readFileSync(new URL("../../public/dafeiyu/helper/scheme.js", import.meta.url), "utf8");
+  assert.match(scheme, new RegExp(DAFEIYU_SCHEME_MESSAGE));
+  assert.match(scheme, /colorScheme/);
+});
+
+test("没被摆过的鱼在舞台变窄后仍算初始落点", () => {
+  const idle = {
+    customPos: null,
+    dragState: { active: false },
+    throwRef: null,
+    moveRef: null,
+  };
+  assert.equal(restingBeforeRelayout(idle), true);
+  assert.equal(restingBeforeRelayout({ ...idle, customPos: { rx: 0.9 } }), false);
+  assert.equal(restingBeforeRelayout({ ...idle, dragState: { active: true } }), false);
+  assert.equal(restingBeforeRelayout({ ...idle, throwRef: 1 }), false);
+  assert.equal(restingBeforeRelayout({ ...idle, moveRef: 1 }), false);
 });
 
 test("右键菜单夹在舞台可视区域内，贴着点击处", () => {
@@ -77,5 +122,8 @@ test("大肥鱼页不写说明，首页不再挂小莓", () => {
   assert.doesNotMatch(layout, /XiaomeiCompanion/);
   const helper = readFileSync(new URL("../../public/dafeiyu/helper/index.html", import.meta.url), "utf8");
   assert.match(helper, /sprite\.js/);
+  assert.match(helper, /scheme\.js/);
+  assert.ok(helper.indexOf("scheme.js") < helper.indexOf("sprite.js"));
   assert.ok(helper.indexOf("sprite.js") < helper.indexOf("page-fit.js"));
+  assert.doesNotMatch(page, /bg-white|#fff|小莓/);
 });

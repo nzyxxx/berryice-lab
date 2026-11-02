@@ -31,10 +31,26 @@
     },
   });
 
+  var petRef = null;
+  var pendingRest = null;
+
   function petSize() {
     var n = Number(new URLSearchParams(location.search).get("petSize"));
     if (!Number.isFinite(n)) return 462;
-    return Math.round(Math.min(462, Math.max(160, n)));
+    // 保留小数。四舍五入到整数 CSS 像素会让 1.25 倍屏落在半个设备像素上，边缘发虚。
+    return Math.min(462, Math.max(160, n));
+  }
+
+  function readMargin(name, fallback) {
+    var n = Number(new URLSearchParams(location.search).get(name));
+    if (!Number.isFinite(n)) return fallback;
+    return Math.round(n);
+  }
+
+  function applyRest(pet, rest) {
+    if (!pet || !rest) return;
+    if (Number.isFinite(rest.marginX)) pet.position.marginX = rest.marginX;
+    if (Number.isFinite(rest.marginY)) pet.position.marginY = rest.marginY;
   }
 
   function patchConfig(data) {
@@ -44,7 +60,13 @@
     var pet = main.pets[0];
     pet.size = petSize();
     pet.name = "大肥鱼";
-    pet.position = { corner: "bottom-left", marginX: 28, marginY: 36 };
+    pet.position = {
+      corner: "bottom-left",
+      marginX: readMargin("marginX", 28),
+      marginY: readMargin("marginY", 36),
+    };
+    petRef = pet;
+    if (pendingRest) applyRest(pet, pendingRest);
     pet.whisperEnabled = false;
     pet.balanceEnabled = false;
     pet.workStatusEnabled = false;
@@ -160,8 +182,13 @@
   window.addEventListener("message", function (event) {
     if (event.origin !== location.origin) return;
     var data = event.data;
-    if (!data || data.type !== "dafeiyu-geometry" || typeof displaysCb !== "function") return;
-    displaysCb(data.geo);
+    if (!data || data.type !== "dafeiyu-geometry") return;
+    if (data.rest) {
+      pendingRest = data.rest;
+      window.__dafeiyuRestMargin = data.rest;
+      applyRest(petRef, data.rest);
+    }
+    if (typeof displaysCb === "function") displaysCb(data.geo);
   });
 
   document.addEventListener("visibilitychange", function () {

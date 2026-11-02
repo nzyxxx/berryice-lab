@@ -8,6 +8,8 @@
       content="default-src 'self' http: https: data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http: https: data:; media-src 'self' http: https: blob:; font-src 'self' http: https: data:"
     />
     <title>大肥鱼</title>
+    <!-- 父页面是暗色时，不声明同一套 color-scheme 的 iframe 会铺一块不透明白画布。 -->
+    <script src="./scheme.js"></script>
     <style>
       * {
         box-sizing: border-box;
