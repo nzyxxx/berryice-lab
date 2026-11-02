@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // dsh-pet 0.4.0 原样拷贝，不按本站规则改。
+    "public/dafeiyu/helper/vendor/**",
+    "public/dsh-pet-7340/**",
   ]),
 ]);
 

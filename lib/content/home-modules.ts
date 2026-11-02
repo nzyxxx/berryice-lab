@@ -47,6 +47,11 @@ export const homeModules: HomeModule[] = [
         description: "枪械库、社区改枪码、主播配装。",
         href: "/delta-gun",
       },
+      {
+        title: "大肥鱼",
+        description: "浏览器里的 dsh-pet。不是小莓。",
+        href: "/dafeiyu",
+      },
     ],
   },
   {
