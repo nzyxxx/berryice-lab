@@ -8,6 +8,8 @@ berryice.cn 是非商业个人站点。这一页是实验室体验基线，不�
 - npm：https://www.npmjs.com/package/dsh-pet
 - 完整性：sha512-MRK3BJFAoJJG4pzMX+PSuuMOVhKtGLt0I3s1HDaqnRDE2Nz5ajUlg4WmJS4bMrxEF1BhKBI2LozGv9VD4Q+7cg==
 - 本页用的是该版本桌面助手的浏览器运行时（runtime/electron-helper）和包内 VP9-alpha webm。
+- 播放素材是 640×360。上游没有发布更清晰的成片；2160 只存在于未公开的转码中间步。
+- Safari 要的 HEVC-alpha .mov 在 Release `assets-mov`（压缩包约 80MB，分辨率仍是 640×360，只解决黑底）。本页没有打进包里。
 - 没有装 Electron，也没有接 DeepSeek Harness 登录。
 
 本页改了什么

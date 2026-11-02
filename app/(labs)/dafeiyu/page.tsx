@@ -13,19 +13,24 @@ export default function DafeiyuPage() {
     <SiteShell>
       <SiteHeader backHref="/" backLabel="首页" />
       <main id="main" className="flex min-h-0 flex-1 flex-col">
-        <header className="mx-auto w-full max-w-6xl px-4 pb-3 pt-6 sm:px-6">
-          <p className="font-mono text-[11px] tracking-[0.28em] text-lab-ink-subtle">LAB · DSH-PET 0.4.0</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-lab-ink sm:text-5xl">大肥鱼</h1>
-          <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <header className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 pb-2 pt-6 sm:px-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1">
+            <h1 className="text-display-section">大肥鱼</h1>
+            <p className="font-mono text-[11px] tracking-[0.18em] text-lab-ink-subtle">LAB · DSH-PET 0.4.0</p>
+          </div>
+          <p className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-lab-ink-muted">
             <a
-              className="inline-flex min-h-11 items-center text-lab-ink underline-offset-4 hover:underline"
+              className="inline-flex min-h-11 items-center underline-offset-4 transition-colors hover:text-lab-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lab-primary"
               href="https://github.com/PC2005-cloud/dsh-pet"
               rel="noreferrer"
               target="_blank"
             >
               PC2005-cloud/dsh-pet
             </a>
-            <a className="inline-flex min-h-11 items-center text-lab-ink underline-offset-4 hover:underline" href="/dafeiyu/NOTICE.txt">
+            <a
+              className="inline-flex min-h-11 items-center underline-offset-4 transition-colors hover:text-lab-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lab-primary"
+              href="/dafeiyu/NOTICE.txt"
+            >
               署名与许可
             </a>
           </p>
