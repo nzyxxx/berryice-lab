@@ -16,6 +16,7 @@ berryice.cn 是非商业个人站点。这一页是实验室体验基线，不�
 - public/dafeiyu/helper/index.html 在上游脚本之前加了两段本站脚本，上游 js 放在 vendor/，逻辑未改。
 - browser-bridge.js 把「移动系统窗口」收成移动页面里的鱼，并在本标签页里应答 /state 与睡觉。
 - 素材地址仍是上游的 /dsh-pet-7340/thumb/main/。
+- 这些 640×360 VP9-alpha 缩略图的软边按邻近轮廓色预乘过（scripts/defringe-dsh-pet-webm.py），避免夜雨近黑底上闪一圈白。分辨率、署名和许可不变。
 - 碎碎念、对话、余额、待办不在这页实现。
 
 许可
