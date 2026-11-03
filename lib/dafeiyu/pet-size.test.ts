@@ -72,6 +72,7 @@ test("助手地址带上台面尺寸和官方素材前缀", () => {
   assert.equal(url.searchParams.get("scheme"), "dark");
   assert.equal(url.searchParams.get("workAreaW"), "1280");
   assert.equal(url.searchParams.get("configUrl"), "https://berryice.cn/dsh-pet-7340/config");
+  assert.equal(url.searchParams.get("character"), "dafeiyu");
 });
 
 test("工作区是一块屏，消息名和桥一致", () => {
