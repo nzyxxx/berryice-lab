@@ -52,6 +52,11 @@ export const homeModules: HomeModule[] = [
         description: "浏览器里的 dsh-pet。",
         href: "/dafeiyu",
       },
+      {
+        title: "表情工坊",
+        description: "做成微信版，收进保险箱。",
+        href: "/stickers",
+      },
     ],
   },
   {
