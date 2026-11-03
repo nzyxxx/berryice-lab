@@ -31,6 +31,11 @@ berryice.cn 是非商业个人站点。这一页是实验室体验基线，不�
   声明原文：https://www.bilibili.com/opus/1247156596114456581
   「大肥鱼是遵守 CC BY-NC-SA 4.0 协议的形象，不可以以任何形式商业化。」
 
+角色槽
+- 同一播放器可以切角色。默认仍是上面这份大肥鱼素材。
+- 「小莓」读 public/characters/xiaomei/manifest.json。status 为 empty 时只画空包占位，不请求 /dsh-pet-7340/thumb/。
+- 小莓不上首页角标。这一格没有鲸鱼画面。
+
 本站
 - https://berryice.cn/dafeiyu
 - 非商业、个人使用。不要把这些像素拿去卖，也不要拿掉上面的署名。

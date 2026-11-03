@@ -18,6 +18,49 @@ function restingBeforeRelayout(sprite) {
   return !sprite.customPos && !sprite.dragState.active && sprite.throwRef == null && sprite.moveRef == null;
 }
 
+function installLabChrome() {
+  var slot = window.BerryiceCharacterSlot;
+  if (slot && window.PetShared && typeof window.PetShared.mountContextMenu === "function" && !window.PetShared.mountContextMenu.__labMenu) {
+    var originalMenu = window.PetShared.mountContextMenu;
+    function mountLabMenu(opts) {
+      var tree = opts && Array.isArray(opts.tree) ? slot.labMenuTree(opts.tree) : [];
+      return originalMenu(Object.assign({}, opts, { tree: tree }));
+    }
+    mountLabMenu.__labMenu = true;
+    window.PetShared.mountContextMenu = mountLabMenu;
+  }
+  if (typeof PetSprite === "undefined" || !PetSprite.prototype || !slot) return;
+  var hotkey = PetSprite.prototype.onHotkey;
+  if (typeof hotkey === "function" && !hotkey.__labHotkey) {
+    function onHotkey(event) {
+      var shared = window.PetShared || {};
+      var disposition = slot.labHotkeyDisposition({
+        sleep: typeof shared.isSleepHotkey === "function" && shared.isSleepHotkey(event),
+        chat: typeof shared.isChatHotkey === "function" && shared.isChatHotkey(event),
+        todo: typeof shared.isTodoHotkey === "function" && shared.isTodoHotkey(event),
+        capture: typeof shared.isCaptureHotkey === "function" && shared.isCaptureHotkey(event),
+        display: typeof shared.displayOfHotkey === "function" && !!shared.displayOfHotkey(event),
+      });
+      if (disposition === "sleep") return hotkey.call(this, event);
+      if (disposition === "drop" && event && typeof event.preventDefault === "function") event.preventDefault();
+    }
+    onHotkey.__labHotkey = true;
+    PetSprite.prototype.onHotkey = onHotkey;
+  }
+  if (typeof PetSprite.prototype.onDropImage === "function" && !PetSprite.prototype.onDropImage.__labDrop) {
+    function onDropImage(event) {
+      if (event && typeof event.preventDefault === "function") event.preventDefault();
+    }
+    onDropImage.__labDrop = true;
+    PetSprite.prototype.onDropImage = onDropImage;
+  }
+  if (typeof PetSprite.prototype.onPasteImage === "function" && !PetSprite.prototype.onPasteImage.__labPaste) {
+    function onPasteImage() {}
+    onPasteImage.__labPaste = true;
+    PetSprite.prototype.onPasteImage = onPasteImage;
+  }
+}
+
 function installMenuViewportClamp() {
   if (typeof PetSprite === "undefined" || !PetSprite.prototype) return;
   PetSprite.prototype.visibleClampRect = function () {
@@ -53,4 +96,5 @@ if (typeof module === "object" && module.exports) {
 }
 if (typeof window !== "undefined") {
   installMenuViewportClamp();
+  installLabChrome();
 }

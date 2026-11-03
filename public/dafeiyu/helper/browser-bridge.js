@@ -3,13 +3,28 @@
 /**
  * 把 dsh-pet 桌面助手放进网页舞台。
  * 上游用系统窗口搬家；这里改成挪 iframe 里的 #root。
- * /state 与睡觉留在本标签页，素材仍从 /dsh-pet-7340/ 取。
+ * /state 与睡觉留在本标签页。大肥鱼的素材从 /dsh-pet-7340/ 取；小莓空槽不取 thumb。
  */
 (function () {
   var factory = window.DafeiyuLocalHost && window.DafeiyuLocalHost.createDafeiyuHost;
   if (typeof factory !== "function") {
     console.error("[dafeiyu] 本地宿主没装上");
     return;
+  }
+
+  var slot = window.BerryiceCharacterSlot;
+  var characterId = slot && typeof slot.readCharacterId === "function"
+    ? slot.readCharacterId(location.search)
+    : (new URLSearchParams(location.search).get("character") === "xiaomei" ? "xiaomei" : "dafeiyu");
+  var placeholder = characterId === "xiaomei";
+  if (placeholder) {
+    // 空宠物列表会走到上游的 window.close。这里是 iframe，关掉会把占位一起拆掉。
+    window.close = function () {};
+    if (slot && typeof slot.paintPlaceholder === "function") slot.paintPlaceholder(document.getElementById("root"));
+    else {
+      var emptyRoot = document.getElementById("root");
+      if (emptyRoot) emptyRoot.textContent = "小莓 · 空包占位";
+    }
   }
 
   var cached = null;
@@ -59,7 +74,7 @@
     if (!main || !Array.isArray(main.pets) || !main.pets[0]) return data;
     var pet = main.pets[0];
     pet.size = petSize();
-    pet.name = "大肥鱼";
+    pet.name = "大肥鱼"; // 只改鱼包显示名。小莓不进这个函数。
     pet.position = {
       corner: "bottom-left",
       marginX: readMargin("marginX", 28),
@@ -110,11 +125,20 @@
     }
     var rest = url.pathname.slice("/dsh-pet-7340/".length);
     if (rest === "config") {
+      if (placeholder) {
+        var empty = slot && typeof slot.emptyDesktopConfig === "function"
+          ? slot.emptyDesktopConfig()
+          : { main: { pets: [], memes: {} } };
+        return Promise.resolve(jsonResponse(empty));
+      }
       return nativeFetch(input, init).then(function (res) {
         return res.json().then(function (data) {
           return jsonResponse(patchConfig(data));
         });
       });
+    }
+    if (placeholder && rest.indexOf("thumb/") === 0) {
+      return Promise.resolve(new Response(null, { status: 404 }));
     }
     if (
       rest.indexOf("thumb/") === 0 ||
@@ -148,7 +172,7 @@
     return Promise.resolve(jsonResponse({
       ok: false,
       reason: "unsupported",
-      message: "这个体验页没有接上 DeepSeek Harness，碎碎念、对话和余额在这里用不了。",
+      message: "这个体验页没有这一项。",
     }));
   };
 

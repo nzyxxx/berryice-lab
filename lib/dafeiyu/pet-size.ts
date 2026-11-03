@@ -1,3 +1,5 @@
+import { parseLabCharacterId, type LabCharacterId } from "./characters";
+
 /** dsh-pet 默认桌宠宽度。高度由上游按 16:9 推。 */
 export const DAFEIYU_DESKTOP_SIZE = 462;
 
@@ -53,11 +55,15 @@ export function dafeiyuHelperSrc(
   height: number,
   devicePixelRatio = 1,
   scheme: "dark" | "light" = "dark",
+  characterId: LabCharacterId = "dafeiyu",
 ): string {
   const petSize = petSizeForStage(width, devicePixelRatio);
   const rest = dafeiyuRestMargin(width, height, petSize);
+  // configUrl 只用来取同源 origin。播哪一只由 character 决定：
+  // 助手里的素材根仍是 /dsh-pet-7340，小莓槽在取 config / thumb 之前被拦住。
   const params = new URLSearchParams({
     configUrl: `${origin}/dsh-pet-7340/config`,
+    character: parseLabCharacterId(characterId),
     scale: "1",
     petIndex: "0",
     petSize: String(petSize),

@@ -110,7 +110,7 @@ function createDafeiyuHost(options) {
     }
     if (rest === "sleep") return enter();
     if (rest === "wake") return wake();
-    return { ok: false, reason: "unsupported", message: "这个体验页没有接上 DeepSeek Harness。" };
+    return { ok: false, reason: "unsupported", message: "这个体验页没有这一项。" };
   }
 
   return {

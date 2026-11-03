@@ -1,0 +1,10 @@
+{
+  "id": "xiaomei",
+  "label": "小莓",
+  "status": "empty",
+  "body": "raster-samebody",
+  "identity": ["银紫发", "绵羊耳", "女仆围裙"],
+  "animations": {},
+  "sources": [],
+  "note": "空包。等小莓自己的 SameBody 成片。"
+}
