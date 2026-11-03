@@ -5,9 +5,11 @@
 
 const FALLBACK_LABEL = "小莓";
 const FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
-/** 与 character-slot.js 同一数。640×853 在此宽度下高约 260。 */
-const ACTOR_WIDTH = 195;
+/** 与 character-slot.js 同一数。640×853 在此宽度下高约 347。 */
+const ACTOR_WIDTH = 260;
 const SOURCE_SRC = /^\/characters\/xiaomei\/[a-z0-9][a-z0-9-]*\.(webp|png|svg)$/;
+const ART_FRAME_FILE = /^[a-z0-9][a-z0-9-]*\.webp$/;
+const ART_ACTIVITIES = new Set(["idle", "stretch", "walk"]);
 
 export type XiaomeiSameBodyPlan = {
   width: number;
@@ -59,9 +61,67 @@ function breathRank(id: string): number {
   return Number.isFinite(n) ? n : 99;
 }
 
+function artFamilyPack(data: object): object | null {
+  const art = data as {
+    artFamily?: unknown;
+    activities?: unknown;
+    frames?: unknown;
+    identityLocks?: unknown;
+    reskinSlot?: { id?: unknown; status?: unknown } | null;
+  };
+  if (art.artFamily !== "xiaomei-samebody-v1") return null;
+  const slot = art.reskinSlot;
+  if (!slot || slot.id !== "xiaomei" || slot.status !== "ready") return null;
+  if (!Array.isArray(art.activities) || art.activities.length !== 3) return null;
+  const seen = new Set<string>();
+  for (const name of art.activities) {
+    if (typeof name !== "string" || !ART_ACTIVITIES.has(name) || seen.has(name)) return null;
+    seen.add(name);
+  }
+  if (!art.frames || typeof art.frames !== "object" || Array.isArray(art.frames)) return null;
+  const frameMap = art.frames as Record<string, unknown>;
+  if (!Array.isArray(art.identityLocks)) return null;
+  if (
+    !art.identityLocks.includes("sheepEars") ||
+    !art.identityLocks.includes("silverLilacHair") ||
+    !art.identityLocks.includes("maidApronBlueberry")
+  ) {
+    return null;
+  }
+  const sources = [];
+  for (const id of ["idle", "stretch", "walk"] as const) {
+    const file = frameMap[id];
+    if (typeof file !== "string" || !ART_FRAME_FILE.test(file)) return null;
+    sources.push({ id, src: `/characters/xiaomei/${file}` });
+  }
+  return {
+    id: "xiaomei",
+    label: FALLBACK_LABEL,
+    status: "ready",
+    body: "raster-samebody",
+    identity: ["银紫发", "绵羊耳", "女仆围裙"],
+    animations: {},
+    sources,
+    note: "小莓站在台上。",
+  };
+}
+
 export function xiaomeiSameBodyPlan(data: unknown): XiaomeiSameBodyPlan | null {
   if (!data || typeof data !== "object") return null;
-  const pack = data as {
+  let rawBlob: string;
+  try {
+    rawBlob = JSON.stringify(data);
+  } catch {
+    return null;
+  }
+  if (bannedPackText(rawBlob)) return null;
+  let source: object = data;
+  if ("artFamily" in data && (data as { artFamily?: unknown }).artFamily != null) {
+    const packed = artFamilyPack(data);
+    if (!packed) return null;
+    source = packed;
+  }
+  const pack = source as {
     id?: unknown;
     status?: unknown;
     body?: unknown;

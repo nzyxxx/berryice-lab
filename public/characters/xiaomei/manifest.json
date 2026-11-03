@@ -1,14 +1,41 @@
 {
-  "id": "xiaomei",
-  "label": "小莓",
-  "status": "ready",
-  "body": "raster-samebody",
-  "identity": ["银紫发", "绵羊耳", "女仆围裙"],
-  "animations": {},
-  "sources": [
-    { "id": "idle", "src": "/characters/xiaomei/idle.webp" },
-    { "id": "stretch", "src": "/characters/xiaomei/stretch.webp" },
-    { "id": "walk", "src": "/characters/xiaomei/walk.webp" }
+  "artFamily": "xiaomei-samebody-v1",
+  "canvas": {
+    "w": 640,
+    "h": 853
+  },
+  "anchor": {
+    "x": 0.5,
+    "y": 0.85
+  },
+  "registration": {
+    "headTop": 0.328,
+    "footBaseline": 0.85,
+    "notes": "fish_ref_v1 knife: crown≈y131 (headTop 0.328), foot y=340; crown→foot ~209; idle bbox_w 240; head≈45% of span; proportions borrowed from 大肥鱼 (ratio only)"
+  },
+  "identityLocks": [
+    "sheepEars",
+    "sheepTail",
+    "silverLilacHair",
+    "maidApronBlueberry",
+    "footBaseline",
+    "artFamily",
+    "fishProportionSilhouette",
+    "wideReadableFace"
   ],
-  "note": "小莓站在台上。"
+  "reskinSlot": {
+    "id": "xiaomei",
+    "status": "ready",
+    "notes": "SameBody fish_ref_v1 for /dafeiyu — big-head wide soft silhouette; sheep-maid; stage width raised by Rachel."
+  },
+  "activities": [
+    "idle",
+    "stretch",
+    "walk"
+  ],
+  "frames": {
+    "idle": "idle.webp",
+    "stretch": "stretch.webp",
+    "walk": "walk.webp"
+  }
 }

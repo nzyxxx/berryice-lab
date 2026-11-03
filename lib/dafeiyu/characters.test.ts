@@ -73,38 +73,43 @@ function webpSize(file: URL) {
 
 test("小莓清单是她自己的成片，空包规则还在，占位图不是鲸鱼", () => {
   const manifest = JSON.parse(readFileSync(new URL("public/characters/xiaomei/manifest.json", root), "utf8")) as {
-    id: string;
-    label: string;
-    status: string;
-    body: string;
-    identity: string[];
-    sources: { id: string; src: string }[];
-    note: string;
+    artFamily: string;
+    activities: string[];
+    frames: { idle: string; stretch: string; walk: string };
+    identityLocks: string[];
+    reskinSlot: { id: string; status: string };
   };
-  assert.equal(manifest.id, "xiaomei");
-  assert.equal(manifest.label, slot.FALLBACK_LABEL);
-  assert.equal(manifest.status, "ready");
-  assert.equal(manifest.body, "raster-samebody");
-  assert.equal(manifest.identity.join(" · "), slot.FALLBACK_IDENTITY);
-  assert.equal(manifest.note, "小莓站在台上。");
-  assert.deepEqual(manifest.sources, [
-    { id: "idle", src: "/characters/xiaomei/idle.webp" },
-    { id: "stretch", src: "/characters/xiaomei/stretch.webp" },
-    { id: "walk", src: "/characters/xiaomei/walk.webp" },
-  ]);
+  assert.equal(manifest.artFamily, "xiaomei-samebody-v1");
+  assert.deepEqual(manifest.activities, ["idle", "stretch", "walk"]);
+  assert.deepEqual(manifest.frames, { idle: "idle.webp", stretch: "stretch.webp", walk: "walk.webp" });
+  assert.equal(manifest.reskinSlot.id, "xiaomei");
+  assert.equal(manifest.reskinSlot.status, "ready");
+  assert.equal(manifest.identityLocks.includes("sheepEars"), true);
+  assert.equal(manifest.identityLocks.includes("silverLilacHair"), true);
+  assert.equal(manifest.identityLocks.includes("maidApronBlueberry"), true);
+  const manifestText = JSON.stringify(manifest);
+  assert.equal(manifestText.includes("dsh-pet"), false);
+  assert.equal(manifestText.includes("/thumb/"), false);
+  assert.equal(manifestText.includes(".webm"), false);
   assert.equal(slot.slotCopyAllowed(manifest), false);
   assert.equal(slot.sameBodyReady(manifest), true);
   assert.equal(xiaomeiPackReady(manifest), true);
   assert.equal(xiaomeiPackReadyFromJson(JSON.stringify(manifest)), true);
   assert.equal(xiaomeiPackReadyFromJson("{"), false);
   const plan = slot.sameBodyPlan(manifest);
+  assert.equal(plan?.width, 260);
   assert.equal(plan?.idle, "/characters/xiaomei/idle.webp");
   assert.deepEqual(plan?.breath, []);
   assert.equal(plan?.stretch, "/characters/xiaomei/stretch.webp");
   assert.equal(plan?.walk, "/characters/xiaomei/walk.webp");
-  const flipped = { ...manifest, status: "empty", sources: [], note: slot.FALLBACK_NOTE };
+  assert.equal(plan?.identity, slot.FALLBACK_IDENTITY);
+  plansAgree(manifest);
+  const flipped = { ...manifest, reskinSlot: { ...manifest.reskinSlot, status: "empty" } };
   assert.equal(slot.sameBodyReady(flipped), false);
-  assert.equal(slot.slotCopyAllowed(flipped), true);
+  assert.equal(
+    slot.slotCopyAllowed({ id: "xiaomei", status: "empty", sources: [], note: slot.FALLBACK_NOTE }),
+    true,
+  );
   assert.equal(
     slot.slotCopyAllowed({
       id: "xiaomei",
@@ -224,8 +229,8 @@ test("成片夹具换成 SameBody，鱼的 thumb 和鲸鱼字眼进不了小莓�
   plansAgree(readyPack);
   const plan = slot.sameBodyPlan(readyPack);
   assert.ok(plan);
-  assert.equal(plan.width, 195);
-  assert.equal(slot.ACTOR_WIDTH, 195);
+  assert.equal(plan.width, 260);
+  assert.equal(slot.ACTOR_WIDTH, 260);
   assert.equal(plan.idle, "/characters/xiaomei/idle.webp");
   assert.deepEqual(plan.breath, [
     "/characters/xiaomei/breath.webp",
@@ -299,7 +304,7 @@ test("成片夹具换成 SameBody，鱼的 thumb 和鲸鱼字眼进不了小莓�
     assert.equal(slot.sameBodyReady(pack), false);
   }
   const slotSource = readFileSync(new URL("public/dafeiyu/helper/character-slot.js", root), "utf8");
-  assert.match(slotSource, /width:min\(72vw,195px\)/);
+  assert.match(slotSource, /width:min\(72vw,260px\)/);
   assert.match(slotSource, /paintSameBodyReady/);
   assert.doesNotMatch(slotSource, /requestAnimationFrame|backdrop-filter|will-change|dsh-pet-7340\/thumb/);
 });
@@ -486,8 +491,7 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     assert.equal(calls.every((url) => url === slot.MANIFEST_URL), true);
 
     const live = JSON.parse(readFileSync(new URL("public/characters/xiaomei/manifest.json", root), "utf8")) as {
-      status: string;
-      sources: { id: string; src: string }[];
+      reskinSlot: { id: string; status: string };
     };
     payload = live;
     const liveRoot = makeSlotEl("div");
@@ -503,7 +507,7 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     );
     assert.equal(calls.every((url) => url === slot.MANIFEST_URL), true);
 
-    payload = { ...live, status: "empty", sources: [], note: slot.FALLBACK_NOTE };
+    payload = { ...live, reskinSlot: { ...live.reskinSlot, status: "empty" } };
     const flippedRoot = makeSlotEl("div");
     created.push(flippedRoot);
     calls.length = 0;

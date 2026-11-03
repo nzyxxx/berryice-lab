@@ -13,12 +13,13 @@
  *            {id:"breath-1",src:"/characters/xiaomei/breath-1.webp"}],
  *   note:"小莓站在台上。" }
  * src 只能是 /characters/xiaomei/ 下的 webp、png、svg。stretch / walk 可以先写进清单，台上先不轮播。
+ * 另一份成片是 artFamily "xiaomei-samebody-v1"：activities 只有 idle/stretch/walk，frames 指向同目录 webp。
  */
 var FALLBACK_LABEL = "小莓";
 var FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
 var FALLBACK_NOTE = "空包。等小莓自己的 SameBody 成片。";
-// 立绘 640×853。195px 宽时画面高 195×853/640≈260，对齐大肥鱼默认视频高 259.875。
-var ACTOR_WIDTH = 195;
+// 立绘 640×853。小莓演员宽 260，画面高 260×853/640≈347。鱼的 petSize 仍是 462。
+var ACTOR_WIDTH = 260;
 var BREATH_FRAME_MS = 1600;
 var MOUNT_WAIT_MS = 4000;
 var STRETCH_MS = 700;
@@ -121,9 +122,63 @@ function breathRank(id) {
   return Number.isFinite(n) ? n : 99;
 }
 
+var ART_FRAME_FILE = /^[a-z0-9][a-z0-9-]*\.webp$/;
+var ART_ACTIVITIES = { idle: true, stretch: true, walk: true };
+
+/** artFamily 清单折成原来的成片包。对不上就返回 null。 */
+function artFamilyPack(data) {
+  if (!data || data.artFamily !== "xiaomei-samebody-v1") return null;
+  var slot = data.reskinSlot;
+  if (!slot || slot.id !== "xiaomei" || slot.status !== "ready") return null;
+  var activities = data.activities;
+  if (!Array.isArray(activities) || activities.length !== 3) return null;
+  var seen = Object.create(null);
+  for (var i = 0; i < activities.length; i += 1) {
+    var name = activities[i];
+    if (!ART_ACTIVITIES[name] || seen[name]) return null;
+    seen[name] = true;
+  }
+  var frames = data.frames;
+  if (!frames || typeof frames !== "object" || Array.isArray(frames)) return null;
+  var locks = data.identityLocks;
+  if (!Array.isArray(locks)) return null;
+  if (locks.indexOf("sheepEars") === -1 || locks.indexOf("silverLilacHair") === -1 || locks.indexOf("maidApronBlueberry") === -1) {
+    return null;
+  }
+  var sources = [];
+  var order = ["idle", "stretch", "walk"];
+  for (var j = 0; j < order.length; j += 1) {
+    var id = order[j];
+    var file = frames[id];
+    if (typeof file !== "string" || !ART_FRAME_FILE.test(file)) return null;
+    sources.push({ id: id, src: "/characters/xiaomei/" + file });
+  }
+  return {
+    id: "xiaomei",
+    label: FALLBACK_LABEL,
+    status: "ready",
+    body: "raster-samebody",
+    identity: ["银紫发", "绵羊耳", "女仆围裙"],
+    animations: {},
+    sources: sources,
+    note: "小莓站在台上。",
+  };
+}
+
 /** 成片帧计划。不合格就返回 null，调用方继续画空包。 */
 function sameBodyPlan(data) {
   if (!data || typeof data !== "object") return null;
+  var rawBlob;
+  try {
+    rawBlob = JSON.stringify(data);
+  } catch {
+    return null;
+  }
+  if (bannedPackText(rawBlob)) return null;
+  if (data.artFamily != null) {
+    data = artFamilyPack(data);
+    if (!data) return null;
+  }
   if (data.id !== "xiaomei" || data.status !== "ready" || data.body !== "raster-samebody") return null;
   if (data.label != null && data.label !== FALLBACK_LABEL) return null;
   if (data.note != null && typeof data.note !== "string") return null;
@@ -234,7 +289,7 @@ var SLOT_CSS = [
   ".berryice-slot-figure svg{display:block;width:100%;height:auto}",
   ".berryice-slot-name{margin:0;font-size:15px;letter-spacing:.14em}",
   ".berryice-slot-line{margin:0;font-size:12px;line-height:1.5;opacity:.72}",
-  ".berryice-actor{position:relative;width:min(72vw,195px);touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
+  ".berryice-actor{position:relative;width:min(72vw,260px);touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
   ".berryice-actor[data-dragging='1']{cursor:grabbing}",
   ".berryice-ground{position:absolute;left:50%;bottom:2px;width:68%;height:14px;transform:translateX(-50%);",
   "background:radial-gradient(ellipse at center, rgba(150,196,214,.45), rgba(150,196,214,0) 72%);pointer-events:none}",
