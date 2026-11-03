@@ -1,7 +1,19 @@
 import { DafeiyuStage } from "@/components/dafeiyu/dafeiyu-stage";
 import { SiteHeader } from "@/components/lab/site-header";
 import { SiteShell } from "@/components/lab/site-shell";
+import { xiaomeiPackReadyFromJson } from "@/lib/dafeiyu/xiaomei-pack";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import type { Metadata } from "next";
+
+function labXiaomeiReady(): boolean {
+  try {
+    const raw = readFileSync(path.join(process.cwd(), "public/characters/xiaomei/manifest.json"), "utf8");
+    return xiaomeiPackReadyFromJson(raw);
+  } catch {
+    return false;
+  }
+}
 
 export const metadata: Metadata = {
   title: "大肥鱼",
@@ -35,7 +47,7 @@ export default function DafeiyuPage() {
             </a>
           </p>
         </header>
-        <DafeiyuStage />
+        <DafeiyuStage xiaomeiReady={labXiaomeiReady()} />
       </main>
     </SiteShell>
   );

@@ -5,10 +5,12 @@ import { cn } from "@/lib/utils";
 export function CharacterSwitch({
   characterId,
   locked,
+  xiaomeiReady,
   onSelect,
 }: {
   characterId: LabCharacterId;
   locked: boolean;
+  xiaomeiReady: boolean;
   onSelect: (id: LabCharacterId) => void;
 }) {
   return (
@@ -27,7 +29,7 @@ export function CharacterSwitch({
               type="button"
               role="radio"
               aria-checked={selected}
-              aria-label={character.id === "xiaomei" ? "小莓，空包占位" : character.label}
+              aria-label={character.id === "xiaomei" ? (xiaomeiReady ? "小莓" : "小莓，空包占位") : character.label}
               disabled={locked}
               className={cn(
                 "min-h-11 cursor-pointer rounded-full px-4 text-sm motion-reduce:transition-none",
@@ -42,7 +44,9 @@ export function CharacterSwitch({
           );
         })}
       </div>
-      {characterId === "xiaomei" ? <p className="text-sm text-lab-ink-subtle">空包占位</p> : null}
+      {characterId === "xiaomei" ? (
+        <p className="text-sm text-lab-ink-subtle">{xiaomeiReady ? "可以拖一拖" : "空包占位"}</p>
+      ) : null}
     </div>
   );
 }

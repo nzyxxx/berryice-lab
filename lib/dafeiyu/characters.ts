@@ -1,4 +1,4 @@
-/** 实验室对照角色。默认大肥鱼；小莓是同一播放器里的空槽，不是首页角标。 */
+/** 实验室对照角色。默认大肥鱼。小莓走同一播放器：清单空则占位，清单就绪则用她自己的光栅。不是首页角标。 */
 export const LAB_CHARACTER_IDS = ["dafeiyu", "xiaomei"] as const;
 
 export type LabCharacterId = (typeof LAB_CHARACTER_IDS)[number];
