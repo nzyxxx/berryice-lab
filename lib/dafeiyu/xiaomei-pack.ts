@@ -5,7 +5,8 @@
 
 const FALLBACK_LABEL = "小莓";
 const FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
-const ACTOR_WIDTH = 320;
+/** 与 character-slot.js 同一数。640×853 在此宽度下高约 260。 */
+const ACTOR_WIDTH = 195;
 const SOURCE_SRC = /^\/characters\/xiaomei\/[a-z0-9][a-z0-9-]*\.(webp|png|svg)$/;
 
 export type XiaomeiSameBodyPlan = {
