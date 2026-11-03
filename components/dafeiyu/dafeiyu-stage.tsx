@@ -57,7 +57,7 @@ function characterServerSnapshot(): LabCharacterId | null {
   return null;
 }
 
-export function DafeiyuStage() {
+export function DafeiyuStage({ xiaomeiReady }: { xiaomeiReady: boolean }) {
   const { theme } = useTheme();
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -161,20 +161,20 @@ export function DafeiyuStage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div data-character={characterId} className="mx-auto flex w-full max-w-6xl px-4 pb-2 sm:px-6">
-        <CharacterSwitch characterId={characterId} locked={locked} onSelect={select} />
+        <CharacterSwitch characterId={characterId} locked={locked} xiaomeiReady={xiaomeiReady} onSelect={select} />
       </div>
       <div ref={stageRef} className="relative min-h-[28rem] flex-1">
         <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: STAGE_WASH }} />
         {ready && !booted ? (
           <p className="pointer-events-none absolute left-6 top-6 z-20 text-sm text-lab-ink-subtle">
-            {characterId === "xiaomei" ? "小莓的空槽正在打开。" : "大肥鱼正在进来。"}
+            {characterId === "xiaomei" ? (xiaomeiReady ? "小莓正在进来。" : "小莓的空槽正在打开。") : "大肥鱼正在进来。"}
           </p>
         ) : null}
         {src ? (
           <iframe
             key={characterId}
             ref={frameRef}
-            title={characterId === "xiaomei" ? "小莓，空包占位" : "大肥鱼，可以拖拽"}
+            title={characterId === "xiaomei" ? (xiaomeiReady ? "小莓，可以拖拽" : "小莓，空包占位") : "大肥鱼，可以拖拽"}
             src={src}
             className="absolute inset-0 z-10 h-full w-full border-0 bg-transparent"
             style={{ background: "transparent", colorScheme: theme }}
