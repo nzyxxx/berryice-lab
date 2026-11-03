@@ -61,28 +61,50 @@ test("小莓和鱼共用助手地址，但小莓的 config 与 thumb 不落到�
   assert.equal(JSON.stringify(empty).includes("待机"), false);
 });
 
-test("小莓清单是空包，目录里没有光栅，占位图不是鲸鱼", () => {
+function webpSize(file: URL) {
+  const bytes = readFileSync(file);
+  assert.equal(bytes.toString("ascii", 0, 4), "RIFF");
+  assert.equal(bytes.toString("ascii", 8, 12), "WEBP");
+  assert.equal(bytes.toString("ascii", 12, 16), "VP8L");
+  assert.equal(bytes[20], 0x2f);
+  const bits = bytes.readUInt32LE(21);
+  return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+}
+
+test("小莓清单是她自己的成片，空包规则还在，占位图不是鲸鱼", () => {
   const manifest = JSON.parse(readFileSync(new URL("public/characters/xiaomei/manifest.json", root), "utf8")) as {
     id: string;
     label: string;
     status: string;
     body: string;
     identity: string[];
-    sources: string[];
+    sources: { id: string; src: string }[];
     note: string;
   };
   assert.equal(manifest.id, "xiaomei");
   assert.equal(manifest.label, slot.FALLBACK_LABEL);
-  assert.equal(manifest.status, "empty");
+  assert.equal(manifest.status, "ready");
   assert.equal(manifest.body, "raster-samebody");
   assert.equal(manifest.identity.join(" · "), slot.FALLBACK_IDENTITY);
-  assert.equal(manifest.note, slot.FALLBACK_NOTE);
-  assert.deepEqual(manifest.sources, []);
-  assert.equal(slot.slotCopyAllowed(manifest), true);
-  assert.equal(slot.sameBodyReady(manifest), false);
-  assert.equal(xiaomeiPackReady(manifest), false);
-  assert.equal(xiaomeiPackReadyFromJson(JSON.stringify(manifest)), false);
+  assert.equal(manifest.note, "小莓站在台上。");
+  assert.deepEqual(manifest.sources, [
+    { id: "idle", src: "/characters/xiaomei/idle.webp" },
+    { id: "stretch", src: "/characters/xiaomei/stretch.webp" },
+    { id: "walk", src: "/characters/xiaomei/walk.webp" },
+  ]);
+  assert.equal(slot.slotCopyAllowed(manifest), false);
+  assert.equal(slot.sameBodyReady(manifest), true);
+  assert.equal(xiaomeiPackReady(manifest), true);
+  assert.equal(xiaomeiPackReadyFromJson(JSON.stringify(manifest)), true);
   assert.equal(xiaomeiPackReadyFromJson("{"), false);
+  const plan = slot.sameBodyPlan(manifest);
+  assert.equal(plan?.idle, "/characters/xiaomei/idle.webp");
+  assert.deepEqual(plan?.breath, []);
+  assert.equal(plan?.stretch, "/characters/xiaomei/stretch.webp");
+  assert.equal(plan?.walk, "/characters/xiaomei/walk.webp");
+  const flipped = { ...manifest, status: "empty", sources: [], note: slot.FALLBACK_NOTE };
+  assert.equal(slot.sameBodyReady(flipped), false);
+  assert.equal(slot.slotCopyAllowed(flipped), true);
   assert.equal(
     slot.slotCopyAllowed({
       id: "xiaomei",
@@ -92,8 +114,11 @@ test("小莓清单是空包，目录里没有光栅，占位图不是鲸鱼", ()
     }),
     false,
   );
-  const names = readdirSync(new URL("public/characters/xiaomei", root));
-  assert.deepEqual(names, ["manifest.json"]);
+  const names = readdirSync(new URL("public/characters/xiaomei", root)).sort();
+  assert.deepEqual(names, ["idle.webp", "manifest.json", "stretch.webp", "walk.webp"]);
+  for (const name of ["idle.webp", "stretch.webp", "walk.webp"]) {
+    assert.deepEqual(webpSize(new URL(`public/characters/xiaomei/${name}`, root)), { width: 640, height: 853 });
+  }
   const figure = slot.placeholderFigureSvg();
   assert.match(figure, /小莓占位/);
   assert.match(figure, /占位/);
@@ -460,16 +485,34 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     assert.ok(calls.length > 0);
     assert.equal(calls.every((url) => url === slot.MANIFEST_URL), true);
 
-    payload = JSON.parse(readFileSync(new URL("public/characters/xiaomei/manifest.json", root), "utf8"));
-    const emptyRoot = makeSlotEl("div");
-    created.push(emptyRoot);
+    const live = JSON.parse(readFileSync(new URL("public/characters/xiaomei/manifest.json", root), "utf8")) as {
+      status: string;
+      sources: { id: string; src: string }[];
+    };
+    payload = live;
+    const liveRoot = makeSlotEl("div");
+    created.push(liveRoot);
     calls.length = 0;
-    slot.mountXiaomeiSlot(emptyRoot);
+    slot.mountXiaomeiSlot(liveRoot);
     await new Promise((resolve) => setTimeout(resolve, 0));
-    assert.equal(emptyRoot.querySelector("[data-pack='empty']") !== null, true);
-    assert.equal(emptyRoot.querySelector("img"), null);
-    assert.match(slotDump(emptyRoot), /小莓占位/);
-    assert.ok(calls.length > 0);
+    assert.equal(liveRoot.querySelector("[data-pack='ready']") !== null, true);
+    assert.equal(liveRoot.querySelector("[data-pack='empty']"), null);
+    assert.deepEqual(
+      liveRoot.querySelectorAll("img").map((img) => img.getAttribute("src")),
+      ["/characters/xiaomei/idle.webp", "/characters/xiaomei/stretch.webp"],
+    );
+    assert.equal(calls.every((url) => url === slot.MANIFEST_URL), true);
+
+    payload = { ...live, status: "empty", sources: [], note: slot.FALLBACK_NOTE };
+    const flippedRoot = makeSlotEl("div");
+    created.push(flippedRoot);
+    calls.length = 0;
+    slot.mountXiaomeiSlot(flippedRoot);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(flippedRoot.querySelector("[data-pack='empty']") !== null, true);
+    assert.equal(flippedRoot.querySelector("[data-pack='ready']"), null);
+    assert.equal(flippedRoot.querySelector("img"), null);
+    assert.match(slotDump(flippedRoot), /小莓占位/);
     assert.equal(calls.every((url) => url === slot.MANIFEST_URL), true);
   } finally {
     globalThis.fetch = previousFetch;

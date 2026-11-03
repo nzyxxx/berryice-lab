@@ -1,10 +1,14 @@
 {
   "id": "xiaomei",
   "label": "小莓",
-  "status": "empty",
+  "status": "ready",
   "body": "raster-samebody",
   "identity": ["银紫发", "绵羊耳", "女仆围裙"],
   "animations": {},
-  "sources": [],
-  "note": "空包。等小莓自己的 SameBody 成片。"
+  "sources": [
+    { "id": "idle", "src": "/characters/xiaomei/idle.webp" },
+    { "id": "stretch", "src": "/characters/xiaomei/stretch.webp" },
+    { "id": "walk", "src": "/characters/xiaomei/walk.webp" }
+  ],
+  "note": "小莓站在台上。"
 }
