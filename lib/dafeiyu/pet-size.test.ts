@@ -117,6 +117,7 @@ test("右键菜单夹在舞台可视区域内，贴着点击处", () => {
 test("大肥鱼和首页共用夜雨，闪电不跟过来", () => {
   assert.deepEqual(atmosphereForPath("/"), { rain: true, lightning: true });
   assert.deepEqual(atmosphereForPath("/dafeiyu"), { rain: true, lightning: false });
+  assert.deepEqual(atmosphereForPath("/stickers"), { rain: true, lightning: false });
   assert.deepEqual(atmosphereForPath("/about"), { rain: false, lightning: false });
   const atmosphere = readFileSync(new URL("../../components/atmosphere/site-atmosphere.tsx", import.meta.url), "utf8");
   assert.match(atmosphere, /atmosphereForPath/);

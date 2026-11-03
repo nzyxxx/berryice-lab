@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
 export function SectionZone({
+  id,
   index,
   label,
   title,
@@ -13,6 +14,7 @@ export function SectionZone({
   descriptionClassName,
   hideKicker = false,
 }: {
+  id?: string;
   index: string;
   label: string;
   title?: string;
@@ -29,7 +31,7 @@ export function SectionZone({
   const Heading = headingLevel;
 
   return (
-    <section className={cn("relative", className)}>
+    <section id={id} className={cn("relative", className)}>
       {hideKicker ? null : (
         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-lab-primary">
           {index} / {label}

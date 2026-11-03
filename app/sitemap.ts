@@ -17,6 +17,7 @@ const STATIC_ROUTES: {
   { path: "/writing", changeFrequency: "weekly", priority: 0.6 },
   { path: "/about", changeFrequency: "monthly", priority: 0.6 },
   { path: "/dafeiyu", changeFrequency: "monthly", priority: 0.4 },
+  { path: "/stickers", changeFrequency: "monthly", priority: 0.4 },
   { path: "/delta-gun", changeFrequency: "daily", priority: 0.9 },
   { path: "/delta-gun/guns", changeFrequency: "weekly", priority: 0.8 },
   { path: "/delta-gun/community", changeFrequency: "daily", priority: 0.8 },
