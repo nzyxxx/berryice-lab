@@ -224,8 +224,8 @@ test("成片夹具换成 SameBody，鱼的 thumb 和鲸鱼字眼进不了小莓�
   plansAgree(readyPack);
   const plan = slot.sameBodyPlan(readyPack);
   assert.ok(plan);
-  assert.equal(plan.width, 320);
-  assert.equal(slot.ACTOR_WIDTH, 320);
+  assert.equal(plan.width, 195);
+  assert.equal(slot.ACTOR_WIDTH, 195);
   assert.equal(plan.idle, "/characters/xiaomei/idle.webp");
   assert.deepEqual(plan.breath, [
     "/characters/xiaomei/breath.webp",
@@ -299,7 +299,7 @@ test("成片夹具换成 SameBody，鱼的 thumb 和鲸鱼字眼进不了小莓�
     assert.equal(slot.sameBodyReady(pack), false);
   }
   const slotSource = readFileSync(new URL("public/dafeiyu/helper/character-slot.js", root), "utf8");
-  assert.match(slotSource, /width:min\(72vw,320px\)/);
+  assert.match(slotSource, /width:min\(72vw,195px\)/);
   assert.match(slotSource, /paintSameBodyReady/);
   assert.doesNotMatch(slotSource, /requestAnimationFrame|backdrop-filter|will-change|dsh-pet-7340\/thumb/);
 });

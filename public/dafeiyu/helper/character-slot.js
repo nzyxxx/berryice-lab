@@ -17,7 +17,8 @@
 var FALLBACK_LABEL = "小莓";
 var FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
 var FALLBACK_NOTE = "空包。等小莓自己的 SameBody 成片。";
-var ACTOR_WIDTH = 320;
+// 立绘 640×853。195px 宽时画面高 195×853/640≈260，对齐大肥鱼默认视频高 259.875。
+var ACTOR_WIDTH = 195;
 var BREATH_FRAME_MS = 1600;
 var MOUNT_WAIT_MS = 4000;
 var STRETCH_MS = 700;
@@ -233,7 +234,7 @@ var SLOT_CSS = [
   ".berryice-slot-figure svg{display:block;width:100%;height:auto}",
   ".berryice-slot-name{margin:0;font-size:15px;letter-spacing:.14em}",
   ".berryice-slot-line{margin:0;font-size:12px;line-height:1.5;opacity:.72}",
-  ".berryice-actor{position:relative;width:min(72vw,320px);touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
+  ".berryice-actor{position:relative;width:min(72vw,195px);touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
   ".berryice-actor[data-dragging='1']{cursor:grabbing}",
   ".berryice-ground{position:absolute;left:50%;bottom:2px;width:68%;height:14px;transform:translateX(-50%);",
   "background:radial-gradient(ellipse at center, rgba(150,196,214,.45), rgba(150,196,214,0) 72%);pointer-events:none}",
