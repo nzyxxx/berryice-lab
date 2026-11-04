@@ -305,6 +305,12 @@ test("成片夹具换成 SameBody，鱼的 thumb 和鲸鱼字眼进不了小莓�
   }
   const slotSource = readFileSync(new URL("public/dafeiyu/helper/character-slot.js", root), "utf8");
   assert.match(slotSource, /width:min\(72vw,260px\)/);
+  assert.match(slotSource, /height:calc\(min\(72vw,260px\) \* 853 \/ 640\)/);
+  assert.match(slotSource, /aspect-ratio:640 \/ 853/);
+  assert.match(slotSource, /\.berryice-actor-frames,\.berryice-actor-stretch\{transition:opacity 0\.18s ease\}/);
+  assert.match(slotSource, /data-pose='stretch'\] \.berryice-actor-frames\{opacity:0\}/);
+  assert.match(slotSource, /data-pose='stretch'\] \.berryice-actor-stretch\{opacity:1\}/);
+  assert.doesNotMatch(slotSource, /visibility:\s*hidden/);
   assert.match(slotSource, /paintSameBodyReady/);
   assert.doesNotMatch(slotSource, /requestAnimationFrame|backdrop-filter|will-change|dsh-pet-7340\/thumb/);
 });
@@ -445,6 +451,11 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     await new Promise((resolve) => setTimeout(resolve, 0));
     assert.equal(stageRoot.querySelector("[data-pack='ready']") !== null, true);
     assert.equal(stageRoot.querySelector("[data-pack='empty']"), null);
+    const slotCss = head.querySelector("#berryice-slot-css");
+    assert.ok(slotCss);
+    assert.match(slotCss.textContent, /aspect-ratio:640 \/ 853/);
+    assert.match(slotCss.textContent, /transition:opacity 0\.18s ease/);
+    assert.doesNotMatch(slotCss.textContent, /visibility:\s*hidden/);
     const actor = stageRoot.querySelector("[data-actor='samebody']");
     assert.ok(actor);
     assert.equal(actor.getAttribute("aria-label"), "小莓");
