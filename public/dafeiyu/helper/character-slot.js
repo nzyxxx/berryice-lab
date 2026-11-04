@@ -18,7 +18,8 @@
 var FALLBACK_LABEL = "小莓";
 var FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
 var FALLBACK_NOTE = "空包。等小莓自己的 SameBody 成片。";
-// 立绘 640×853。小莓演员宽 260，画面高 260×853/640≈347。鱼的 petSize 仍是 462。
+// 立绘 640×853。演员宽 min(72vw, 260px)，高按 853/640 钉死（260 时约 347）。鱼的 petSize 仍是 462。
+// 换姿只做静帧交叉淡入（对齐鱼的 opacity 0.18s）。预合成片之前这是过渡，不是双缓冲视频。
 var ACTOR_WIDTH = 260;
 var BREATH_FRAME_MS = 1600;
 var MOUNT_WAIT_MS = 4000;
@@ -289,24 +290,25 @@ var SLOT_CSS = [
   ".berryice-slot-figure svg{display:block;width:100%;height:auto}",
   ".berryice-slot-name{margin:0;font-size:15px;letter-spacing:.14em}",
   ".berryice-slot-line{margin:0;font-size:12px;line-height:1.5;opacity:.72}",
-  ".berryice-actor{position:relative;width:min(72vw,260px);touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
+  ".berryice-actor{position:relative;width:min(72vw,260px);height:calc(min(72vw,260px) * 853 / 640);aspect-ratio:640 / 853;touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
   ".berryice-actor[data-dragging='1']{cursor:grabbing}",
   ".berryice-ground{position:absolute;left:50%;bottom:2px;width:68%;height:14px;transform:translateX(-50%);",
   "background:radial-gradient(ellipse at center, rgba(150,196,214,.45), rgba(150,196,214,0) 72%);pointer-events:none}",
-  ".berryice-actor-frames{position:relative;width:100%}",
-  ".berryice-actor-frame{display:block;width:100%;height:auto;object-fit:contain;object-position:center bottom;",
+  ".berryice-actor-frames,.berryice-actor-stretch{transition:opacity 0.18s ease}",
+  ".berryice-actor-frames{position:absolute;inset:0;width:100%;height:100%}",
+  ".berryice-actor-frame{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;",
   "pointer-events:none;user-select:none}",
-  ".berryice-actor-frame.is-idle{position:relative}",
-  ".berryice-actor-frames.has-breath .berryice-actor-frame:not(.is-idle){position:absolute;left:0;right:0;bottom:0;width:100%;height:100%;opacity:0}",
+  ".berryice-actor-frames.has-breath .berryice-actor-frame:not(.is-idle){opacity:0}",
   "@media (prefers-reduced-motion:no-preference){",
   ".berryice-actor-frames.has-breath .berryice-actor-frame{animation-name:berryice-breath;animation-duration:var(--berryice-breath,3200ms);",
   "animation-timing-function:linear;animation-iteration-count:infinite}}",
   ".berryice-actor[data-dragging='1'] .berryice-actor-frames{transform:scale(1.015,.97);transform-origin:center bottom}",
   "@media (prefers-reduced-motion:reduce){",
-  ".berryice-actor[data-dragging='1'] .berryice-actor-frames{transform:none}}",
-  ".berryice-actor-stretch{position:absolute;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;",
+  ".berryice-actor[data-dragging='1'] .berryice-actor-frames{transform:none}",
+  ".berryice-actor-frames,.berryice-actor-stretch{transition:none}}",
+  ".berryice-actor-stretch{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;",
   "opacity:0;pointer-events:none}",
-  ".berryice-actor[data-pose='stretch'] .berryice-actor-frames{visibility:hidden}",
+  ".berryice-actor[data-pose='stretch'] .berryice-actor-frames{opacity:0}",
   ".berryice-actor[data-pose='stretch'] .berryice-actor-stretch{opacity:1}",
   ".berryice-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}",
 ].join("");
@@ -500,6 +502,7 @@ function paintSameBodyReady(root, manifest) {
     actor.setAttribute("data-pose", "stretch");
     poseTimer = setTimeout(function () {
       poseTimer = 0;
+      // 去掉属性就开始 0.18s 淡回待机，不在这一步把 idle 硬藏起来。
       actor.removeAttribute("data-pose");
     }, STRETCH_MS);
   }
