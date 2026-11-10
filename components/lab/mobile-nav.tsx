@@ -126,7 +126,6 @@ export function MobileNav() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    prefetch={item.href === "/wiki" ? true : undefined}
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex min-h-[3.25rem] flex-col justify-center rounded-2xl px-4 py-2.5",
