@@ -79,6 +79,9 @@ export function SiteHeader({
                 <Link
                   key={m.id}
                   href={m.href}
+                  // 知识库是动态页。默认预取只有 loading 壳，点击后地址先变，
+                  // 列表要再等一次完整 RSC。这里把整页数据提前取好。
+                  prefetch={m.href === "/wiki" ? true : undefined}
                   className={cn(
                     "transition-colors hover:text-lab-ink",
                     pathname.startsWith(m.href) && "text-lab-primary"
