@@ -2,8 +2,9 @@ import type { MetadataRoute } from "next";
 
 import { listWikiNotes } from "@/lib/content/wiki-store";
 import { getGuns } from "@/lib/data/guns";
-import { ensureStreamerTables, listStreamers } from "@/lib/repositories/streamersRepo";
+import { deferWithoutDatabase, readStreamersCached } from "@/lib/runtime-database";
 import { getSiteUrl } from "@/lib/site-config";
+import { unstable_rethrow } from "next/navigation";
 
 /** 主播名单每天变。站点地图跟着 ISR，不要在构建时冻成一年。 */
 export const revalidate = 3600;
@@ -52,8 +53,7 @@ async function wikiEntries(siteUrl: string): Promise<MetadataRoute.Sitemap> {
 
 async function streamerEntries(siteUrl: string): Promise<MetadataRoute.Sitemap> {
   try {
-    await ensureStreamerTables();
-    const streamers = await listStreamers();
+    const streamers = await readStreamersCached();
     return streamers.map((streamer) => {
       const updated = new Date(streamer.collectedAt);
       return {
@@ -64,16 +64,17 @@ async function streamerEntries(siteUrl: string): Promise<MetadataRoute.Sitemap> 
       };
     });
   } catch (error) {
+    unstable_rethrow(error);
     console.warn(
-      "sitemap: 主播页未写入（没有数据库时跳过）:",
+      "sitemap: 主播页未写入:",
       error instanceof Error ? error.message : error
     );
-    if (process.env.DATABASE_URL) throw error;
-    return [];
+    throw error;
   }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  await deferWithoutDatabase();
   const siteUrl = getSiteUrl();
   const guns = await getGuns();
 

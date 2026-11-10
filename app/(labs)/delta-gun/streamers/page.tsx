@@ -1,9 +1,10 @@
 import { StreamersView } from "@/components/delta-gun/streamers-view";
 import { SectionZone } from "@/components/gallery/section-zone";
 import { PageContainer } from "@/components/lab/page-container";
-import { ensureStreamerTables, listStreamers } from "@/lib/repositories/streamersRepo";
+import { deferWithoutDatabase, readStreamersCached } from "@/lib/runtime-database";
 import type { StoredStreamer } from "@/lib/types/streamer";
 import type { Metadata } from "next";
+import { unstable_rethrow } from "next/navigation";
 
 // 主播名单按日更新。force-dynamic 会让每个访问都打库；
 // 静态预渲染又会给出 s-maxage=31536000，nginx 能存一年。
@@ -16,14 +17,13 @@ export const metadata: Metadata = {
 };
 
 async function loadStreamers(): Promise<StoredStreamer[]> {
+  await deferWithoutDatabase();
   try {
-    await ensureStreamerTables();
-    return await listStreamers();
+    return await readStreamersCached();
   } catch (error) {
+    unstable_rethrow(error);
     console.error("加载主播列表失败:", error);
-    // 没有 DATABASE_URL 的构建（本机验收）不能因此失败，页面先空着。
-    // 线上配了库却暂时连不上时要抛出，ISR 才会留着上一份页面，而不是把空列表存一小时。
-    if (!process.env.DATABASE_URL) return [];
+    // 连不上库就抛出。ISR 才会留着上一份页面，而不是把空列表存一小时。
     throw error;
   }
 }
