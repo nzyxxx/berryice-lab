@@ -4,13 +4,14 @@ import {
   XIAOMEI_DAILY_LIMIT,
   XIAOMEI_MAX_BODY_BYTES,
   XIAOMEI_RATE_LIMIT,
+  backupAfterFailure,
   clientAddress,
   createDualRateLimiter,
   hasClientKeyField,
   isXiaomeiJailbreak,
   isXiaomeiSameOrigin,
   sanitizeXiaomeiMessages,
-  shouldRetryUpstream,
+  type XiaomeiUpstreamEndpoint,
 } from "@/lib/xiaomei-chat";
 import { sanitizeXiaomeiMemory } from "@/lib/xiaomei-memory";
 import { sanitizeXiaomeiNapkin } from "@/lib/xiaomei-napkin";
@@ -20,8 +21,8 @@ import {
   XIAOMEI_UPSTREAM_ERROR,
   cannedXiaomeiStream,
   requestXiaomeiUpstream,
-  upstreamToClientSse,
   xiaomeiBudgetSnapshot,
+  xiaomeiUpstreamClientStream,
   xiaomeiChatDisabled,
   xiaomeiUpstreamConfig,
 } from "@/lib/xiaomei-chat-server";
@@ -146,18 +147,23 @@ export async function POST(request: Request) {
   }
 
   try {
-    let upstream = await requestXiaomeiUpstream(config, config.primary, messages, memory, napkin);
-    if (!upstream.ok && config.backup && shouldRetryUpstream(upstream.status)) {
-      await upstream.body?.cancel().catch(() => undefined);
-      console.error("[xiaomei] upstream retry", upstream.status);
-      upstream = await requestXiaomeiUpstream(config, config.backup, messages, memory, napkin);
+    let endpoint: XiaomeiUpstreamEndpoint = config.primary;
+    let upstream = await requestXiaomeiUpstream(endpoint, messages, memory, napkin);
+    if (!upstream.ok) {
+      const retry = backupAfterFailure(upstream.status, config.backup);
+      if (retry) {
+        await upstream.body?.cancel().catch(() => undefined);
+        console.error("[xiaomei] upstream retry", upstream.status);
+        endpoint = retry;
+        upstream = await requestXiaomeiUpstream(endpoint, messages, memory, napkin);
+      }
     }
     if (!upstream.ok || !upstream.body) {
       await upstream.body?.cancel().catch(() => undefined);
       console.error("[xiaomei] upstream status", upstream.status);
       return jsonError(XIAOMEI_UPSTREAM_ERROR, 502, cookieHeader);
     }
-    return new Response(upstreamToClientSse(upstream.body), {
+    return new Response(await xiaomeiUpstreamClientStream(upstream, endpoint.protocol), {
       headers: {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",

@@ -1,14 +1,26 @@
 /**
  * 只允许路由和站长页引用。
- * 这里读 DEEPSEEK_API_KEY / DEEPSEEK_API_KEY_2，禁止被客户端组件 import。
+ * 主上游读 XIAOMEI_UPSTREAM_PRIMARY_API_KEY，备用读 XIAOMEI_UPSTREAM_BACKUP_API_KEY。
+ * 旧的 DEEPSEEK_API_KEY / DEEPSEEK_API_KEY_2 / DEEPSEEK_BASE_URL / DEEPSEEK_MODEL 只用来发现「还没清掉」，不参与请求。
+ * 禁止被客户端组件 import。
  */
 
 import {
-  buildXiaomeiPublicStatus,
+  accountAnthropicUsage,
+  anthropicMessageText,
+  anthropicMessageUsage,
+  anthropicMessagesHeaders,
+  buildAnthropicMessagesBody,
+  describeXiaomeiUpstream,
+  pullAnthropicDeltas,
   pullUpstreamDeltas,
+  resolveXiaomeiUpstreams,
   xiaomeiOutputLimit,
+  type AnthropicTokenUsage,
   type XiaomeiChatTurn,
   type XiaomeiSseEvent,
+  type XiaomeiUpstreamEndpoint,
+  type XiaomeiUpstreamProtocol,
 } from "./xiaomei-chat";
 import { XIAOMEI_NAME } from "./xiaomei-lines";
 import {
@@ -210,11 +222,24 @@ export async function xiaomeiUpstreamMessagesGrounded(
   return xiaomeiUpstreamMessages(messages, memory, cards, napkin);
 }
 
+export const XIAOMEI_PRIMARY_KEY_ENV = "XIAOMEI_UPSTREAM_PRIMARY_API_KEY";
+export const XIAOMEI_PRIMARY_URL_ENV = "XIAOMEI_UPSTREAM_PRIMARY_URL";
+export const XIAOMEI_PRIMARY_MODEL_ENV = "XIAOMEI_UPSTREAM_PRIMARY_MODEL";
+export const XIAOMEI_BACKUP_KEY_ENV = "XIAOMEI_UPSTREAM_BACKUP_API_KEY";
+export const XIAOMEI_BACKUP_URL_ENV = "XIAOMEI_UPSTREAM_BACKUP_URL";
+export const XIAOMEI_BACKUP_MODEL_ENV = "XIAOMEI_UPSTREAM_BACKUP_MODEL";
+
+/** 部署时清空。代码不再读取这些值来发请求。 */
+export const LEGACY_UPSTREAM_ENV_NAMES = [
+  "DEEPSEEK_API_KEY",
+  "DEEPSEEK_API_KEY_2",
+  "DEEPSEEK_BASE_URL",
+  "DEEPSEEK_MODEL",
+] as const;
+
 export type XiaomeiUpstreamTarget = {
-  url: string;
-  model: string;
-  primary: string;
-  backup: string | null;
+  primary: XiaomeiUpstreamEndpoint;
+  backup: XiaomeiUpstreamEndpoint | null;
 };
 
 export function xiaomeiChatDisabled(): boolean {
@@ -222,17 +247,40 @@ export function xiaomeiChatDisabled(): boolean {
   return flag === "1" || flag === "true";
 }
 
-/** 没配主钥匙就当没接上。备用钥匙不能单独顶上。 */
+function envValue(name: string): string {
+  return process.env[name]?.trim() ?? "";
+}
+
+export function legacyUpstreamEnvNames(env: NodeJS.ProcessEnv = process.env): string[] {
+  return LEGACY_UPSTREAM_ENV_NAMES.filter((name) => Boolean(env[name]?.trim()));
+}
+
+let legacyNoted = false;
+
+function noteLegacyOnce() {
+  const names = legacyUpstreamEnvNames();
+  if (legacyNoted || names.length === 0) return;
+  legacyNoted = true;
+  console.warn(`[xiaomei] ignoring legacy upstream env: ${names.join(", ")}`);
+}
+
+export function resetXiaomeiLegacyWarningForTests() {
+  legacyNoted = false;
+}
+
+/** 没配主钥匙就当没接上。备用钥匙不能单独顶上，也不会跟着主上游走。 */
 export function xiaomeiUpstreamConfig(): XiaomeiUpstreamTarget | null {
-  const primary = process.env.DEEPSEEK_API_KEY?.trim() ?? "";
-  if (!primary) return null;
-  const backupRaw = process.env.DEEPSEEK_API_KEY_2?.trim() ?? "";
-  const backup = backupRaw && backupRaw !== primary ? backupRaw : null;
-  const base = (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").trim().replace(/\/$/, "");
-  const url = base.endsWith("/chat/completions") ? base : `${base}/chat/completions`;
-  const modelRaw = process.env.DEEPSEEK_MODEL?.trim() || "deepseek-chat";
-  const model = modelRaw === primary || modelRaw === backupRaw ? "deepseek-chat" : modelRaw.slice(0, 64);
-  return { url, model, primary, backup };
+  noteLegacyOnce();
+  const resolved = resolveXiaomeiUpstreams({
+    primaryKey: envValue(XIAOMEI_PRIMARY_KEY_ENV),
+    primaryUrl: envValue(XIAOMEI_PRIMARY_URL_ENV),
+    primaryModel: envValue(XIAOMEI_PRIMARY_MODEL_ENV),
+    backupKey: envValue(XIAOMEI_BACKUP_KEY_ENV),
+    backupUrl: envValue(XIAOMEI_BACKUP_URL_ENV),
+    backupModel: envValue(XIAOMEI_BACKUP_MODEL_ENV),
+  });
+  if (!resolved) return null;
+  return { primary: resolved.primary, backup: resolved.backup };
 }
 
 type BudgetState = { day: string; spent: number };
@@ -275,12 +323,16 @@ export function resetXiaomeiUsageForTests() {
 }
 
 export function xiaomeiPublicStatus() {
+  noteLegacyOnce();
   const budget = xiaomeiBudgetSnapshot();
-  return buildXiaomeiPublicStatus({
-    primary: process.env.DEEPSEEK_API_KEY ?? "",
-    backup: process.env.DEEPSEEK_API_KEY_2 ?? "",
-    model: process.env.DEEPSEEK_MODEL ?? "",
-    base: process.env.DEEPSEEK_BASE_URL ?? "",
+  return describeXiaomeiUpstream({
+    primaryKey: envValue(XIAOMEI_PRIMARY_KEY_ENV),
+    backupKey: envValue(XIAOMEI_BACKUP_KEY_ENV),
+    primaryModel: envValue(XIAOMEI_PRIMARY_MODEL_ENV),
+    backupModel: envValue(XIAOMEI_BACKUP_MODEL_ENV),
+    primaryUrl: envValue(XIAOMEI_PRIMARY_URL_ENV),
+    backupUrl: envValue(XIAOMEI_BACKUP_URL_ENV),
+    legacyIgnored: legacyUpstreamEnvNames(),
     disabled: xiaomeiChatDisabled(),
     dailyTokenBudget: budget.limit,
     dailyTokensUsed: budget.spent,
@@ -302,32 +354,56 @@ export function cannedXiaomeiStream(text: string): ReadableStream<Uint8Array> {
   });
 }
 
-export function upstreamToClientSse(upstream: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+export function upstreamToClientSse(
+  upstream: ReadableStream<Uint8Array>,
+  protocol: XiaomeiUpstreamProtocol,
+): ReadableStream<Uint8Array> {
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
   let buffer = "";
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   let tokens = 0;
   let chars = 0;
+  let seenUsage: AnthropicTokenUsage = { inputTokens: 0, outputTokens: 0 };
+  let failed = false;
 
   return new ReadableStream({
     async start(controller) {
       reader = upstream.getReader();
       try {
-        while (true) {
+        while (!failed) {
           const { done, value } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
-          const pulled = pullUpstreamDeltas(buffer);
-          buffer = pulled.rest;
-          tokens += pulled.tokens;
-          for (const delta of pulled.deltas) {
-            chars += delta.length;
-            controller.enqueue(encoder.encode(sseData({ delta })));
+          if (protocol === "anthropic-messages") {
+            const pulled = pullAnthropicDeltas(buffer);
+            buffer = pulled.rest;
+            const accounted = accountAnthropicUsage(seenUsage, pulled.usage);
+            seenUsage = accounted.seen;
+            tokens += accounted.tokens;
+            if (pulled.error) {
+              failed = true;
+              controller.enqueue(encoder.encode(sseData({ error: XIAOMEI_UPSTREAM_ERROR })));
+              break;
+            }
+            for (const delta of pulled.deltas) {
+              chars += delta.length;
+              controller.enqueue(encoder.encode(sseData({ delta })));
+            }
+          } else {
+            const pulled = pullUpstreamDeltas(buffer);
+            buffer = pulled.rest;
+            tokens += pulled.tokens;
+            for (const delta of pulled.deltas) {
+              chars += delta.length;
+              controller.enqueue(encoder.encode(sseData({ delta })));
+            }
           }
         }
-        noteXiaomeiTokens(tokens > 0 ? tokens : Math.ceil(chars / 2));
-        controller.enqueue(encoder.encode(sseData({ done: true })));
+        if (!failed) {
+          noteXiaomeiTokens(tokens > 0 ? tokens : Math.ceil(chars / 2));
+          controller.enqueue(encoder.encode(sseData({ done: true })));
+        }
       } catch {
         controller.enqueue(encoder.encode(sseData({ error: XIAOMEI_UPSTREAM_ERROR })));
       } finally {
@@ -340,25 +416,105 @@ export function upstreamToClientSse(upstream: ReadableStream<Uint8Array>): Reada
   });
 }
 
+function messagesPath(url: string): boolean {
+  try {
+    return new URL(url).pathname.includes("/messages");
+  } catch {
+    return url.includes("/messages");
+  }
+}
+
+/** 非流式 JSON 只在主上游出现。思考块不进页面。 */
+export async function anthropicJsonToClientSse(upstream: Response): Promise<ReadableStream<Uint8Array>> {
+  try {
+    const payload = (await upstream.json()) as unknown;
+    const text = anthropicMessageText(payload);
+    const usage = anthropicMessageUsage(payload);
+    const tokens = usage.inputTokens + usage.outputTokens;
+    if (!text) {
+      return new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(sseData({ error: XIAOMEI_UPSTREAM_ERROR })));
+          controller.close();
+        },
+      });
+    }
+    noteXiaomeiTokens(tokens > 0 ? tokens : Math.ceil(text.length / 2));
+    return cannedXiaomeiStream(text);
+  } catch {
+    return new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(sseData({ error: XIAOMEI_UPSTREAM_ERROR })));
+        controller.close();
+      },
+    });
+  }
+}
+
+export async function xiaomeiUpstreamClientStream(
+  upstream: Response,
+  protocol: XiaomeiUpstreamProtocol,
+): Promise<ReadableStream<Uint8Array>> {
+  const type = upstream.headers.get("content-type") ?? "";
+  if (protocol === "anthropic-messages" && type.includes("application/json")) {
+    return anthropicJsonToClientSse(upstream);
+  }
+  if (!upstream.body) {
+    return new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(sseData({ error: XIAOMEI_UPSTREAM_ERROR })));
+        controller.close();
+      },
+    });
+  }
+  return upstreamToClientSse(upstream.body, protocol);
+}
+
+class BackupMessagesRouteError extends Error {
+  constructor() {
+    super("backup upstream cannot use the messages endpoint");
+    this.name = "BackupMessagesRouteError";
+  }
+}
+
 export async function requestXiaomeiUpstream(
-  target: Pick<XiaomeiUpstreamTarget, "url" | "model">,
-  key: string,
+  endpoint: XiaomeiUpstreamEndpoint,
   messages: XiaomeiChatTurn[],
   memory: XiaomeiMemoryContext,
   napkin?: XiaomeiNapkin | null,
 ): Promise<Response> {
-  return fetch(target.url, {
+  if (endpoint.protocol === "openai-chat" && messagesPath(endpoint.url)) {
+    throw new BackupMessagesRouteError();
+  }
+  const upstreamMessages = await xiaomeiUpstreamMessagesGrounded(messages, memory, napkin);
+  const maxTokens = xiaomeiOutputLimit(messages);
+  if (endpoint.protocol === "anthropic-messages") {
+    return fetch(endpoint.url, {
+      method: "POST",
+      headers: anthropicMessagesHeaders(endpoint.apiKey, true),
+      body: JSON.stringify(
+        buildAnthropicMessagesBody({
+          model: endpoint.model,
+          maxTokens,
+          messages: upstreamMessages,
+          stream: true,
+        }),
+      ),
+      signal: AbortSignal.timeout(25_000),
+    });
+  }
+  return fetch(endpoint.url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${key}`,
+      Authorization: `Bearer ${endpoint.apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: target.model,
+      model: endpoint.model,
       stream: true,
-      max_tokens: xiaomeiOutputLimit(messages),
+      max_tokens: maxTokens,
       temperature: XIAOMEI_TEMPERATURE,
-      messages: await xiaomeiUpstreamMessagesGrounded(messages, memory, napkin),
+      messages: upstreamMessages,
     }),
     signal: AbortSignal.timeout(25_000),
   });
