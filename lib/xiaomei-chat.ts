@@ -482,7 +482,7 @@ export function describeXiaomeiUpstream(input: {
   backupModel: string;
   primaryUrl: string;
   backupUrl: string;
-  legacyIgnored: readonly string[];
+  legacyPresent: boolean;
   disabled: boolean;
   dailyTokenBudget: number | null;
   dailyTokensUsed: number;
@@ -491,12 +491,11 @@ export function describeXiaomeiUpstream(input: {
   const primaryUrl = exactUpstreamUrl(input.primaryUrl, XIAOMEI_PRIMARY_MESSAGES_URL);
   const secrets = [input.primaryKey, input.backupKey];
   const model = safeUpstreamModel(input.primaryModel, XIAOMEI_PRIMARY_MODEL, secrets);
-  const legacyIgnored = input.legacyIgnored.map((name) => name.trim()).filter(Boolean);
   const shared = {
     model: resolved?.primary.model ?? model,
     baseUrlHost: deepseekHost(resolved?.primary.url ?? primaryUrl),
     primaryProtocol: "anthropic-messages" as const,
-    legacyIgnored,
+    legacyPresent: input.legacyPresent,
     chatDisabled: input.disabled,
     dailyTokenBudget: input.dailyTokenBudget,
     dailyTokensUsed: input.dailyTokensUsed,
@@ -588,7 +587,11 @@ export function pullAnthropicDeltas(buffer: string): {
         try {
           const json = JSON.parse(payload) as Record<string, unknown>;
           usage = mergeAnthropicUsage(usage, usageFromAnthropicEvent(json));
-          if (json.type === "error") error = true;
+          if (json.type === "error") {
+            error = true;
+            continue;
+          }
+          if (error) continue;
           if (json.type === "content_block_delta" && json.delta && typeof json.delta === "object") {
             const delta = json.delta as { type?: unknown; text?: unknown };
             if (delta.type === "text_delta" && typeof delta.text === "string" && delta.text) deltas.push(delta.text);

@@ -4,14 +4,12 @@ import {
   XIAOMEI_DAILY_LIMIT,
   XIAOMEI_MAX_BODY_BYTES,
   XIAOMEI_RATE_LIMIT,
-  backupAfterFailure,
   clientAddress,
   createDualRateLimiter,
   hasClientKeyField,
   isXiaomeiJailbreak,
   isXiaomeiSameOrigin,
   sanitizeXiaomeiMessages,
-  type XiaomeiUpstreamEndpoint,
 } from "@/lib/xiaomei-chat";
 import { sanitizeXiaomeiMemory } from "@/lib/xiaomei-memory";
 import { sanitizeXiaomeiNapkin } from "@/lib/xiaomei-napkin";
@@ -20,9 +18,8 @@ import {
   XIAOMEI_REFUSAL,
   XIAOMEI_UPSTREAM_ERROR,
   cannedXiaomeiStream,
-  requestXiaomeiUpstream,
+  openXiaomeiUpstream,
   xiaomeiBudgetSnapshot,
-  xiaomeiUpstreamClientStream,
   xiaomeiChatDisabled,
   xiaomeiUpstreamConfig,
 } from "@/lib/xiaomei-chat-server";
@@ -146,33 +143,14 @@ export async function POST(request: Request) {
     });
   }
 
-  try {
-    let endpoint: XiaomeiUpstreamEndpoint = config.primary;
-    let upstream = await requestXiaomeiUpstream(endpoint, messages, memory, napkin);
-    if (!upstream.ok) {
-      const retry = backupAfterFailure(upstream.status, config.backup);
-      if (retry) {
-        await upstream.body?.cancel().catch(() => undefined);
-        console.error("[xiaomei] upstream retry", upstream.status);
-        endpoint = retry;
-        upstream = await requestXiaomeiUpstream(endpoint, messages, memory, napkin);
-      }
-    }
-    if (!upstream.ok || !upstream.body) {
-      await upstream.body?.cancel().catch(() => undefined);
-      console.error("[xiaomei] upstream status", upstream.status);
-      return jsonError(XIAOMEI_UPSTREAM_ERROR, 502, cookieHeader);
-    }
-    return new Response(await xiaomeiUpstreamClientStream(upstream, endpoint.protocol), {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        "X-Accel-Buffering": "no",
-        ...cookieHeader,
-      },
-    });
-  } catch (error) {
-    console.error("[xiaomei] upstream failed", error instanceof Error ? error.name : "error");
-    return jsonError(XIAOMEI_UPSTREAM_ERROR, 502, cookieHeader);
-  }
+  const opened = await openXiaomeiUpstream(config, messages, memory, napkin);
+  if (!opened.ok) return jsonError(XIAOMEI_UPSTREAM_ERROR, opened.status, cookieHeader);
+  return new Response(opened.stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+      ...cookieHeader,
+    },
+  });
 }

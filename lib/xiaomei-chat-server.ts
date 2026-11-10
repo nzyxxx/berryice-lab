@@ -7,6 +7,7 @@
 
 import {
   accountAnthropicUsage,
+  backupAfterFailure,
   anthropicMessageText,
   anthropicMessageUsage,
   anthropicMessagesHeaders,
@@ -258,10 +259,9 @@ export function legacyUpstreamEnvNames(env: NodeJS.ProcessEnv = process.env): st
 let legacyNoted = false;
 
 function noteLegacyOnce() {
-  const names = legacyUpstreamEnvNames();
-  if (legacyNoted || names.length === 0) return;
+  if (legacyNoted || legacyUpstreamEnvNames().length === 0) return;
   legacyNoted = true;
-  console.warn(`[xiaomei] ignoring legacy upstream env: ${names.join(", ")}`);
+  console.warn("[xiaomei] ignoring legacy upstream env");
 }
 
 export function resetXiaomeiLegacyWarningForTests() {
@@ -332,7 +332,7 @@ export function xiaomeiPublicStatus() {
     backupModel: envValue(XIAOMEI_BACKUP_MODEL_ENV),
     primaryUrl: envValue(XIAOMEI_PRIMARY_URL_ENV),
     backupUrl: envValue(XIAOMEI_BACKUP_URL_ENV),
-    legacyIgnored: legacyUpstreamEnvNames(),
+    legacyPresent: legacyUpstreamEnvNames().length > 0,
     disabled: xiaomeiChatDisabled(),
     dailyTokenBudget: budget.limit,
     dailyTokensUsed: budget.spent,
@@ -381,14 +381,14 @@ export function upstreamToClientSse(
             const accounted = accountAnthropicUsage(seenUsage, pulled.usage);
             seenUsage = accounted.seen;
             tokens += accounted.tokens;
+            for (const delta of pulled.deltas) {
+              chars += delta.length;
+              controller.enqueue(encoder.encode(sseData({ delta })));
+            }
             if (pulled.error) {
               failed = true;
               controller.enqueue(encoder.encode(sseData({ error: XIAOMEI_UPSTREAM_ERROR })));
               break;
-            }
-            for (const delta of pulled.deltas) {
-              chars += delta.length;
-              controller.enqueue(encoder.encode(sseData({ delta })));
             }
           } else {
             const pulled = pullUpstreamDeltas(buffer);
@@ -468,6 +468,47 @@ export async function xiaomeiUpstreamClientStream(
     });
   }
   return upstreamToClientSse(upstream.body, protocol);
+}
+
+/**
+ * 只有 HTTP 401、429、5xx 才换备用，而且必须发生在还没往页面写字之前。
+ * 超时沿用原来的做法：fetch 直接失败，返回 502，不改打另一家。
+ * 已经开始流式之后若出错，只结束这一条，不再打开备用，避免两段答案拼在一起。
+ */
+export async function openXiaomeiUpstream(
+  config: XiaomeiUpstreamTarget,
+  messages: XiaomeiChatTurn[],
+  memory: XiaomeiMemoryContext,
+  napkin?: XiaomeiNapkin | null,
+): Promise<{ ok: true; stream: ReadableStream<Uint8Array> } | { ok: false; status: number }> {
+  let endpoint = config.primary;
+  let upstream: Response;
+  try {
+    upstream = await requestXiaomeiUpstream(endpoint, messages, memory, napkin);
+  } catch (error) {
+    console.error("[xiaomei] upstream failed", error instanceof Error ? error.name : "error");
+    return { ok: false, status: 502 };
+  }
+  if (!upstream.ok) {
+    const retry = backupAfterFailure(upstream.status, config.backup);
+    if (retry) {
+      await upstream.body?.cancel().catch(() => undefined);
+      console.error("[xiaomei] upstream retry", upstream.status);
+      endpoint = retry;
+      try {
+        upstream = await requestXiaomeiUpstream(endpoint, messages, memory, napkin);
+      } catch (error) {
+        console.error("[xiaomei] upstream failed", error instanceof Error ? error.name : "error");
+        return { ok: false, status: 502 };
+      }
+    }
+  }
+  if (!upstream.ok || !upstream.body) {
+    await upstream.body?.cancel().catch(() => undefined);
+    console.error("[xiaomei] upstream status", upstream.status);
+    return { ok: false, status: 502 };
+  }
+  return { ok: true, stream: await xiaomeiUpstreamClientStream(upstream, endpoint.protocol) };
 }
 
 class BackupMessagesRouteError extends Error {

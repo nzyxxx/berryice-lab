@@ -57,13 +57,13 @@ import {
   XIAOMEI_PET_DAILY_CAP,
 } from "./xiaomei-meters.ts";
 import {
-  LEGACY_UPSTREAM_ENV_NAMES,
   XIAOMEI_BACKUP_KEY_ENV,
   XIAOMEI_BACKUP_URL_ENV,
   XIAOMEI_PRIMARY_KEY_ENV,
   XIAOMEI_TEMPERATURE,
   anthropicJsonToClientSse,
   buildXiaomeiSystemPrompt,
+  openXiaomeiUpstream,
   requestXiaomeiUpstream,
   resetXiaomeiLegacyWarningForTests,
   resetXiaomeiUsageForTests,
@@ -1440,7 +1440,7 @@ test("没配主钥匙时不上游，状态里没有钥匙原文", async () => {
     backupModel: XIAOMEI_BACKUP_MODEL,
     primaryUrl: "https://user:pass@www.viralaiai.com/v1/messages",
     backupUrl: XIAOMEI_BACKUP_ORIGIN,
-    legacyIgnored: [],
+    legacyPresent: false,
     disabled: false,
     dailyTokenBudget: null,
     dailyTokensUsed: 0,
@@ -1639,13 +1639,26 @@ test("主上游固定打 Messages，旧变量和空备用都不参与", async ()
     },
     async () => {
       assert.equal(xiaomeiUpstreamConfig(), null);
-      const status = xiaomeiPublicStatus();
+      resetXiaomeiLegacyWarningForTests();
+      const warnings: string[] = [];
+      const warn = console.warn;
+      console.warn = (message?: unknown) => {
+        warnings.push(String(message));
+      };
+      let status: ReturnType<typeof xiaomeiPublicStatus>;
+      try {
+        status = xiaomeiPublicStatus();
+      } finally {
+        console.warn = warn;
+      }
       const blob = JSON.stringify(status);
       assert.equal(status.configuredPrimary, false);
       assert.equal(status.configuredBackup, false);
       assert.equal(status.keyCount, 0);
-      assert.deepEqual(status.legacyIgnored, [...LEGACY_UPSTREAM_ENV_NAMES]);
+      assert.equal(status.legacyPresent, true);
       assert.equal(blob.includes("sk-test"), false);
+      assert.equal(blob.includes("DEEPSEEK_"), false);
+      assert.equal(warnings.some((line) => line.includes("DEEPSEEK_") || line.includes("sk-test")), false);
     },
   );
 
@@ -1699,12 +1712,30 @@ test("Messages 请求体、流式文本和用量按实测契约合并", async ()
   assert.equal(shaped.system, "人设");
   assert.deepEqual(shaped.messages, [{ role: "user", content: "在吗\n还在吗" }]);
   assert.equal(JSON.stringify(shaped).includes("temperature"), false);
+  const turns = buildAnthropicMessagesBody({
+    model: XIAOMEI_PRIMARY_MODEL,
+    maxTokens: 120,
+    messages: [
+      { role: "system", content: "人设甲" },
+      { role: "system", content: "人设乙" },
+      { role: "user", content: "第一问" },
+      { role: "assistant", content: "第一答" },
+      { role: "user", content: "第二问" },
+    ],
+  });
+  assert.equal(turns.system, "人设甲\n\n人设乙");
+  assert.deepEqual(turns.messages, [
+    { role: "user", content: "第一问" },
+    { role: "assistant", content: "第一答" },
+    { role: "user", content: "第二问" },
+  ]);
 
   const sse = [
     `data: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 40, output_tokens: 1 } } })}`,
     `data: ${JSON.stringify({ type: "ping" })}`,
     `data: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "thinking", thinking: "" } })}`,
-    `data: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "thinking_delta", thinking: "不要泄露" } })}`,
+    `data: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "thinking_delta", thinking: "不要泄露", text: "冒充正文" } })}`,
+    `data: ${JSON.stringify({ type: "content_block_start", content_block: { type: "tool_use", name: "leak", text: "工具正文" } })}`,
     `data: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "signature_delta", signature: "sig" } })}`,
     `data: ${JSON.stringify({ type: "content_block_stop", index: 0 })}`,
     `data: ${JSON.stringify({ type: "content_block_start", index: 1, content_block: { type: "text", text: "" } })}`,
@@ -1757,7 +1788,8 @@ test("Messages 请求体、流式文本和用量按实测契约合并", async ()
       role: "assistant",
       stop_reason: "end_turn",
       content: [
-        { type: "thinking", thinking: "不要泄露" },
+        { type: "thinking", thinking: "不要泄露", text: "冒充正文" },
+        { type: "tool_use", name: "leak", text: "工具正文" },
         { type: "text", text: "OK" },
       ],
       usage: {
@@ -1887,6 +1919,102 @@ test("主请求带公司头，备用请求留在官方补全且不接收 Message
   }
 
   const route = await readFile(new URL("../app/api/xiaomei/chat/route.ts", import.meta.url), "utf8");
-  assert.match(route, /backupAfterFailure\(upstream\.status, config\.backup\)/);
+  const admin = await readFile(new URL("../app/admin/xiaomei/page.tsx", import.meta.url), "utf8");
+  const shared = await readFile(new URL("./xiaomei-chat.ts", import.meta.url), "utf8");
+  assert.match(route, /openXiaomeiUpstream\(config, messages, memory, napkin\)/);
   assert.equal(route.includes("DEEPSEEK_"), false);
+  assert.equal(admin.includes("DEEPSEEK_"), false);
+  assert.equal(shared.includes("DEEPSEEK_"), false);
+  assert.equal(shared.includes("XIAOMEI_UPSTREAM_"), false);
+});
+
+test("主上游失败才换备用，半句之后不再拼接另一家", async () => {
+  const memory = sanitizeXiaomeiMemory(undefined);
+  const config = {
+    primary: {
+      protocol: "anthropic-messages" as const,
+      url: XIAOMEI_PRIMARY_MESSAGES_URL,
+      model: XIAOMEI_PRIMARY_MODEL,
+      apiKey: COMPANY_KEY,
+    },
+    backup: {
+      protocol: "openai-chat" as const,
+      url: "https://api.deepseek.com/chat/completions",
+      model: XIAOMEI_BACKUP_MODEL,
+      apiKey: PERSONAL_KEY,
+    },
+  };
+  const turns = [{ role: "user" as const, content: "在吗" }];
+  const original = globalThis.fetch;
+  const calls: { url: string; headers: Headers }[] = [];
+
+  function install(handler: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) {
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: String(input), headers: new Headers(init?.headers) });
+      return handler(input, init);
+    }) as typeof fetch;
+  }
+
+  try {
+    for (const status of [401, 429, 500, 503]) {
+      calls.length = 0;
+      install(async () => {
+        if (calls.length === 1) return new Response("primary-body", { status });
+        return new Response(`data: ${JSON.stringify({ choices: [{ delta: { content: "备用答案" } }] })}\n\n`, {
+          status: 200,
+          headers: { "content-type": "text/event-stream" },
+        });
+      });
+      const opened = await openXiaomeiUpstream(config, turns, memory);
+      assert.equal(opened.ok, true, String(status));
+      const text = await new Response(opened.ok ? opened.stream : null).text();
+      assert.equal(calls.length, 2, String(status));
+      assert.equal(calls[0]?.url, XIAOMEI_PRIMARY_MESSAGES_URL);
+      assert.equal(calls[0]?.headers.get("x-api-key"), COMPANY_KEY);
+      assert.equal(calls[0]?.headers.get("authorization"), null);
+      assert.equal(calls[1]?.url, "https://api.deepseek.com/chat/completions");
+      assert.equal(calls[1]?.headers.get("authorization"), `Bearer ${PERSONAL_KEY}`);
+      assert.equal(calls[1]?.headers.get("x-api-key"), null);
+      assert.match(text, /备用答案/);
+      assert.equal(text.includes("primary-body"), false);
+      assert.equal(text.includes(COMPANY_KEY), false);
+      assert.equal(text.includes(PERSONAL_KEY), false);
+    }
+
+    calls.length = 0;
+    install(async () => new Response("bad", { status: 400 }));
+    const rejected = await openXiaomeiUpstream(config, turns, memory);
+    assert.equal(rejected.ok, false);
+    assert.equal(calls.length, 1);
+
+    calls.length = 0;
+    install(async () => {
+      const error = new Error("The operation was aborted due to timeout");
+      error.name = "TimeoutError";
+      throw error;
+    });
+    const timedOut = await openXiaomeiUpstream(config, turns, memory);
+    assert.deepEqual(timedOut, { ok: false, status: 502 });
+    assert.equal(calls.length, 1);
+
+    calls.length = 0;
+    install(async () => {
+      const body = [
+        `data: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text: "主上游半句" } })}\n`,
+        `data: ${JSON.stringify({ type: "error", error: { message: PERSONAL_KEY } })}\n`,
+      ].join("");
+      return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
+    });
+    const partial = await openXiaomeiUpstream(config, turns, memory);
+    assert.equal(partial.ok, true);
+    const partialText = await new Response(partial.ok ? partial.stream : null).text();
+    assert.equal(calls.length, 1);
+    assert.match(partialText, /主上游半句/);
+    assert.match(partialText, /线断了/);
+    assert.equal(partialText.includes("备用答案"), false);
+    assert.equal(partialText.includes(PERSONAL_KEY), false);
+    assert.equal(partialText.includes(COMPANY_KEY), false);
+  } finally {
+    globalThis.fetch = original;
+  }
 });

@@ -1,5 +1,9 @@
 import { isAdminRequest } from "@/lib/api/admin-auth";
-import { xiaomeiPublicStatus } from "@/lib/xiaomei-chat-server";
+import {
+  XIAOMEI_BACKUP_KEY_ENV,
+  XIAOMEI_PRIMARY_KEY_ENV,
+  xiaomeiPublicStatus,
+} from "@/lib/xiaomei-chat-server";
 import { XIAOMEI_NAME } from "@/lib/xiaomei-lines";
 import { isWikiAdminAuthorized } from "@/lib/content/wiki-auth";
 import type { Metadata } from "next";
@@ -48,11 +52,11 @@ function StatusList() {
   const flag = (on: boolean) => (on ? "已配置" : "未配置");
   return (
     <dl className="mt-8">
-      <Row label="主钥匙" value={flag(status.configuredPrimary)} />
+      <Row label={XIAOMEI_PRIMARY_KEY_ENV} value={flag(status.configuredPrimary)} />
       <Row label="主协议" value="Anthropic Messages" />
       <Row label="主模型" value={status.model} />
       <Row label="主机" value={status.baseUrlHost || "—"} />
-      <Row label="备用钥匙" value={flag(status.configuredBackup)} />
+      <Row label={XIAOMEI_BACKUP_KEY_ENV} value={flag(status.configuredBackup)} />
       {status.configuredBackup ? (
         <>
           <Row label="备用协议" value="Chat Completions" />
@@ -71,8 +75,8 @@ function StatusList() {
           }
         />
       )}
-      {status.legacyIgnored.length > 0 ? (
-        <Row label="旧变量" value={`已忽略：${status.legacyIgnored.join("、")}`} />
+      {status.legacyPresent ? (
+        <Row label="旧变量" value="已停用，不参与对话。清空后重启 Node。" />
       ) : null}
       <Row label="对话" value={status.chatDisabled ? "已按停" : "开着"} />
       <Row
