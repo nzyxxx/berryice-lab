@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
@@ -27,6 +28,8 @@ const slot = require("../../public/dafeiyu/helper/character-slot.js") as {
     stretch: string | null;
     walk: string | null;
     identity: string;
+    playbackMs?: Record<string, number> | null;
+    frameMs?: Record<string, number> | null;
   } | null;
   sameBodyReady: (data: unknown) => boolean;
   paintSameBodyReady: (root: unknown, manifest: unknown) => unknown;
@@ -61,14 +64,33 @@ test("小莓和鱼共用助手地址，但小莓的 config 与 thumb 不落到�
   assert.equal(JSON.stringify(empty).includes("待机"), false);
 });
 
-function webpSize(file: URL) {
+function webpTimeline(file: URL) {
   const bytes = readFileSync(file);
   assert.equal(bytes.toString("ascii", 0, 4), "RIFF");
   assert.equal(bytes.toString("ascii", 8, 12), "WEBP");
-  assert.equal(bytes.toString("ascii", 12, 16), "VP8L");
-  assert.equal(bytes[20], 0x2f);
-  const bits = bytes.readUInt32LE(21);
-  return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+  let offset = 12;
+  let width = 0;
+  let height = 0;
+  const durations: number[] = [];
+  while (offset + 8 <= bytes.length) {
+    const tag = bytes.toString("ascii", offset, offset + 4);
+    const size = bytes.readUInt32LE(offset + 4);
+    const start = offset + 8;
+    if (tag === "VP8X" && size >= 10) {
+      width = bytes.readUIntLE(start + 4, 3) + 1;
+      height = bytes.readUIntLE(start + 7, 3) + 1;
+    }
+    if (tag === "ANMF" && size >= 16) durations.push(bytes.readUIntLE(start + 12, 3));
+    offset += 8 + size + (size & 1);
+  }
+  return {
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    width,
+    height,
+    frames: durations.length,
+    durations,
+    sumMs: durations.reduce((sum, ms) => sum + ms, 0),
+  };
 }
 
 test("小莓清单是她自己的成片，空包规则还在，占位图不是鲸鱼", () => {
@@ -82,15 +104,15 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   assert.equal(manifest.artFamily, "xiaomei-samebody-v1");
   assert.deepEqual(manifest.activities, ["idle", "stretch", "walk"]);
   assert.deepEqual(manifest.frames, {
-    idle: "idle-hair-light-24.webp",
-    stretch: "stretch-hair-light-24.webp",
-    walk: "walk-hair-light-24.webp",
+    idle: "idle-candd-24.webp",
+    stretch: "stretch-candd-24.webp",
+    walk: "walk-candd-24.webp",
   });
   assert.equal(manifest.reskinSlot.id, "xiaomei");
   assert.equal(manifest.reskinSlot.status, "ready");
-  assert.equal(manifest.identityLocks.includes("sheepEars"), true);
   assert.equal(manifest.identityLocks.includes("silverLilacHair"), true);
-  assert.equal(manifest.identityLocks.includes("maidApronBlueberry"), true);
+  assert.equal(manifest.identityLocks.includes("fittedVest"), true);
+  assert.equal(manifest.identityLocks.includes("creamApron"), true);
   const manifestText = JSON.stringify(manifest);
   assert.equal(manifestText.includes("dsh-pet"), false);
   assert.equal(manifestText.includes("/thumb/"), false);
@@ -102,12 +124,14 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   assert.equal(xiaomeiPackReadyFromJson("{"), false);
   const plan = slot.sameBodyPlan(manifest);
   assert.equal(plan?.width, 180);
-  assert.equal(plan?.idle, "/characters/xiaomei/idle-hair-light-24.webp");
+  assert.equal(plan?.idle, "/characters/xiaomei/idle-candd-24.webp");
   assert.deepEqual(plan?.breath, []);
-  assert.equal(plan?.stretch, "/characters/xiaomei/stretch-hair-light-24.webp");
-  assert.equal(plan?.walk, "/characters/xiaomei/walk-hair-light-24.webp");
-  assert.equal(plan?.playbackMs?.stretch, 5082);
-  assert.equal(plan?.frameMs?.stretch, 42);
+  assert.equal(plan?.stretch, "/characters/xiaomei/stretch-candd-24.webp");
+  assert.equal(plan?.walk, "/characters/xiaomei/walk-candd-24.webp");
+  for (const pose of ["idle", "stretch", "walk"] as const) {
+    assert.equal(plan?.playbackMs?.[pose], 6090);
+    assert.equal(plan?.frameMs?.[pose], 42);
+  }
   assert.equal(plan?.identity, slot.FALLBACK_IDENTITY);
   plansAgree(manifest);
   const flipped = { ...manifest, reskinSlot: { ...manifest.reskinSlot, status: "empty" } };
@@ -127,19 +151,31 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   );
   const names = readdirSync(new URL("public/characters/xiaomei", root)).sort();
   assert.deepEqual(names, [
-    "idle-hair-light-24-still.webp",
-    "idle-hair-light-24.webp",
-    "idle-still.webp",
-    "idle.webp",
+    "idle-candd-24-still.webp",
+    "idle-candd-24.webp",
     "manifest.json",
-    "stretch-hair-light-24.webp",
-    "stretch.webp",
-    "walk-hair-light-24.webp",
-    "walk.webp",
+    "stretch-candd-24.webp",
+    "walk-candd-24.webp",
   ]);
-  for (const name of ["idle.webp", "stretch.webp", "walk.webp"]) {
-    assert.deepEqual(webpSize(new URL(`public/characters/xiaomei/${name}`, root)), { width: 640, height: 853 });
+  const expectedSha = {
+    "idle-candd-24.webp": "b1891a67248ca08c58f9d0afbc335f30e423cbae02b2b96e0e422d992820fcaf",
+    "stretch-candd-24.webp": "9975e65e54123a86550adf5854e38f7b0fccdc3843c6312b56cee5bd7bd80ac1",
+    "walk-candd-24.webp": "8ed84d05cc1e3b563bcbc0be353950fb4d911e0f738777069c083e1bd5185ab6",
+  };
+  const rejectedWalk = "ff0b8685dce9b1eb171bbbcf077bb47f1d13576853a975bc83772d80b422c028";
+  for (const [name, sha] of Object.entries(expectedSha)) {
+    const timeline = webpTimeline(new URL(`public/characters/xiaomei/${name}`, root));
+    assert.equal(timeline.sha256, sha);
+    assert.equal(timeline.sha256 === rejectedWalk, false);
+    assert.deepEqual([timeline.width, timeline.height], [640, 853]);
+    assert.equal(timeline.frames, 145);
+    assert.deepEqual([...new Set(timeline.durations)], [42]);
+    assert.equal(timeline.sumMs, 6090);
   }
+  const still = webpTimeline(new URL("public/characters/xiaomei/idle-candd-24-still.webp", root));
+  assert.deepEqual([still.width, still.height], [640, 853]);
+  assert.equal(still.frames, 0);
+  assert.equal(still.sha256 === rejectedWalk, false);
   const figure = slot.placeholderFigureSvg();
   assert.match(figure, /小莓占位/);
   assert.match(figure, /占位/);
@@ -223,7 +259,7 @@ const readyPack = {
   label: "小莓",
   status: "ready",
   body: "raster-samebody",
-  identity: ["银紫发", "绵羊耳", "女仆围裙"],
+  identity: ["浅银紫发", "灰紫背心", "奶白围裙"],
   animations: {},
   sources: [
     { id: "breath-10", src: "/characters/xiaomei/breath-10.webp" },
@@ -234,8 +270,8 @@ const readyPack = {
     { id: "breath", src: "/characters/xiaomei/breath.webp" },
   ],
   note: "小莓站在台上。",
-  playbackMs: { stretch: 5082, walk: 5082 },
-  frameMs: { stretch: 42, walk: 42 },
+  playbackMs: { idle: 6090, stretch: 6090, walk: 6090 },
+  frameMs: { idle: 42, stretch: 42, walk: 42 },
 };
 
 function plansAgree(data: unknown) {
@@ -293,8 +329,8 @@ test("成片夹具换成 SameBody，鱼的 thumb 和鲸鱼字眼进不了小莓�
     { ...readyPack, label: "小莓妹" },
     { ...readyPack, label: "蓝莓" },
     { ...readyPack, note: "whale" },
-    { ...readyPack, identity: ["银紫发", "鲸鳍", "女仆围裙"] },
-    { ...readyPack, identity: ["银紫发", "女仆围裙"] },
+    { ...readyPack, identity: ["银紫发", "鲸鳍", "奶白围裙"] },
+    { ...readyPack, identity: ["浅银紫发"] },
     { ...readyPack, animations: { idle: "/characters/xiaomei/idle.webp" } },
     { ...readyPack, sources: ["/characters/xiaomei/idle.webp"] },
     { ...readyPack, sources: [{ id: "stretch", src: "/characters/xiaomei/stretch.webp" }] },
@@ -526,7 +562,7 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     assert.equal(liveRoot.querySelector("[data-pack='empty']"), null);
     assert.deepEqual(
       liveRoot.querySelectorAll("img").map((img) => img.getAttribute("src")).filter((src) => src),
-      ["/characters/xiaomei/idle-hair-light-24.webp"],
+      ["/characters/xiaomei/idle-candd-24.webp"],
     );
     assert.equal(liveRoot.querySelector("[data-frame='stretch']")?.getAttribute("src"), null);
     assert.equal(liveRoot.querySelector("[data-frame='walk']")?.getAttribute("src"), null);

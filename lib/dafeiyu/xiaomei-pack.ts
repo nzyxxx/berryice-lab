@@ -4,7 +4,7 @@
  */
 
 const FALLBACK_LABEL = "小莓";
-const FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
+const FALLBACK_IDENTITY = "浅银紫发 · 灰紫背心 · 奶白围裙";
 /** 与 character-slot.js 同一数。现网预览宽 180，高约 240。 */
 const ACTOR_WIDTH = 180;
 const SOURCE_SRC = /^\/characters\/xiaomei\/[a-z0-9][a-z0-9-]*\.(webp|png|svg)$/;
@@ -48,7 +48,7 @@ function bannedPackText(text: string): boolean {
 
 function identityLocked(data: { identity?: unknown }): boolean {
   const line = identityLine(data);
-  return line.includes("银紫发") && line.includes("绵羊耳") && line.includes("女仆");
+  return line.includes("银紫发") && line.includes("围裙");
 }
 
 function sourceKind(id: string): "idle" | "breath" | "stretch" | "walk" | "" {
@@ -84,9 +84,9 @@ function artFamilyPack(data: object): object | null {
   const frameMap = art.frames as Record<string, unknown>;
   if (!Array.isArray(art.identityLocks)) return null;
   if (
-    !art.identityLocks.includes("sheepEars") ||
     !art.identityLocks.includes("silverLilacHair") ||
-    !art.identityLocks.includes("maidApronBlueberry")
+    !art.identityLocks.includes("fittedVest") ||
+    !art.identityLocks.includes("creamApron")
   ) {
     return null;
   }
@@ -101,7 +101,7 @@ function artFamilyPack(data: object): object | null {
     label: FALLBACK_LABEL,
     status: "ready",
     body: "raster-samebody",
-    identity: ["银紫发", "绵羊耳", "女仆围裙"],
+    identity: ["浅银紫发", "灰紫背心", "奶白围裙"],
     animations: {},
     sources,
     note: "小莓站在台上。",

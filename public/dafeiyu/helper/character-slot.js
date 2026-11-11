@@ -8,7 +8,7 @@
  *
  * 成片清单：
  * { id:"xiaomei", body:"raster-samebody", status:"ready",
- *   identity:["银紫发","绵羊耳","女仆围裙"],
+ *   identity:["浅银紫发","灰紫背心","奶白围裙"],
  *   sources:[{id:"idle",src:"/characters/xiaomei/idle.webp"},
  *            {id:"breath-1",src:"/characters/xiaomei/breath-1.webp"}],
  *   note:"小莓站在台上。" }
@@ -16,12 +16,12 @@
  * 另一份成片是 artFamily "xiaomei-samebody-v1"：activities 只有 idle/stretch/walk，frames 指向同目录 webp。
  */
 var FALLBACK_LABEL = "小莓";
-var FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
+var FALLBACK_IDENTITY = "浅银紫发 · 灰紫背心 · 奶白围裙";
 var FALLBACK_NOTE = "空包。等小莓自己的 SameBody 成片。";
 // 立绘 640×853。演员宽 min(72vw, 180px)，高按 853/640 钉死（180 时约 240）。鱼的 petSize 仍是 462。
 // preview_fix_v1：缩小显示贴近鱼舞台高 260；内容高约贴近鱼。
-// 24fps 候选按文件实测：每帧 42ms。stretch/walk 各 121 帧共 5082ms。
-// idle 容器 144 帧，其中一帧 84ms，时间轴 6090ms。收起用总长减去末帧，不把循环接缝播出来。
+// candD_fix1 按文件实测：三套都是 145 帧、每帧 42ms、共 6090ms。
+// 收起用总长减去末帧，不把循环接缝播出来。不用 125ms 把 24fps 放慢。
 // 伸懒腰和走路在点击后才设 src，待机页不预取这两段。
 var ACTOR_WIDTH = 180;
 var BREATH_FRAME_MS = 1600;
@@ -108,7 +108,7 @@ function bannedPackText(text) {
 
 function identityLocked(data) {
   var line = identityLine(data);
-  return line.indexOf("银紫发") !== -1 && line.indexOf("绵羊耳") !== -1 && line.indexOf("女仆") !== -1;
+  return line.indexOf("银紫发") !== -1 && line.indexOf("围裙") !== -1;
 }
 
 function sourceKind(id) {
@@ -145,7 +145,7 @@ function artFamilyPack(data) {
   if (!frames || typeof frames !== "object" || Array.isArray(frames)) return null;
   var locks = data.identityLocks;
   if (!Array.isArray(locks)) return null;
-  if (locks.indexOf("sheepEars") === -1 || locks.indexOf("silverLilacHair") === -1 || locks.indexOf("maidApronBlueberry") === -1) {
+  if (locks.indexOf("silverLilacHair") === -1 || locks.indexOf("fittedVest") === -1 || locks.indexOf("creamApron") === -1) {
     return null;
   }
   var sources = [];
@@ -161,7 +161,7 @@ function artFamilyPack(data) {
     label: FALLBACK_LABEL,
     status: "ready",
     body: "raster-samebody",
-    identity: ["银紫发", "绵羊耳", "女仆围裙"],
+    identity: ["浅银紫发", "灰紫背心", "奶白围裙"],
     animations: {},
     sources: sources,
     note: "小莓站在台上。",
@@ -287,8 +287,8 @@ function placeholderFigureSvg() {
   ].join("");
 }
 
-// 画布脚下有约 15% 空白。光圈贴着元素底边时，鞋底会悬在光圈上方。
-// 待机脚底在画布高度的 0.849，光圈中心对齐这条线。动作离地时人抬起，光圈留在台上。
+// 画布脚下空白约 15%（鞋底 y=725 / 853）。光圈贴着元素底边时，鞋底会悬在光圈上方。
+// 光圈底边放在这条线上方 4px，中心略压进鞋底。三套动作共用这一条线，不逐帧挪，也不缩放人物。
 var SLOT_CSS = [
   ".berryice-slot{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;",
   "padding:24px 16px 8vh;pointer-events:none;color:CanvasText;",
@@ -301,7 +301,7 @@ var SLOT_CSS = [
   ".berryice-actor{position:relative;width:min(72vw,180px);height:calc(min(72vw,180px) * 853 / 640);aspect-ratio:640 / 853;touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
   ".berryice-actor[data-dragging='1']{cursor:grabbing}",
   ".berryice-ground{position:absolute;left:50%;width:68%;height:14px;transform:translateX(-50%);",
-  "bottom:calc(15.1% - 4px);",
+  "bottom:calc(15% - 4px);",
   "background:radial-gradient(ellipse at center, rgba(150,196,214,.45), rgba(150,196,214,0) 72%);pointer-events:none}",
   ".berryice-actor-frames{position:absolute;inset:0;width:100%;height:100%}",
   ".berryice-actor-frame{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;",
