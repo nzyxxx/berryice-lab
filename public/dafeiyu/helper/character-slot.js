@@ -287,6 +287,8 @@ function placeholderFigureSvg() {
   ].join("");
 }
 
+// 画布脚下有约 15% 空白。光圈贴着元素底边时，鞋底会悬在光圈上方。
+// 待机脚底在画布高度的 0.849，光圈中心对齐这条线。动作离地时人抬起，光圈留在台上。
 var SLOT_CSS = [
   ".berryice-slot{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;",
   "padding:24px 16px 8vh;pointer-events:none;color:CanvasText;",
@@ -298,7 +300,8 @@ var SLOT_CSS = [
   ".berryice-slot-line{margin:0;font-size:12px;line-height:1.5;opacity:.72}",
   ".berryice-actor{position:relative;width:min(72vw,180px);height:calc(min(72vw,180px) * 853 / 640);aspect-ratio:640 / 853;touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
   ".berryice-actor[data-dragging='1']{cursor:grabbing}",
-  ".berryice-ground{position:absolute;left:50%;bottom:2px;width:68%;height:14px;transform:translateX(-50%);",
+  ".berryice-ground{position:absolute;left:50%;width:68%;height:14px;transform:translateX(-50%);",
+  "bottom:calc(15.1% - 4px);",
   "background:radial-gradient(ellipse at center, rgba(150,196,214,.45), rgba(150,196,214,0) 72%);pointer-events:none}",
   ".berryice-actor-frames{position:absolute;inset:0;width:100%;height:100%}",
   ".berryice-actor-frame{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;",
