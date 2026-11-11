@@ -20,12 +20,12 @@ var FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
 var FALLBACK_NOTE = "空包。等小莓自己的 SameBody 成片。";
 // 立绘 640×853。演员宽 min(72vw, 180px)，高按 853/640 钉死（180 时约 240）。鱼的 petSize 仍是 462。
 // preview_fix_v1：缩小显示贴近鱼舞台高 260；内容高约贴近鱼。
-// 现网 webp 每帧 125ms。stretch / walk 各 41 帧 = 5125ms，且末帧接不回第 0 帧。
-// 播完一轮前 40ms 收起，避免循环接缝。两张图不再叠 0.28s 透明度，否则会双重影。
+// 24fps 候选按文件实测：每帧 42ms。stretch/walk 各 121 帧共 5082ms。
+// idle 容器 144 帧，其中一帧 84ms，时间轴 6090ms。收起用总长减去末帧，不把循环接缝播出来。
+// 伸懒腰和走路在点击后才设 src，待机页不预取这两段。
 var ACTOR_WIDTH = 180;
 var BREATH_FRAME_MS = 1600;
 var MOUNT_WAIT_MS = 4000;
-var CLIP_MS = { stretch: 5085, walk: 5085 };
 var MANIFEST_URL = "/characters/xiaomei/manifest.json";
 
 var LAB_DROPPED_ACTIONS = {
@@ -165,6 +165,8 @@ function artFamilyPack(data) {
     animations: {},
     sources: sources,
     note: "小莓站在台上。",
+    playbackMs: data.playbackMs,
+    frameMs: data.frameMs,
   };
 }
 
@@ -229,6 +231,8 @@ function sameBodyPlan(data) {
     stretch: stretch,
     walk: walk,
     identity: identityLine(data),
+    playbackMs: data.playbackMs || null,
+    frameMs: data.frameMs || null,
   };
 }
 
@@ -489,7 +493,7 @@ function paintSameBodyReady(root, manifest) {
   if (typeof window !== "undefined" && window.matchMedia) {
     reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
-  var idleImg = makeFrame(plan.idle, "idle", true);
+  var idleImg = makeFrame(reduceMotion ? plan.idle.replace(/\.webp$/, "-still.webp") : plan.idle, "idle", true);
   var fellBack = false;
   idleImg.addEventListener("error", function () {
     var src = idleImg.getAttribute("src") || "";
@@ -502,12 +506,12 @@ function paintSameBodyReady(root, manifest) {
     if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
     paintPlaceholder(root);
   });
-  if (reduceMotion) idleImg.setAttribute("src", plan.idle.replace(/\.webp$/, "-still.webp"));
   frames.appendChild(idleImg);
   for (var i = 0; i < plan.breath.length; i += 1) {
     watchBreath(makeFrame(plan.breath[i], "breath", false), frames);
   }
   var poseTimer = 0;
+  var poseBusy = false;
   var poseOrder = [];
   if (plan.stretch) poseOrder.push("stretch");
   if (plan.walk) poseOrder.push("walk");
@@ -515,23 +519,54 @@ function paintSameBodyReady(root, manifest) {
   function endPose() {
     if (poseTimer) clearTimeout(poseTimer);
     poseTimer = 0;
+    poseBusy = false;
     actor.removeAttribute("data-pose");
   }
-  function restartClip(frameId) {
+  function holdMs(pose) {
+    var total = plan.playbackMs && plan.playbackMs[pose];
+    var frame = plan.frameMs && plan.frameMs[pose];
+    if (!total || !frame || frame >= total) return 0;
+    return total - frame;
+  }
+  function beginPose(pose) {
+    var hold = holdMs(pose);
+    if (!hold) return;
+    actor.setAttribute("data-pose", pose);
+    poseTimer = setTimeout(endPose, hold);
+    var other = pose === "stretch" ? "walk" : "stretch";
+    warmPose(other);
+  }
+  function warmPose(frameId) {
+    if (reduceMotion) return;
     var img = actor.querySelector("[data-frame='" + frameId + "']");
-    if (!img) return;
-    var src = img.getAttribute("src");
-    if (src) img.setAttribute("src", src);
+    if (!img || img.getAttribute("src")) return;
+    img.addEventListener("load", function onLoad() {
+      if (img.removeEventListener) img.removeEventListener("load", onLoad);
+      img.setAttribute("data-ready", "1");
+    });
+    img.setAttribute("src", img.getAttribute("data-src"));
   }
   function showNextPose() {
-    if (reduceMotion || poseTimer || poseOrder.length === 0) return;
+    if (reduceMotion || poseTimer || poseBusy || poseOrder.length === 0) return;
     var pose = poseOrder[poseCursor % poseOrder.length];
+    var img = actor.querySelector("[data-frame='" + pose + "']");
+    if (!img || !holdMs(pose)) return;
     poseCursor += 1;
-    var ms = CLIP_MS[pose];
-    if (!ms) return;
-    restartClip(pose);
-    actor.setAttribute("data-pose", pose);
-    poseTimer = setTimeout(endPose, ms);
+    if (img.getAttribute("data-ready") === "1") {
+      var current = img.getAttribute("src");
+      img.removeAttribute("src");
+      img.setAttribute("src", current);
+      beginPose(pose);
+      return;
+    }
+    poseBusy = true;
+    img.addEventListener("load", function onLoad() {
+      if (img.removeEventListener) img.removeEventListener("load", onLoad);
+      img.setAttribute("data-ready", "1");
+      poseBusy = false;
+      beginPose(pose);
+    });
+    img.setAttribute("src", img.getAttribute("data-src"));
   }
   if (typeof document !== "undefined" && document.addEventListener) {
     document.addEventListener("visibilitychange", function () {
@@ -541,8 +576,13 @@ function paintSameBodyReady(root, manifest) {
   actor.appendChild(ground);
   actor.appendChild(frames);
   function addPose(src, frameId) {
-    var img = makeFrame(src, frameId, false);
+    var img = document.createElement("img");
     img.className = "berryice-actor-pose";
+    img.setAttribute("data-frame", frameId);
+    img.setAttribute("data-src", src);
+    img.alt = "";
+    img.decoding = "async";
+    img.draggable = false;
     img.addEventListener("error", function () {
       if (frameId === "stretch") plan.stretch = null;
       if (frameId === "walk") plan.walk = null;

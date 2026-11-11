@@ -18,6 +18,8 @@ export type XiaomeiSameBodyPlan = {
   stretch: string | null;
   walk: string | null;
   identity: string;
+  playbackMs: Record<string, number> | null;
+  frameMs: Record<string, number> | null;
 };
 
 function textAllowed(text: string): boolean {
@@ -103,6 +105,8 @@ function artFamilyPack(data: object): object | null {
     animations: {},
     sources,
     note: "小莓站在台上。",
+    playbackMs: (data as { playbackMs?: unknown }).playbackMs,
+    frameMs: (data as { frameMs?: unknown }).frameMs,
   };
 }
 
@@ -166,6 +170,7 @@ export function xiaomeiSameBodyPlan(data: unknown): XiaomeiSameBodyPlan | null {
   }
   if (!idle) return null;
   breath.sort((a, b) => breathRank(a.id) - breathRank(b.id));
+  const packRecord = pack as { playbackMs?: unknown; frameMs?: unknown };
   return {
     width: ACTOR_WIDTH,
     idle,
@@ -173,6 +178,8 @@ export function xiaomeiSameBodyPlan(data: unknown): XiaomeiSameBodyPlan | null {
     stretch,
     walk,
     identity: identityLine(pack),
+    playbackMs: packRecord.playbackMs && typeof packRecord.playbackMs === "object" ? (packRecord.playbackMs as Record<string, number>) : null,
+    frameMs: packRecord.frameMs && typeof packRecord.frameMs === "object" ? (packRecord.frameMs as Record<string, number>) : null,
   };
 }
 

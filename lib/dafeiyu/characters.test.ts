@@ -81,7 +81,11 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   };
   assert.equal(manifest.artFamily, "xiaomei-samebody-v1");
   assert.deepEqual(manifest.activities, ["idle", "stretch", "walk"]);
-  assert.deepEqual(manifest.frames, { idle: "idle.webp", stretch: "stretch.webp", walk: "walk.webp" });
+  assert.deepEqual(manifest.frames, {
+    idle: "idle-hair-light-24.webp",
+    stretch: "stretch-hair-light-24.webp",
+    walk: "walk-hair-light-24.webp",
+  });
   assert.equal(manifest.reskinSlot.id, "xiaomei");
   assert.equal(manifest.reskinSlot.status, "ready");
   assert.equal(manifest.identityLocks.includes("sheepEars"), true);
@@ -98,10 +102,12 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   assert.equal(xiaomeiPackReadyFromJson("{"), false);
   const plan = slot.sameBodyPlan(manifest);
   assert.equal(plan?.width, 180);
-  assert.equal(plan?.idle, "/characters/xiaomei/idle.webp");
+  assert.equal(plan?.idle, "/characters/xiaomei/idle-hair-light-24.webp");
   assert.deepEqual(plan?.breath, []);
-  assert.equal(plan?.stretch, "/characters/xiaomei/stretch.webp");
-  assert.equal(plan?.walk, "/characters/xiaomei/walk.webp");
+  assert.equal(plan?.stretch, "/characters/xiaomei/stretch-hair-light-24.webp");
+  assert.equal(plan?.walk, "/characters/xiaomei/walk-hair-light-24.webp");
+  assert.equal(plan?.playbackMs?.stretch, 5082);
+  assert.equal(plan?.frameMs?.stretch, 42);
   assert.equal(plan?.identity, slot.FALLBACK_IDENTITY);
   plansAgree(manifest);
   const flipped = { ...manifest, reskinSlot: { ...manifest.reskinSlot, status: "empty" } };
@@ -120,7 +126,17 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
     false,
   );
   const names = readdirSync(new URL("public/characters/xiaomei", root)).sort();
-  assert.deepEqual(names, ["idle-still.webp", "idle.webp", "manifest.json", "stretch.webp", "walk.webp"]);
+  assert.deepEqual(names, [
+    "idle-hair-light-24-still.webp",
+    "idle-hair-light-24.webp",
+    "idle-still.webp",
+    "idle.webp",
+    "manifest.json",
+    "stretch-hair-light-24.webp",
+    "stretch.webp",
+    "walk-hair-light-24.webp",
+    "walk.webp",
+  ]);
   for (const name of ["idle.webp", "stretch.webp", "walk.webp"]) {
     assert.deepEqual(webpSize(new URL(`public/characters/xiaomei/${name}`, root)), { width: 640, height: 853 });
   }
@@ -218,6 +234,8 @@ const readyPack = {
     { id: "breath", src: "/characters/xiaomei/breath.webp" },
   ],
   note: "小莓站在台上。",
+  playbackMs: { stretch: 5082, walk: 5082 },
+  frameMs: { stretch: 42, walk: 42 },
 };
 
 function plansAgree(data: unknown) {
@@ -448,15 +466,16 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     const actor = stageRoot.querySelector("[data-actor='samebody']");
     assert.ok(actor);
     assert.equal(actor.getAttribute("aria-label"), "小莓");
-    const srcs = stageRoot.querySelectorAll("img").map((img) => img.getAttribute("src"));
+    const srcs = stageRoot.querySelectorAll("img").map((img) => img.getAttribute("src")).filter((src) => src);
     assert.deepEqual(srcs, [
       "/characters/xiaomei/idle.webp",
       "/characters/xiaomei/breath.webp",
       "/characters/xiaomei/breath-2.webp",
       "/characters/xiaomei/breath-10.webp",
-      "/characters/xiaomei/stretch.webp",
-      "/characters/xiaomei/walk.webp",
     ]);
+    assert.equal(stageRoot.querySelector("[data-frame='stretch']")?.getAttribute("src"), null);
+    assert.equal(stageRoot.querySelector("[data-frame='stretch']")?.getAttribute("data-src"), "/characters/xiaomei/stretch.webp");
+    assert.equal(stageRoot.querySelector("[data-frame='walk']")?.getAttribute("src"), null);
     assert.equal(srcs.some((src) => src?.includes("dsh-pet") || src?.includes("/thumb/") || src?.endsWith(".webm")), false);
     const frames = stageRoot.querySelector("[data-frame='idle']")?.parentNode;
     assert.equal(frames?.style.props["--berryice-breath"], "6400ms");
@@ -467,6 +486,10 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     assert.equal(actor.getAttribute("data-pose"), null);
     fireSlot(actor, "pointerdown", { button: 0, clientX: 10, clientY: 10 });
     fireSlot(actor, "pointerup", {});
+    const stretchImg = stageRoot.querySelector("[data-frame='stretch']");
+    assert.equal(stretchImg?.getAttribute("src"), "/characters/xiaomei/stretch.webp");
+    assert.equal(actor.getAttribute("data-pose"), null);
+    fireSlot(stretchImg as FakeEl, "load", {});
     assert.equal(actor.getAttribute("data-pose"), "stretch");
     const idle = stageRoot.querySelector("[data-frame='idle']");
     assert.ok(idle);
@@ -502,9 +525,11 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     assert.equal(liveRoot.querySelector("[data-pack='ready']") !== null, true);
     assert.equal(liveRoot.querySelector("[data-pack='empty']"), null);
     assert.deepEqual(
-      liveRoot.querySelectorAll("img").map((img) => img.getAttribute("src")),
-      ["/characters/xiaomei/idle.webp", "/characters/xiaomei/stretch.webp", "/characters/xiaomei/walk.webp"],
+      liveRoot.querySelectorAll("img").map((img) => img.getAttribute("src")).filter((src) => src),
+      ["/characters/xiaomei/idle-hair-light-24.webp"],
     );
+    assert.equal(liveRoot.querySelector("[data-frame='stretch']")?.getAttribute("src"), null);
+    assert.equal(liveRoot.querySelector("[data-frame='walk']")?.getAttribute("src"), null);
     assert.equal(calls.every((url) => url === slot.MANIFEST_URL), true);
 
     payload = { ...live, reskinSlot: { ...live.reskinSlot, status: "empty" } };

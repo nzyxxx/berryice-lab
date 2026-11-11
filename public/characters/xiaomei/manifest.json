@@ -34,8 +34,18 @@
     "walk"
   ],
   "frames": {
-    "idle": "idle.webp",
-    "stretch": "stretch.webp",
-    "walk": "walk.webp"
+    "idle": "idle-hair-light-24.webp",
+    "stretch": "stretch-hair-light-24.webp",
+    "walk": "walk-hair-light-24.webp"
+  },
+  "playbackMs": {
+    "idle": 6090,
+    "stretch": 5082,
+    "walk": 5082
+  },
+  "frameMs": {
+    "idle": 42,
+    "stretch": 42,
+    "walk": 42
   }
 }
