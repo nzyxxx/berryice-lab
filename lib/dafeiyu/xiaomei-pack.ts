@@ -5,8 +5,8 @@
 
 const FALLBACK_LABEL = "小莓";
 const FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
-/** 与 character-slot.js 同一数。640×853 在此宽度下高约 347。 */
-const ACTOR_WIDTH = 260;
+/** 与 character-slot.js 同一数。现网预览宽 180，高约 240。 */
+const ACTOR_WIDTH = 180;
 const SOURCE_SRC = /^\/characters\/xiaomei\/[a-z0-9][a-z0-9-]*\.(webp|png|svg)$/;
 const ART_FRAME_FILE = /^[a-z0-9][a-z0-9-]*\.webp$/;
 const ART_ACTIVITIES = new Set(["idle", "stretch", "walk"]);

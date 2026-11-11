@@ -18,11 +18,14 @@
 var FALLBACK_LABEL = "小莓";
 var FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
 var FALLBACK_NOTE = "空包。等小莓自己的 SameBody 成片。";
-// 立绘 640×853。小莓演员宽 260，画面高 260×853/640≈347。鱼的 petSize 仍是 462。
-var ACTOR_WIDTH = 260;
+// 立绘 640×853。演员宽 min(72vw, 180px)，高按 853/640 钉死（180 时约 240）。鱼的 petSize 仍是 462。
+// preview_fix_v1：缩小显示贴近鱼舞台高 260；内容高约贴近鱼。
+// 现网 webp 每帧 125ms。stretch / walk 各 41 帧 = 5125ms，且末帧接不回第 0 帧。
+// 播完一轮前 40ms 收起，避免循环接缝。两张图不再叠 0.28s 透明度，否则会双重影。
+var ACTOR_WIDTH = 180;
 var BREATH_FRAME_MS = 1600;
 var MOUNT_WAIT_MS = 4000;
-var STRETCH_MS = 700;
+var CLIP_MS = { stretch: 5085, walk: 5085 };
 var MANIFEST_URL = "/characters/xiaomei/manifest.json";
 
 var LAB_DROPPED_ACTIONS = {
@@ -289,25 +292,25 @@ var SLOT_CSS = [
   ".berryice-slot-figure svg{display:block;width:100%;height:auto}",
   ".berryice-slot-name{margin:0;font-size:15px;letter-spacing:.14em}",
   ".berryice-slot-line{margin:0;font-size:12px;line-height:1.5;opacity:.72}",
-  ".berryice-actor{position:relative;width:min(72vw,260px);touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
+  ".berryice-actor{position:relative;width:min(72vw,180px);height:calc(min(72vw,180px) * 853 / 640);aspect-ratio:640 / 853;touch-action:none;pointer-events:auto;cursor:grab;user-select:none}",
   ".berryice-actor[data-dragging='1']{cursor:grabbing}",
   ".berryice-ground{position:absolute;left:50%;bottom:2px;width:68%;height:14px;transform:translateX(-50%);",
   "background:radial-gradient(ellipse at center, rgba(150,196,214,.45), rgba(150,196,214,0) 72%);pointer-events:none}",
-  ".berryice-actor-frames{position:relative;width:100%}",
-  ".berryice-actor-frame{display:block;width:100%;height:auto;object-fit:contain;object-position:center bottom;",
+  ".berryice-actor-frames{position:absolute;inset:0;width:100%;height:100%}",
+  ".berryice-actor-frame{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;object-position:center bottom;",
   "pointer-events:none;user-select:none}",
-  ".berryice-actor-frame.is-idle{position:relative}",
-  ".berryice-actor-frames.has-breath .berryice-actor-frame:not(.is-idle){position:absolute;left:0;right:0;bottom:0;width:100%;height:100%;opacity:0}",
+  ".berryice-actor-frames.has-breath .berryice-actor-frame:not(.is-idle){opacity:0}",
   "@media (prefers-reduced-motion:no-preference){",
   ".berryice-actor-frames.has-breath .berryice-actor-frame{animation-name:berryice-breath;animation-duration:var(--berryice-breath,3200ms);",
   "animation-timing-function:linear;animation-iteration-count:infinite}}",
   ".berryice-actor[data-dragging='1'] .berryice-actor-frames{transform:scale(1.015,.97);transform-origin:center bottom}",
   "@media (prefers-reduced-motion:reduce){",
   ".berryice-actor[data-dragging='1'] .berryice-actor-frames{transform:none}}",
-  ".berryice-actor-stretch{position:absolute;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;",
-  "opacity:0;pointer-events:none}",
-  ".berryice-actor[data-pose='stretch'] .berryice-actor-frames{visibility:hidden}",
-  ".berryice-actor[data-pose='stretch'] .berryice-actor-stretch{opacity:1}",
+  ".berryice-actor-pose{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;",
+  "opacity:0;visibility:hidden;pointer-events:none}",
+  ".berryice-actor[data-pose='stretch'] .berryice-actor-frames,.berryice-actor[data-pose='walk'] .berryice-actor-frames{visibility:hidden}",
+  ".berryice-actor[data-pose='stretch'] .berryice-actor-pose[data-frame='stretch']{opacity:1;visibility:visible}",
+  ".berryice-actor[data-pose='walk'] .berryice-actor-pose[data-frame='walk']{opacity:1;visibility:visible}",
   ".berryice-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}",
 ].join("");
 
@@ -482,44 +485,80 @@ function paintSameBodyReady(root, manifest) {
   if (plan.breath.length > 0 && frames.style && typeof frames.style.setProperty === "function") {
     frames.style.setProperty("--berryice-breath", frameCount * BREATH_FRAME_MS + "ms");
   }
+  var reduceMotion = false;
+  if (typeof window !== "undefined" && window.matchMedia) {
+    reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
   var idleImg = makeFrame(plan.idle, "idle", true);
   var fellBack = false;
   idleImg.addEventListener("error", function () {
+    var src = idleImg.getAttribute("src") || "";
+    if (src.indexOf("-still.webp") !== -1) {
+      idleImg.setAttribute("src", plan.idle);
+      return;
+    }
     if (fellBack) return;
     fellBack = true;
     if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
     paintPlaceholder(root);
   });
+  if (reduceMotion) idleImg.setAttribute("src", plan.idle.replace(/\.webp$/, "-still.webp"));
   frames.appendChild(idleImg);
   for (var i = 0; i < plan.breath.length; i += 1) {
     watchBreath(makeFrame(plan.breath[i], "breath", false), frames);
   }
   var poseTimer = 0;
-  function showStretch() {
-    if (!plan.stretch || poseTimer) return;
-    actor.setAttribute("data-pose", "stretch");
-    poseTimer = setTimeout(function () {
-      poseTimer = 0;
-      actor.removeAttribute("data-pose");
-    }, STRETCH_MS);
+  var poseOrder = [];
+  if (plan.stretch) poseOrder.push("stretch");
+  if (plan.walk) poseOrder.push("walk");
+  var poseCursor = 0;
+  function endPose() {
+    if (poseTimer) clearTimeout(poseTimer);
+    poseTimer = 0;
+    actor.removeAttribute("data-pose");
+  }
+  function restartClip(frameId) {
+    var img = actor.querySelector("[data-frame='" + frameId + "']");
+    if (!img) return;
+    var src = img.getAttribute("src");
+    if (src) img.setAttribute("src", src);
+  }
+  function showNextPose() {
+    if (reduceMotion || poseTimer || poseOrder.length === 0) return;
+    var pose = poseOrder[poseCursor % poseOrder.length];
+    poseCursor += 1;
+    var ms = CLIP_MS[pose];
+    if (!ms) return;
+    restartClip(pose);
+    actor.setAttribute("data-pose", pose);
+    poseTimer = setTimeout(endPose, ms);
+  }
+  if (typeof document !== "undefined" && document.addEventListener) {
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) endPose();
+    });
   }
   actor.appendChild(ground);
   actor.appendChild(frames);
-  if (plan.stretch) {
-    var stretchImg = makeFrame(plan.stretch, "stretch", false);
-    stretchImg.className = "berryice-actor-stretch";
-    stretchImg.addEventListener("error", function () {
-      plan.stretch = null;
-      actor.removeAttribute("data-pose");
-      if (stretchImg.parentNode) stretchImg.parentNode.removeChild(stretchImg);
+  function addPose(src, frameId) {
+    var img = makeFrame(src, frameId, false);
+    img.className = "berryice-actor-pose";
+    img.addEventListener("error", function () {
+      if (frameId === "stretch") plan.stretch = null;
+      if (frameId === "walk") plan.walk = null;
+      poseOrder = poseOrder.filter(function (name) { return name !== frameId; });
+      if (actor.getAttribute("data-pose") === frameId) endPose();
+      if (img.parentNode) img.parentNode.removeChild(img);
     });
-    actor.appendChild(stretchImg);
+    actor.appendChild(img);
   }
+  if (plan.stretch) addPose(plan.stretch, "stretch");
+  if (plan.walk) addPose(plan.walk, "walk");
   var sr = document.createElement("p");
   sr.className = "berryice-sr";
   sr.textContent = FALLBACK_LABEL + "。" + plan.identity;
   actor.appendChild(sr);
-  bindActorDrag(actor, root, showStretch);
+  bindActorDrag(actor, root, showNextPose);
   wrap.appendChild(actor);
   root.appendChild(wrap);
   return plan;

@@ -97,7 +97,7 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   assert.equal(xiaomeiPackReadyFromJson(JSON.stringify(manifest)), true);
   assert.equal(xiaomeiPackReadyFromJson("{"), false);
   const plan = slot.sameBodyPlan(manifest);
-  assert.equal(plan?.width, 260);
+  assert.equal(plan?.width, 180);
   assert.equal(plan?.idle, "/characters/xiaomei/idle.webp");
   assert.deepEqual(plan?.breath, []);
   assert.equal(plan?.stretch, "/characters/xiaomei/stretch.webp");
@@ -120,7 +120,7 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
     false,
   );
   const names = readdirSync(new URL("public/characters/xiaomei", root)).sort();
-  assert.deepEqual(names, ["idle.webp", "manifest.json", "stretch.webp", "walk.webp"]);
+  assert.deepEqual(names, ["idle-still.webp", "idle.webp", "manifest.json", "stretch.webp", "walk.webp"]);
   for (const name of ["idle.webp", "stretch.webp", "walk.webp"]) {
     assert.deepEqual(webpSize(new URL(`public/characters/xiaomei/${name}`, root)), { width: 640, height: 853 });
   }
@@ -229,8 +229,8 @@ test("成片夹具换成 SameBody，鱼的 thumb 和鲸鱼字眼进不了小莓�
   plansAgree(readyPack);
   const plan = slot.sameBodyPlan(readyPack);
   assert.ok(plan);
-  assert.equal(plan.width, 260);
-  assert.equal(slot.ACTOR_WIDTH, 260);
+  assert.equal(plan.width, 180);
+  assert.equal(slot.ACTOR_WIDTH, 180);
   assert.equal(plan.idle, "/characters/xiaomei/idle.webp");
   assert.deepEqual(plan.breath, [
     "/characters/xiaomei/breath.webp",
@@ -304,7 +304,7 @@ test("成片夹具换成 SameBody，鱼的 thumb 和鲸鱼字眼进不了小莓�
     assert.equal(slot.sameBodyReady(pack), false);
   }
   const slotSource = readFileSync(new URL("public/dafeiyu/helper/character-slot.js", root), "utf8");
-  assert.match(slotSource, /width:min\(72vw,260px\)/);
+  assert.match(slotSource, /width:min\(72vw,180px\)/);
   assert.match(slotSource, /paintSameBodyReady/);
   assert.doesNotMatch(slotSource, /requestAnimationFrame|backdrop-filter|will-change|dsh-pet-7340\/thumb/);
 });
@@ -455,8 +455,8 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
       "/characters/xiaomei/breath-2.webp",
       "/characters/xiaomei/breath-10.webp",
       "/characters/xiaomei/stretch.webp",
+      "/characters/xiaomei/walk.webp",
     ]);
-    assert.equal(srcs.includes("/characters/xiaomei/walk.webp"), false);
     assert.equal(srcs.some((src) => src?.includes("dsh-pet") || src?.includes("/thumb/") || src?.endsWith(".webm")), false);
     const frames = stageRoot.querySelector("[data-frame='idle']")?.parentNode;
     assert.equal(frames?.style.props["--berryice-breath"], "6400ms");
@@ -503,7 +503,7 @@ test("空包仍画占位；成片夹具画脚边光栅，且不请求鱼的 thum
     assert.equal(liveRoot.querySelector("[data-pack='empty']"), null);
     assert.deepEqual(
       liveRoot.querySelectorAll("img").map((img) => img.getAttribute("src")),
-      ["/characters/xiaomei/idle.webp", "/characters/xiaomei/stretch.webp"],
+      ["/characters/xiaomei/idle.webp", "/characters/xiaomei/stretch.webp", "/characters/xiaomei/walk.webp"],
     );
     assert.equal(calls.every((url) => url === slot.MANIFEST_URL), true);
 
