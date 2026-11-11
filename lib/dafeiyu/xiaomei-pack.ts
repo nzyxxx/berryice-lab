@@ -4,9 +4,9 @@
  */
 
 const FALLBACK_LABEL = "小莓";
-const FALLBACK_IDENTITY = "银紫发 · 绵羊耳 · 女仆围裙";
-/** 与 character-slot.js 同一数。640×853 在此宽度下高约 347。 */
-const ACTOR_WIDTH = 260;
+const FALLBACK_IDENTITY = "浅银紫发 · 灰紫背心 · 奶白围裙";
+/** 与 character-slot.js 同一数。现网预览宽 180，高约 240。 */
+const ACTOR_WIDTH = 180;
 const SOURCE_SRC = /^\/characters\/xiaomei\/[a-z0-9][a-z0-9-]*\.(webp|png|svg)$/;
 const ART_FRAME_FILE = /^[a-z0-9][a-z0-9-]*\.webp$/;
 const ART_ACTIVITIES = new Set(["idle", "stretch", "walk"]);
@@ -18,6 +18,8 @@ export type XiaomeiSameBodyPlan = {
   stretch: string | null;
   walk: string | null;
   identity: string;
+  playbackMs: Record<string, number> | null;
+  frameMs: Record<string, number> | null;
 };
 
 function textAllowed(text: string): boolean {
@@ -46,7 +48,7 @@ function bannedPackText(text: string): boolean {
 
 function identityLocked(data: { identity?: unknown }): boolean {
   const line = identityLine(data);
-  return line.includes("银紫发") && line.includes("绵羊耳") && line.includes("女仆");
+  return line.includes("银紫发") && line.includes("围裙");
 }
 
 function sourceKind(id: string): "idle" | "breath" | "stretch" | "walk" | "" {
@@ -82,9 +84,9 @@ function artFamilyPack(data: object): object | null {
   const frameMap = art.frames as Record<string, unknown>;
   if (!Array.isArray(art.identityLocks)) return null;
   if (
-    !art.identityLocks.includes("sheepEars") ||
     !art.identityLocks.includes("silverLilacHair") ||
-    !art.identityLocks.includes("maidApronBlueberry")
+    !art.identityLocks.includes("fittedVest") ||
+    !art.identityLocks.includes("creamApron")
   ) {
     return null;
   }
@@ -99,10 +101,12 @@ function artFamilyPack(data: object): object | null {
     label: FALLBACK_LABEL,
     status: "ready",
     body: "raster-samebody",
-    identity: ["银紫发", "绵羊耳", "女仆围裙"],
+    identity: ["浅银紫发", "灰紫背心", "奶白围裙"],
     animations: {},
     sources,
     note: "小莓站在台上。",
+    playbackMs: (data as { playbackMs?: unknown }).playbackMs,
+    frameMs: (data as { frameMs?: unknown }).frameMs,
   };
 }
 
@@ -166,6 +170,7 @@ export function xiaomeiSameBodyPlan(data: unknown): XiaomeiSameBodyPlan | null {
   }
   if (!idle) return null;
   breath.sort((a, b) => breathRank(a.id) - breathRank(b.id));
+  const packRecord = pack as { playbackMs?: unknown; frameMs?: unknown };
   return {
     width: ACTOR_WIDTH,
     idle,
@@ -173,6 +178,8 @@ export function xiaomeiSameBodyPlan(data: unknown): XiaomeiSameBodyPlan | null {
     stretch,
     walk,
     identity: identityLine(pack),
+    playbackMs: packRecord.playbackMs && typeof packRecord.playbackMs === "object" ? (packRecord.playbackMs as Record<string, number>) : null,
+    frameMs: packRecord.frameMs && typeof packRecord.frameMs === "object" ? (packRecord.frameMs as Record<string, number>) : null,
   };
 }
 

@@ -9,24 +9,22 @@
     "y": 0.85
   },
   "registration": {
-    "headTop": 0.328,
+    "headTop": 0.2,
     "footBaseline": 0.85,
-    "notes": "fish_ref_v1 knife: crown≈y131 (headTop 0.328), foot y=340; crown→foot ~209; idle bbox_w 240; head≈45% of span; proportions borrowed from 大肥鱼 (ratio only)"
+    "notes": "candD_fix1. crown y=171 (0.200), foot y=725 (0.850). One scale from idle, no per-frame rescale. Display box stays 180x240."
   },
   "identityLocks": [
-    "sheepEars",
-    "sheepTail",
     "silverLilacHair",
-    "maidApronBlueberry",
+    "fittedVest",
+    "creamApron",
     "footBaseline",
     "artFamily",
-    "fishProportionSilhouette",
     "wideReadableFace"
   ],
   "reskinSlot": {
     "id": "xiaomei",
     "status": "ready",
-    "notes": "SameBody fish_ref_v1 for /dafeiyu — big-head wide soft silhouette; sheep-maid; stage width raised by Rachel."
+    "notes": "candD_fix1 for /dafeiyu. Light silver-lilac bob, fitted vest, cream apron, double skirt. Hairpin only. Width 180."
   },
   "activities": [
     "idle",
@@ -34,8 +32,18 @@
     "walk"
   ],
   "frames": {
-    "idle": "idle.webp",
-    "stretch": "stretch.webp",
-    "walk": "walk.webp"
+    "idle": "idle-candd-24.webp",
+    "stretch": "stretch-candd-24.webp",
+    "walk": "walk-candd-24.webp"
+  },
+  "playbackMs": {
+    "idle": 6090,
+    "stretch": 6090,
+    "walk": 6090
+  },
+  "frameMs": {
+    "idle": 42,
+    "stretch": 42,
+    "walk": 42
   }
 }
