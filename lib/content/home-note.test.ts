@@ -23,5 +23,6 @@ test("the homepage does not explain the build to visitors", () => {
   assert.doesNotMatch(source, /不是新画的封面|三套动画|原图还没|笔记 ·|还没有文章/);
   assert.match(source, /知识库/);
   assert.match(source, /idle-candd-24-still\.webp/);
+  assert.match(source, /\/dafeiyu\?character=xiaomei/);
   assert.doesNotMatch(source, /idle-candd-24\.webp/);
 });

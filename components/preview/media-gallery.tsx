@@ -25,7 +25,7 @@ export function MediaGallery({ notes }: { notes: readonly WikiNote[] }) {
 
         <figure className="lg:col-span-5 lg:col-start-1 lg:row-span-2 lg:row-start-1">
           <Link
-            href="/dafeiyu"
+            href="/dafeiyu?character=xiaomei"
             aria-label="小莓的房间"
             className="inline-block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
           >
