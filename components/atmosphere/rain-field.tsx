@@ -247,7 +247,7 @@ export function RainField({ density = "normal" }: { density?: Density }) {
     <>
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
       <div className="absolute inset-0 bg-lab-canvas" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(56,189,248,0.12),transparent_55%)]" />
+      <div className="absolute inset-0" style={{ backgroundImage: "var(--lab-atmosphere)" }} />
 
       {/*
         雨只在被照亮的地方现形。遮罩对齐上方那团青色光晕，
@@ -286,7 +286,6 @@ export function RainField({ density = "normal" }: { density?: Density }) {
         </div>
       )}
 
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(8,9,13,0.35))] dark:bg-[linear-gradient(to_bottom,transparent,rgba(8,9,13,0.55))]" />
     </div>
     {tiles ? (
       <div className={paused ? "rain-paused pointer-events-none fixed inset-x-0 bottom-0 z-30 h-8" : "pointer-events-none fixed inset-x-0 bottom-0 z-30 h-8"} aria-hidden>

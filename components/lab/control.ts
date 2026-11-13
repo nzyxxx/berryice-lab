@@ -13,4 +13,4 @@ export const controlClass = {
 } as const;
 
 export const fieldClass =
-  "min-h-11 w-full rounded-xl border border-lab-hairline bg-transparent px-3 text-[15px] text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary disabled:opacity-40";
+  "min-h-11 w-full rounded-xl border border-lab-hairline bg-lab-surface-1 px-3 text-[15px] text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary disabled:opacity-40";

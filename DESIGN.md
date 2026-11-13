@@ -1,9 +1,9 @@
 ---
 version: 3.0
 name: BerryIce-Night-Rain-Gallery
-description: "Night-rain gallery canvas. Near-black #08090D wet glass, rain as climate (not decoration), iOS 27 Liquid Glass material, oil-slick hover, click pulse. Hub cyan rain reflection; tactical orange reserved for Delta Gun only."
+description: "Night-rain gallery canvas. Near-black ground with a static berry-and-cyan wash, rain as climate, iOS 27 Liquid Glass material. Tactical orange reserved for Delta Gun only."
 colors:
-  canvas: "#08090D"
+  canvas: "#0C0A11"
   surface-1: "#0A0B0F"
   surface-2: "#12141A"
   surface-3: "#1A1D26"
@@ -40,6 +40,8 @@ colors:
 | Awwwards SOTG | 油膜悬停、点击脉冲、玻璃瓦片入场 |
 
 **禁止**：把这些来源的具体版式整块搬过来。抽的是材质和节奏。
+
+静态渐变可以用，而且只做气氛。深色和浅色各有一层 `--lab-atmosphere`：莓紫从一侧进来，青色从另一侧进来，到页面中部就淡进 `--lab-canvas`。文字、表单和页脚坐在实色上，不把字做成渐变，也不做全屏高饱和。不要动画网格、WebGL、常驻 canvas，也不要在雨之外再加第三套光效。浅色不再盖一层近黑遮罩。
 
 ---
 
@@ -181,7 +183,7 @@ z-80   跳到主内容（焦点态）
 ### 7.4 同一屏最多 2–3 个效果
 
 一次点击只配一个反馈（全站是 `ClickPulse`，不要再叠第二个）。
-不要雨 + 极光 + Beams 三套背景叠在一起。
+不要雨 + 极光 + Beams 三套背景叠在一起。气氛渐变替换原来那团青色光和底部的暗罩，不另加一层。
 
 ---
 
