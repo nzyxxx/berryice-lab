@@ -11,7 +11,7 @@ const read = (relative: string) => readFileSync(new URL(relative, import.meta.ur
 test("首页实验室有表情工坊，顶栏不把工坊做成模块", () => {
   const lab = homeModules.find((m) => m.id === "lab");
   assert.ok(lab?.entries?.some((e) => e.title === "表情工坊" && e.href === "/stickers"));
-  assert.equal(moduleLinks.length, 5);
+  assert.equal(moduleLinks.length, 6);
   assert.ok(moduleLinks.some((m) => m.href === "/music"));
   assert.ok(!moduleLinks.some((m) => m.href === "/stickers"));
 });

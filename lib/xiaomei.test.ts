@@ -863,7 +863,7 @@ test("基础教育 few-shot 在提示里，你是谁的例子不带职能词", (
   assert.match(prompt, /【基础教育对照 · 勿原句复读】/);
   assert.match(prompt, /哼。你来啦。/);
   assert.match(prompt, /……有一点点。才没求你喂。/);
-  assert.match(prompt, /顶栏：知识库、三角洲、写作、关于；想投喂也在上面。/);
+  assert.match(prompt, /顶栏：知识库、游戏、三角洲、写作、关于；想投喂也在上面。/);
   assert.match(prompt, /这个人家不确定/);
   assert.match(prompt, /不要说「角标」「伙伴」「网站角色」/);
   assert.match(prompt, /「傲娇」「嘴硬」「心软」「人设」「性格」/);

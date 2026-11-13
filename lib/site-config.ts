@@ -36,10 +36,10 @@ export const profileConfig = {
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
 
-export type ModuleId = "delta" | "writing" | "wiki" | "music" | "about";
+export type ModuleId = "delta" | "writing" | "wiki" | "music" | "about" | "games";
 
 /**
- * 导航有五个去处，顺序就是主次：知识库、三角洲、歌单、关于、写作。
+ * 导航顺序：知识库、游戏、三角洲、歌单、关于、写作。
  * 写作没有公开文章，所以放在最后，地址仍是 /writing。
  * 清单只维护在这里，顶栏和移动端抽屉从它派生。
  *
@@ -66,6 +66,13 @@ export const moduleLinks: {
     title: "知识库",
     description: "收录进来的笔记。",
     accent: "#7dd3fc",
+  },
+  {
+    id: "games",
+    href: "/games",
+    title: "游戏",
+    description: "按游戏记的攻略、技巧、知识和文档。",
+    accent: "#38bdf8",
   },
   {
     id: "delta",

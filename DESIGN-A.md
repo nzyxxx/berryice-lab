@@ -29,7 +29,7 @@
 
 首页摘要用 `homeNoteLine`：停在句号、问号、叹号，或过长时停在逗号、顿号、分号、冒号、斜线。不加省略号。笔记正文不改。
 
-顶栏和手机菜单都来自 `moduleLinks`。知识库、三角洲、歌单、关于、写作用这一套名字。当前页用 `aria-current="page"` 和 `text-lab-primary`。
+顶栏和手机菜单都来自 `moduleLinks`。知识库、游戏、三角洲、歌单、关于、写作用这一套名字。当前页用 `aria-current="page"` 和 `text-lab-primary`。游戏条目的验收在 `ARCHITECTURE.md` 的游戏一节，不另起颜色。
 
 | 状态 | 组件 | 访客看见的 |
 |---|---|---|

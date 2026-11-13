@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 
 import { listWikiNotes } from "@/lib/content/wiki-store";
+import { PUBLIC_GAMES } from "@/lib/games/catalog";
+import { publicWikiNotes } from "@/lib/games/knowledge";
+import { listGameIndex } from "@/lib/games/store";
 import { getGuns } from "@/lib/data/guns";
 import { deferWithoutDatabase, readStreamersCached } from "@/lib/runtime-database";
 import { getSiteUrl } from "@/lib/site-config";
@@ -20,6 +23,8 @@ const STATIC_ROUTES: {
   { path: "/music", changeFrequency: "monthly", priority: 0.3 },
   { path: "/dafeiyu", changeFrequency: "monthly", priority: 0.4 },
   { path: "/stickers", changeFrequency: "monthly", priority: 0.4 },
+  { path: "/games", changeFrequency: "weekly", priority: 0.6 },
+  { path: "/games/delta", changeFrequency: "weekly", priority: 0.6 },
   { path: "/delta-gun", changeFrequency: "daily", priority: 0.9 },
   { path: "/delta-gun/guns", changeFrequency: "weekly", priority: 0.8 },
   { path: "/delta-gun/community", changeFrequency: "daily", priority: 0.8 },
@@ -34,7 +39,7 @@ async function wikiEntries(siteUrl: string): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   };
   try {
-    const notes = await listWikiNotes();
+    const notes = publicWikiNotes(await listWikiNotes());
     return [
       index,
       ...notes.map((note) => ({
@@ -98,9 +103,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]);
 
+  let gameEntries: MetadataRoute.Sitemap = [];
+  try {
+    const entries = await listGameIndex(undefined, PUBLIC_GAMES);
+    gameEntries = entries
+      .filter((entry) => entry.visibility === "public")
+      .map((entry) => ({
+        url: `${siteUrl}/games/${entry.gameId}/${encodeURIComponent(entry.slug)}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.4,
+      }));
+  } catch (error) {
+    console.warn("sitemap: 游戏条目未写入:", error instanceof Error ? error.message : error);
+  }
+
   return [
     ...staticEntries,
     ...(await wikiEntries(siteUrl)),
+    ...gameEntries,
     ...gunEntries,
     ...(await streamerEntries(siteUrl)),
   ];

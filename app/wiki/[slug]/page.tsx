@@ -8,6 +8,7 @@ import { WikiMarkdown } from "@/components/wiki/wiki-markdown";
 import { WikiShare } from "@/components/wiki/wiki-share";
 import { bulletExposesPrivatePath } from "@/lib/content/wiki-media";
 import { readWikiNote } from "@/lib/content/wiki-store";
+import { isWikiDraft } from "@/lib/games/knowledge";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import Link from "next/link";
@@ -26,7 +27,9 @@ async function loadNote(params: PageProps["params"]) {
   } catch {
     return null;
   }
-  return readWikiNote(decoded);
+  const note = await readWikiNote(decoded);
+  if (!note || isWikiDraft(note)) return null;
+  return note;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

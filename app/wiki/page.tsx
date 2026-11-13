@@ -4,6 +4,7 @@ import { PageShell } from "@/components/lab/page-shell";
 import { WikiEmpty } from "@/components/wiki/wiki-empty";
 import { WikiNoteRow } from "@/components/wiki/wiki-note-row";
 import { listWikiNotes } from "@/lib/content/wiki-store";
+import { publicWikiNotes } from "@/lib/games/knowledge";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 export default async function WikiPage() {
   // 文件是运行时写的。不在这里挡住的话，构建会把当时的目录烤进静态页。
   await connection();
-  const notes = await listWikiNotes();
+  const notes = publicWikiNotes(await listWikiNotes());
 
   return (
     <PageShell>

@@ -1,5 +1,6 @@
 import { wikiJson, wikiUnauthorized, isWikiAdminAuthorized } from "@/lib/content/wiki-auth";
-import { WikiStoreError, writeWikiNote } from "@/lib/content/wiki-store";
+import { WikiStoreError, readWikiNote, writeWikiNote } from "@/lib/content/wiki-store";
+import { wikiIngestConflict } from "@/lib/games/knowledge";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    const existing = await readWikiNote(payload.slug);
+    const conflict = wikiIngestConflict(existing, payload.markdown);
+    if (conflict) return wikiJson({ ok: false, message: conflict }, 409);
     const result = await writeWikiNote(payload.slug, payload.markdown);
     return wikiJson({
       ok: true,
