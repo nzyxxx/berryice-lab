@@ -38,8 +38,19 @@ export function gameKindLabel(kind: GameKindId | null): string {
   return GAME_KINDS.find((item) => item.id === kind)?.label ?? "类别未标明";
 }
 
+/**
+ * 旧笔记没有「状态」时保持公开。
+ * 一旦写了「游戏」，必须明确「状态: 公开」才进任何公开出口。缺状态、草稿、未知游戏都不会因此公开。
+ */
+export function noteIsPublic(note: { bullets: readonly WikiBullet[] }): boolean {
+  const status = bulletValue(note.bullets, "状态");
+  const game = bulletValue(note.bullets, "游戏");
+  if (game) return status === "公开";
+  return status !== "草稿";
+}
+
 export function isWikiDraft(note: { bullets: readonly WikiBullet[] }): boolean {
-  return bulletValue(note.bullets, "状态") === "草稿";
+  return !noteIsPublic(note);
 }
 
 export function publicWikiNotes<T extends { bullets: readonly WikiBullet[] }>(notes: readonly T[]): T[] {
@@ -77,6 +88,7 @@ function proseAfterSummary(body: string): string {
   const heading = lines[index]?.match(/^##\s+(.+?)\s*$/);
   if (!heading || heading[1].trim() !== "这条讲什么") return body.trim();
   index += 1;
+  while (index < lines.length && lines[index].trim() === "") index += 1;
   while (index < lines.length && lines[index].trim() !== "") index += 1;
   while (index < lines.length && lines[index].trim() === "") index += 1;
   return lines.slice(index).join("\n").trim();
@@ -119,7 +131,7 @@ export function readGameEntry(note: WikiNote, games: readonly GameRef[]): GameEn
     updatedAt: updated || null,
     season,
     tags: splitTags(bulletValue(note.bullets, "标签")),
-    visibility: isWikiDraft(note) ? "draft" : "public",
+    visibility: noteIsPublic(note) ? "public" : "draft",
   };
 }
 
@@ -183,6 +195,42 @@ export function gameSpaceHref(gameId: string, query: GameQuery = {}): string {
   const search = params.toString();
   const base = gameId === UNSORTED_GAME_ID ? "/games/unsorted" : `/games/${gameId}`;
   return search ? `${base}?${search}` : base;
+}
+
+const TRACKING_PARAMS = new Set([
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "utm_id",
+]);
+
+/** 用来判断是不是同一条来源。页面上仍保留最初写下的链接原文。 */
+export function canonicalSourceHref(input: string): string | null {
+  let url: URL;
+  try {
+    url = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" || url.username !== "" || url.password !== "") return null;
+  url.hash = "";
+  url.hostname = url.hostname.toLowerCase();
+  if (url.pathname.length > 1) url.pathname = url.pathname.replace(/\/+$/, "");
+  const params = [...url.searchParams.entries()].filter(([key]) => !TRACKING_PARAMS.has(key.toLowerCase()));
+  params.sort((left, right) => (left[0] === right[0] ? left[1].localeCompare(right[1]) : left[0].localeCompare(right[0])));
+  url.search = "";
+  for (const [key, value] of params) url.searchParams.append(key, value);
+  return url.toString();
+}
+
+export function sameSourceHref(left: string | null, right: string | null): boolean {
+  if (!left || !right) return false;
+  if (left === right) return true;
+  const a = canonicalSourceHref(left);
+  const b = canonicalSourceHref(right);
+  return Boolean(a && b && a === b);
 }
 
 export function shanghaiStamp(date: Date): string {

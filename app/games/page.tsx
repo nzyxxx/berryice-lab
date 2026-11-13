@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "游戏",
-  description: "按游戏分开记的攻略、技巧、知识和文档。",
+  description: "按游戏整理攻略与技巧，保留来源与适用版本。",
 };
 
 export default async function GamesPage() {
@@ -33,7 +33,7 @@ export default async function GamesPage() {
         <p className="text-[11px] tracking-[0.18em] text-lab-primary">01 / 游戏</p>
         <h1 className="mt-3 text-display-section text-balance">游戏</h1>
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-lab-ink-muted">
-          每款游戏分开记攻略、技巧、知识和文档。没有确认在玩的游戏不会出现在这里。
+          按游戏整理攻略与技巧，保留来源与适用版本。
         </p>
         {failed ? <p className="mt-10 text-[15px] text-lab-ink">这一页没有读出来。过一会儿再打开。</p> : null}
         <ul className="mt-12 border-t border-lab-hairline">
@@ -51,24 +51,22 @@ export default async function GamesPage() {
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-lab-ink-subtle">{game.blurb}</p>
                 <p className="mt-3 text-sm text-lab-ink-muted">
-                  {page.total === 0 ? "还没有公开条目。" : `${page.total} 条公开条目。`}
+                  {page.total === 0 ? "还没有攻略。" : `${page.total} 条。`}
                 </p>
               </li>
             );
           })}
         </ul>
-        <p className="mt-8 text-sm leading-relaxed text-lab-ink-subtle">
-          {unsorted.total === 0 ? (
-            "没有还没分到游戏的公开条目。"
-          ) : (
+        {unsorted.total > 0 ? (
+          <p className="mt-8 text-sm leading-relaxed text-lab-ink-subtle">
             <Link
               href="/games/unsorted"
               className="inline-flex min-h-11 items-center text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
             >
-              未归类 {unsorted.total} 条
+              待整理 {unsorted.total} 条
             </Link>
-          )}
-        </p>
+          </p>
+        ) : null}
       </PageContainer>
     </PageShell>
   );

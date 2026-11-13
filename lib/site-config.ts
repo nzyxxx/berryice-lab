@@ -71,7 +71,7 @@ export const moduleLinks: {
     id: "games",
     href: "/games",
     title: "游戏",
-    description: "按游戏记的攻略、技巧、知识和文档。",
+    description: "按游戏整理攻略与技巧，保留来源与适用版本。",
     accent: "#38bdf8",
   },
   {

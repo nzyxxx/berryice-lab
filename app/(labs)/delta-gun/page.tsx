@@ -45,9 +45,8 @@ export default async function DeltaGunLabPage() {
             href="/games/delta"
             className="inline-flex min-h-11 items-center text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
           >
-            这款游戏的攻略和文档
+            攻略与技巧
           </Link>
-          记在游戏空间。这里仍是枪、码和排行。
         </p>
       </header>
       <DeltaStatRow weapons={guns.length} codes={codes} streamers={streamers} season={CURRENT_SEASON} />

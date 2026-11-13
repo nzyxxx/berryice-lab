@@ -14,7 +14,6 @@ export const dynamic = "force-dynamic";
 type PageProps = { params: Promise<{ gameId: string; slug: string }> };
 
 async function load(params: PageProps["params"]) {
-  await connection();
   const { gameId, slug } = await params;
   let decoded = slug;
   try {
@@ -32,19 +31,20 @@ async function load(params: PageProps["params"]) {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const entry = await load(params);
-  if (!entry) return { title: "没有这条" };
+  if (!entry) notFound();
   return { title: entry.title, description: entry.summary || entry.title };
 }
 
 export default async function GameEntryPage({ params }: PageProps) {
   const entry = await load(params);
   if (!entry) notFound();
+  await connection();
   const game = entry.gameId === UNSORTED_GAME_ID ? null : publicGame(entry.gameId);
   const backHref = entry.gameId === UNSORTED_GAME_ID ? "/games/unsorted" : `/games/${entry.gameId}`;
   const sourceOk = entry.sourceHref?.startsWith("https://") ?? false;
 
   return (
-    <PageShell backHref={backHref} backLabel={game ? `回到${game.title}` : "回到未归类"}>
+      <PageShell backHref={backHref} backLabel={game ? `回到${game.title}` : "回到待整理"}>
       <PageContainer className="max-w-[40rem]">
         <p className="text-[11px] tracking-[0.18em] text-lab-primary">
           {gameKindLabel(entry.kind)} · 版本 {entry.season || "未知"}
@@ -58,7 +58,7 @@ export default async function GameEntryPage({ params }: PageProps) {
         <dl className="mt-6 space-y-2 text-sm leading-relaxed text-lab-ink-subtle">
           {entry.unresolvedGame ? (
             <div>
-              <dt className="inline">游戏没有对上：</dt>
+              <dt className="inline">游戏：</dt>
               <dd className="inline">{entry.unresolvedGame}</dd>
             </div>
           ) : null}
@@ -100,7 +100,7 @@ export default async function GameEntryPage({ params }: PageProps) {
             href={backHref}
             className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle outline-none hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary"
           >
-            {game ? `回到${game.title}` : "回到未归类"}
+            {game ? `回到${game.title}` : "回到待整理"}
           </Link>
         </p>
       </PageContainer>

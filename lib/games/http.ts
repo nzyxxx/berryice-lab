@@ -27,14 +27,16 @@ export async function handleGameKnowledgePost(
 ): Promise<GameHttpResult> {
   if (!options.authorized) return { status: 401, body: { ok: false, message: "未授权" } };
 
-  const length = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(length) && length > 250_000) {
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declared) && declared > 250_000) {
     return { status: 413, body: { ok: false, message: "请求太大" } };
   }
 
   let payload: unknown;
   try {
-    payload = await request.json();
+    const text = await request.text();
+    if (text.length > 250_000) return { status: 413, body: { ok: false, message: "请求太大" } };
+    payload = JSON.parse(text);
   } catch {
     return { status: 400, body: { ok: false, message: "请求体不是 JSON" } };
   }

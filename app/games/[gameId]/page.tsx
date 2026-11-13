@@ -23,21 +23,26 @@ function first(value: string | string[] | undefined): string {
 async function load(params: PageProps["params"]) {
   const { gameId } = await params;
   if (gameId === UNSORTED_GAME_ID) {
-    return { id: UNSORTED_GAME_ID, title: "未归类", blurb: "游戏没有写明，或写了站上还没有的游戏。不会猜它属于哪一款。", tools: [] as { href: string; label: string }[] };
+    return {
+      id: UNSORTED_GAME_ID,
+      title: "待整理",
+      blurb: "按游戏整理攻略与技巧，保留来源与适用版本。",
+      tools: [] as { href: string; label: string }[],
+    };
   }
   return publicGame(gameId);
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const game = await load(params);
-  if (!game) return { title: "没有这款游戏" };
+  if (!game) notFound();
   return { title: game.title, description: game.blurb };
 }
 
 export default async function GameSpacePage({ params, searchParams }: PageProps) {
-  await connection();
   const game = await load(params);
   if (!game) notFound();
+  await connection();
   const raw = await searchParams;
   const query: GameQuery = {
     q: first(raw.q),
@@ -59,9 +64,7 @@ export default async function GameSpacePage({ params, searchParams }: PageProps)
     ? "没有这个类别。"
     : query.q || query.kind
       ? "没有对上的条目。"
-      : game.id === UNSORTED_GAME_ID
-        ? "没有还没分到游戏的公开条目。"
-        : "还没有公开的攻略、技巧、知识或文档。";
+      : "还没有攻略。";
 
   return (
     <PageShell backHref="/games" backLabel="游戏">
@@ -71,7 +74,7 @@ export default async function GameSpacePage({ params, searchParams }: PageProps)
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-lab-ink-muted">{game.blurb}</p>
         {game.tools.length > 0 ? (
           <nav aria-label="工具" className="mt-6">
-            <p className="text-[11px] tracking-[0.18em] text-lab-ink-subtle">工具，不是正文</p>
+            <p className="text-[11px] tracking-[0.18em] text-lab-ink-subtle">常用工具</p>
             <ul className="mt-1 flex flex-wrap gap-x-4">
               {game.tools.map((tool) => (
                 <li key={tool.href}>

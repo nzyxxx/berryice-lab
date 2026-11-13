@@ -6,7 +6,7 @@ export const PUBLIC_GAMES = [
   {
     id: "delta",
     title: "三角洲行动",
-    blurb: "攻略、技巧、知识和文档按这款游戏记。枪械库、改枪码和主播配装仍是工具，不写成攻略正文。",
+    blurb: "按游戏整理攻略与技巧，保留来源与适用版本。",
     tools: [
       { href: "/delta-gun", label: "工具总览" },
       { href: "/delta-gun/guns", label: "枪械库" },
