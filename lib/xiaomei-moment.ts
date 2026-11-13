@@ -47,7 +47,7 @@ function chatBeat(turns: readonly XiaomeiChatTurn[]): XiaomeiSharedMoment | null
 }
 
 function noteBeat(topics: readonly XiaomeiMemoryNote[], userName: string): XiaomeiSharedMoment | null {
-  const drawer = memoryNotesForDrawer({ userName, topics });
+  const drawer = memoryNotesForDrawer({ userName, topics: [...topics] });
   const ordered = [...drawer.facts, ...drawer.events];
   let bestText = "";
   let bestAt = Number.NEGATIVE_INFINITY;

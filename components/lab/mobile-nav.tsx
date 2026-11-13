@@ -1,5 +1,6 @@
 "use client";
 
+import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { moduleLinks } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -93,8 +94,8 @@ export function MobileNav() {
             aria-label="站点导航"
             tabIndex={-1}
             className={cn(
-              "absolute inset-x-3 top-3 rounded-3xl border border-white/12 p-3 outline-none",
-              "bg-lab-canvas/92 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.8)] backdrop-blur-2xl"
+              "absolute inset-x-3 top-3 rounded-3xl p-3 outline-none",
+              glassSurfaceClass("bg-lab-canvas/92")
             )}
             initial={reduceMotion ? undefined : { opacity: 0, y: -12 }}
             animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
@@ -102,8 +103,8 @@ export function MobileNav() {
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="flex items-center justify-between px-2 pb-2 pt-1">
-              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-lab-primary">
-                Navigate
+              <span className="text-[11px] font-medium tracking-[0.18em] text-lab-primary">
+                导航
               </span>
               <button
                 type="button"

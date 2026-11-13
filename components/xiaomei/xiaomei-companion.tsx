@@ -912,7 +912,8 @@ export function XiaomeiCompanion() {
           if (!decision) return;
           lastHoverAt.current = now;
           nudgeRef.current(decision);
-          if (dndBlocksAmbient(dndRef.current) || speechRef.current) return;
+          const hoverBlocked = dndBlocksAmbient(dndRef.current) || speechRef.current != null;
+          if (hoverBlocked) return;
           const tone = toneFromAffection(metersRef.current.affection);
           const line = pickTaggedLine(XIAOMEI_HOVER_LINES, speechRef.current?.text, tone);
           reawakenPendingRef.current = false;

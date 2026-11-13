@@ -36,10 +36,10 @@ export const profileConfig = {
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
 
-export type ModuleId = "delta" | "writing" | "wiki" | "about";
+export type ModuleId = "delta" | "writing" | "wiki" | "music" | "about";
 
 /**
- * 导航有四个去处：三角洲、写作、知识库、关于。
+ * 导航有五个去处：三角洲、写作、知识库、歌单、关于。
  * 清单只维护在这里，顶栏和移动端抽屉从它派生。
  *
  * 首页不是这四块门户瓦片。雨夜首页的栏目在 `lib/content/home-modules.ts`。
@@ -81,6 +81,14 @@ export const moduleLinks: {
     title: "知识库",
     description: "Bear 收录的笔记，手机上翻阅。",
     accent: "#7dd3fc",
+  },
+  {
+    id: "music",
+    href: "/music",
+    title: "歌单草稿",
+    navLabel: "歌单",
+    description: "只写在这台浏览器里，点开官方链接。",
+    accent: "#38bdf8",
   },
   {
     id: "about",

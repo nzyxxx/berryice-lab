@@ -103,13 +103,13 @@ export default function AboutPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "group flex min-h-[8rem] flex-col justify-between rounded-2xl p-5 backdrop-blur-md",
-                  "border border-[#fb7185]/25 bg-[#fb7185]/10",
-                  "transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-[#fb7185]/15",
+                  glassSurfaceClass(),
+                  "group flex min-h-[8rem] flex-col justify-between rounded-2xl p-5",
+                  "transition-transform duration-200 hover:-translate-y-0.5",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/30"
                 )}
               >
-                <span className="flex size-10 items-center justify-center rounded-xl bg-[#fb7185]/20 text-[#fb7185]">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-lab-primary/15 text-lab-primary">
                   <MessageCircle className="size-5" />
                 </span>
                 <span className="mt-4 flex items-center gap-2 text-lg font-medium tracking-tight text-lab-ink">
