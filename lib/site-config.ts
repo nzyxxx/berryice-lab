@@ -93,7 +93,7 @@ export const moduleLinks: {
     id: "writing",
     href: "/writing",
     title: "写作",
-    description: "写完才会放上来。",
+    description: "长文和随记。",
     accent: "#38bdf8",
   },
 ];

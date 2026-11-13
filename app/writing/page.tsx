@@ -27,15 +27,15 @@ export default function WritingPage() {
           index="01"
           label="Brief"
           title="写作"
-          description="长文和随记放在一起。写完才会出现在这儿。"
+          description="长文和随记。"
           headingLevel="h1"
         />
 
         {empty ? (
           <div className="mt-12">
             <EmptyState
-              title="还没有公开的文章"
-              description="在写，但没写完的东西不往这儿摆。"
+              title="还没有文章"
+              description="发表之后会出现在这里。"
               action={
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <Link

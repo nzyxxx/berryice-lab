@@ -49,12 +49,12 @@ export const homeModules: HomeModule[] = [
       },
       {
         title: "大肥鱼",
-        description: "浏览器里的 dsh-pet。",
+        description: "小莓在的房间。",
         href: "/dafeiyu",
       },
       {
         title: "表情工坊",
-        description: "做成微信版，收进保险箱。",
+        description: "方形表情。",
         href: "/stickers",
       },
     ],
