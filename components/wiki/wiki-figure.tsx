@@ -25,14 +25,9 @@ export function WikiFigure({
   if (!noteMentionsStill([body, ...bullets.map((bullet) => bullet.value)])) return null;
 
   return (
-    <figure className="mt-8 flex min-h-36 max-w-xl flex-col justify-end border border-dashed border-lab-hairline px-5 py-5">
+    <figure className="mt-8 max-w-xl border-t border-lab-hairline pt-4">
       <figcaption className="text-[11px] tracking-[0.18em] text-lab-primary">画面</figcaption>
-      <p className="mt-3 max-w-[38ch] text-[15px] leading-relaxed text-lab-ink">
-        原图还在收录盘上，公开目录里没有可显示的文件。
-      </p>
-      <p className="mt-2 text-sm leading-relaxed text-lab-ink-subtle">
-        这格留空。不用别的图顶上，也不写出存储路径。
-      </p>
+      <p className="mt-3 text-[15px] leading-relaxed text-lab-ink-muted">这篇还没有可看的原图。</p>
     </figure>
   );
 }

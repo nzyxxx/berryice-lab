@@ -1,4 +1,4 @@
-import { HomeCover } from "@/components/lab/home-cover";
+import { MediaGallery } from "@/components/preview/media-gallery";
 import { SiteHeader } from "@/components/lab/site-header";
 import { SiteShell } from "@/components/lab/site-shell";
 import { listWikiNotes } from "@/lib/content/wiki-store";
@@ -26,7 +26,7 @@ export default async function HomePage() {
   return (
     <SiteShell>
       <SiteHeader />
-      <HomeCover notes={notes.slice(0, 3)} />
+      <MediaGallery notes={notes.slice(0, 3)} />
     </SiteShell>
   );
 }

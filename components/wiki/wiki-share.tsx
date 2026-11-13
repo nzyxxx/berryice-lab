@@ -64,7 +64,11 @@ export function WikiShare({ title }: { title: string }) {
           复制链接
         </button>
       </div>
-      <p className="min-h-5 text-xs text-lab-ink-subtle" role="status" aria-live="polite">
+      <p
+        className={`min-h-5 text-xs ${status.startsWith("已") || status.startsWith("链接") ? "text-lab-primary" : "text-lab-ink-subtle"}`}
+        role="status"
+        aria-live="polite"
+      >
         {status}
       </p>
     </div>

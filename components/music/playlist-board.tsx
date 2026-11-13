@@ -72,7 +72,11 @@ export function PlaylistBoard({
           加入
         </button>
       </form>
-      <p className="mt-3 min-h-5 text-xs text-lab-ink-subtle" role="status" aria-live="polite">
+      <p
+        className={`mt-3 min-h-5 text-xs ${message.startsWith("已") ? "text-lab-primary" : "text-lab-ink-subtle"}`}
+        role="status"
+        aria-live="polite"
+      >
         {message}
       </p>
 
