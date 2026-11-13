@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 /**
  * 一张已知尺寸的静图。平时懒加载；点开才放大。
@@ -20,6 +20,12 @@ export function FramedStill({
   const [broken, setBroken] = useState(false);
   const [open, setOpen] = useState(false);
   const titleId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const close = () => {
+    dialogRef.current?.close();
+  };
 
   if (broken) {
     return (
@@ -32,14 +38,14 @@ export function FramedStill({
   return (
     <figure>
       <button
+        ref={triggerRef}
         type="button"
         className="block w-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
-        onClick={(event) => {
-          const dialog = event.currentTarget.nextElementSibling;
-          if (dialog instanceof HTMLDialogElement && !dialog.open) {
-            setOpen(true);
-            dialog.showModal();
-          }
+        onClick={() => {
+          const dialog = dialogRef.current;
+          if (!dialog || dialog.open) return;
+          setOpen(true);
+          dialog.showModal();
         }}
       >
         <img
@@ -55,9 +61,18 @@ export function FramedStill({
         />
       </button>
       <dialog
+        ref={dialogRef}
         aria-labelledby={titleId}
-        className="m-auto w-[min(100%-2rem,56rem)] max-h-[90vh] overflow-auto rounded-2xl border border-lab-hairline bg-lab-canvas p-4 text-lab-ink backdrop:bg-black/70"
-        onClose={() => setOpen(false)}
+        className="m-auto w-[min(100%-2rem,56rem)] max-h-[90vh] overflow-auto rounded-2xl border border-lab-hairline bg-lab-canvas p-4 text-lab-ink outline-none backdrop:bg-black/70 focus-visible:ring-2 focus-visible:ring-lab-primary"
+        onKeyDown={(event) => {
+          if (event.key !== "Escape") return;
+          event.preventDefault();
+          event.currentTarget.close();
+        }}
+        onClose={() => {
+          setOpen(false);
+          triggerRef.current?.focus();
+        }}
       >
         <p id={titleId} className="text-sm leading-relaxed text-lab-ink-muted">
           {alt}
@@ -74,18 +89,17 @@ export function FramedStill({
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <a
             href={src}
-            className="inline-flex min-h-11 items-center text-sm text-lab-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+            className="inline-flex min-h-11 items-center text-sm text-lab-primary outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
           >
             打开原图
           </a>
-          <form method="dialog">
-            <button
-              type="submit"
-              className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
-            >
-              关闭
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={close}
+            className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+          >
+            关闭
+          </button>
         </div>
       </dialog>
     </figure>

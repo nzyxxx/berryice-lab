@@ -39,7 +39,8 @@ export const profileConfig = {
 export type ModuleId = "delta" | "writing" | "wiki" | "music" | "about";
 
 /**
- * 导航有五个去处：三角洲、写作、知识库、歌单、关于。
+ * 导航有五个去处，顺序就是主次：知识库、三角洲、歌单、关于、写作。
+ * 写作没有公开文章，所以放在最后，地址仍是 /writing。
  * 清单只维护在这里，顶栏和移动端抽屉从它派生。
  *
  * 首页不是这四块门户瓦片。雨夜首页的栏目在 `lib/content/home-modules.ts`。
@@ -60,6 +61,13 @@ export const moduleLinks: {
   accent: string;
 }[] = [
   {
+    id: "wiki",
+    href: "/wiki",
+    title: "知识库",
+    description: "收录进来的笔记。",
+    accent: "#7dd3fc",
+  },
+  {
     id: "delta",
     href: "/delta-gun",
     title: "三角洲工具",
@@ -68,26 +76,10 @@ export const moduleLinks: {
     accent: "#f97316",
   },
   {
-    id: "writing",
-    href: "/writing",
-    title: "写作与随记",
-    navLabel: "写作",
-    description: "长文和短记。写完才会放上来。",
-    accent: "#38bdf8",
-  },
-  {
-    id: "wiki",
-    href: "/wiki",
-    title: "知识库",
-    description: "Bear 收录的笔记，手机上翻阅。",
-    accent: "#7dd3fc",
-  },
-  {
     id: "music",
     href: "/music",
-    title: "歌单草稿",
-    navLabel: "歌单",
-    description: "只写在这台浏览器里，点开官方链接。",
+    title: "歌单",
+    description: "记在这台浏览器里。",
     accent: "#38bdf8",
   },
   {
@@ -96,6 +88,13 @@ export const moduleLinks: {
     title: "关于",
     description: "我在做什么，以及怎么找到我。",
     accent: "#a78bfa",
+  },
+  {
+    id: "writing",
+    href: "/writing",
+    title: "写作",
+    description: "写完才会放上来。",
+    accent: "#38bdf8",
   },
 ];
 

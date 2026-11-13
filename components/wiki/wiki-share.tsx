@@ -1,5 +1,6 @@
 "use client";
 
+import { writePageLink } from "@/lib/wiki/share-link";
 import { useState } from "react";
 
 /**
@@ -36,14 +37,11 @@ export function WikiShare({ title }: { title: string }) {
   const copy = async () => {
     if (locked()) return;
     setPending(true);
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setStatus("链接已复制");
-    } catch {
-      setStatus("没有复制成。地址就在浏览器栏里");
-    } finally {
-      setPending(false);
-    }
+    const result = await writePageLink(window.location.href, (value) =>
+      navigator.clipboard.writeText(value)
+    );
+    setStatus(result === "copied" ? "链接已复制" : "没有复制成。地址就在浏览器栏里");
+    setPending(false);
   };
 
   return (

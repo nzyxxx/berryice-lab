@@ -257,7 +257,7 @@ export function RainField({ density = "normal" }: { density?: Density }) {
       {tiles && (
         <div className={paused ? "rain-paused" : undefined}>
           <div
-            className="absolute inset-0 [mask-image:linear-gradient(to_bottom,#000_0%,rgba(0,0,0,0.88)_70%,rgba(0,0,0,0.62)_100%)]"
+            className="absolute inset-0 [mask-image:linear-gradient(to_bottom,#000_0%,rgba(0,0,0,0.7)_16%,rgba(0,0,0,0.22)_40%,transparent_64%)]"
             style={{ opacity: dim }}
           >
             {LAYERS.map((spec, index) =>

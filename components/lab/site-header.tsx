@@ -68,25 +68,30 @@ export function SiteHeader({
             <nav className="hidden items-center gap-5 text-sm text-lab-ink-subtle md:flex">
               <Link
                 href="/"
+                aria-current={pathname === "/" ? "page" : undefined}
                 className={cn(
-                  "transition-colors hover:text-lab-ink",
+                  "rounded-md outline-none transition-colors hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary",
                   pathname === "/" && "text-lab-primary"
                 )}
               >
                 首页
               </Link>
-              {moduleLinks.map((m) => (
-                <Link
-                  key={m.id}
-                  href={m.href}
-                  className={cn(
-                    "transition-colors hover:text-lab-ink",
-                    pathname.startsWith(m.href) && "text-lab-primary"
-                  )}
-                >
-                  {m.navLabel ?? m.title}
-                </Link>
-              ))}
+              {moduleLinks.map((m) => {
+                const active = pathname.startsWith(m.href);
+                return (
+                  <Link
+                    key={m.id}
+                    href={m.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "rounded-md outline-none transition-colors hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary",
+                      active && "text-lab-primary"
+                    )}
+                  >
+                    {m.navLabel ?? m.title}
+                  </Link>
+                );
+              })}
             </nav>
           )}
           <ThemeToggle />
