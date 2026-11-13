@@ -20,7 +20,7 @@ export function FramedStill({
   const [broken, setBroken] = useState(false);
   const [open, setOpen] = useState(false);
   const titleId = useId();
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLAnchorElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const close = () => {
@@ -37,13 +37,14 @@ export function FramedStill({
 
   return (
     <figure>
-      <button
+      <a
         ref={triggerRef}
-        type="button"
+        href={src}
         className="block w-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
-        onClick={() => {
+        onClick={(event) => {
           const dialog = dialogRef.current;
           if (!dialog || dialog.open) return;
+          event.preventDefault();
           setOpen(true);
           dialog.showModal();
         }}
@@ -59,7 +60,7 @@ export function FramedStill({
           className="h-auto max-h-44 w-full rounded-2xl object-contain"
           onError={() => setBroken(true)}
         />
-      </button>
+      </a>
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}

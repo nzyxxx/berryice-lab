@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 
 export function PageShell({
   children,
-  backHref = "/",
-  backLabel = "首页",
+  backHref,
+  backLabel = "返回",
 }: {
   children: ReactNode;
   backHref?: string;

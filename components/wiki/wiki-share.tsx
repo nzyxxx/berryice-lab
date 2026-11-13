@@ -1,5 +1,6 @@
 "use client";
 
+import { controlClass } from "@/components/lab/control";
 import { writePageLink } from "@/lib/wiki/share-link";
 import { useState } from "react";
 
@@ -51,7 +52,7 @@ export function WikiShare({ title }: { title: string }) {
           type="button"
           onClick={share}
           disabled={pending}
-          className="inline-flex min-h-11 items-center rounded-full px-3 text-sm text-lab-ink-subtle transition-colors hover:text-lab-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary disabled:opacity-50"
+          className={controlClass.quiet}
         >
           分享
         </button>
@@ -59,7 +60,7 @@ export function WikiShare({ title }: { title: string }) {
           type="button"
           onClick={copy}
           disabled={pending}
-          className="inline-flex min-h-11 items-center rounded-full px-3 text-sm text-lab-ink-subtle transition-colors hover:text-lab-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary disabled:opacity-50"
+          className={controlClass.quiet}
         >
           复制链接
         </button>

@@ -39,9 +39,9 @@ export const profileConfig = {
 export type ModuleId = "delta" | "writing" | "wiki" | "music" | "about" | "games";
 
 /**
- * 导航顺序：知识库、游戏、三角洲、歌单、关于、写作。
- * 写作没有公开文章，所以放在最后，地址仍是 /writing。
- * 清单只维护在这里，顶栏和移动端抽屉从它派生。
+ * 全站索引的顺序：知识库、游戏、三角洲、歌单、关于、写作。
+ * 顶栏只用 `headerNav`：游戏是一级，三角洲留在 `/delta-gun`，从游戏页进去。
+ * 写作没有公开文章，顶栏不占位，页脚仍链到 `/writing`。
  *
  * 首页不是这四块门户瓦片。雨夜首页的栏目在 `lib/content/home-modules.ts`。
  * 写作是自己的长文和随记。知识库是 Bear 收录的笔记，走 `/wiki`，
@@ -104,6 +104,18 @@ export const moduleLinks: {
     accent: "#38bdf8",
   },
 ];
+
+/** 顶栏和手机菜单。三角洲和写作不跟这些并列。 */
+export const headerNav = moduleLinks.filter((item) => item.id !== "delta" && item.id !== "writing");
+
+/** 当前页。人在三角洲工具里时，顶栏的「游戏」仍是当前项。 */
+export function navIsCurrent(href: string, pathname: string): boolean {
+  if (href === "/") return pathname === "/";
+  if (href === "/games") {
+    return pathname === "/games" || pathname.startsWith("/games/") || pathname.startsWith("/delta-gun");
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export type SocialIconId = "github" | "repo" | "kook" | "x" | "bilibili" | "mail";
 

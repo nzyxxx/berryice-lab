@@ -1,9 +1,6 @@
+import { controlClass, fieldClass } from "@/components/lab/control";
 import { GAME_KINDS, gameKindLabel, gameSpaceHref, type GameEntryIndex, type GameQuery } from "@/lib/games/knowledge";
 import Link from "next/link";
-
-function fieldClass() {
-  return "min-h-11 w-full rounded-2xl border border-lab-hairline bg-lab-surface-1/40 px-3 text-[15px] text-lab-ink outline-none placeholder:text-lab-ink-subtle focus-visible:ring-2 focus-visible:ring-lab-primary";
-}
 
 export function GameSearch({ gameId, query }: { gameId: string; query: GameQuery }) {
   return (
@@ -17,12 +14,12 @@ export function GameSearch({ gameId, query }: { gameId: string; query: GameQuery
           name="q"
           defaultValue={query.q ?? ""}
           placeholder="标题、摘要或标签"
-          className={fieldClass()}
+          className={fieldClass}
         />
         {query.kind ? <input type="hidden" name="kind" value={query.kind} /> : null}
         <button
           type="submit"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-2xl border border-lab-hairline px-4 text-[15px] text-lab-ink outline-none hover:border-lab-primary/40 focus-visible:ring-2 focus-visible:ring-lab-primary"
+          className={controlClass.primary}
         >
           查找
         </button>

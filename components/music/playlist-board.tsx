@@ -1,3 +1,4 @@
+import { controlClass, fieldClass } from "@/components/lab/control";
 import type { PlaylistTrack } from "@/lib/music/playlist-draft";
 
 export function PlaylistBoard({
@@ -38,7 +39,7 @@ export function PlaylistBoard({
             required
             maxLength={40}
             autoComplete="off"
-            className="min-h-11 rounded-xl border border-lab-hairline bg-transparent px-3 text-[15px] text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+            className={fieldClass}
           />
         </label>
         <label className="grid gap-1 text-xs text-lab-ink-subtle">
@@ -48,7 +49,7 @@ export function PlaylistBoard({
             required
             maxLength={40}
             autoComplete="off"
-            className="min-h-11 rounded-xl border border-lab-hairline bg-transparent px-3 text-[15px] text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+            className={fieldClass}
           />
         </label>
         <label className="grid gap-1 text-xs text-lab-ink-subtle">
@@ -61,13 +62,14 @@ export function PlaylistBoard({
             placeholder="https://"
             maxLength={300}
             autoComplete="off"
-            className="min-h-11 rounded-xl border border-lab-hairline bg-transparent px-3 text-[15px] text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+            className={fieldClass}
           />
         </label>
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-lab-primary px-4 text-sm font-medium text-lab-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary disabled:opacity-50"
+          className={controlClass.primary}
+          aria-busy={pending}
         >
           加入
         </button>
@@ -97,7 +99,7 @@ export function PlaylistBoard({
                   href={track.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center px-3 text-sm text-lab-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+                  className={controlClass.quiet}
                 >
                   官方页面
                 </a>
@@ -105,7 +107,7 @@ export function PlaylistBoard({
                   type="button"
                   disabled={pending || index === 0}
                   onClick={() => onMove(track.id, -1)}
-                  className="inline-flex min-h-11 items-center px-3 text-sm text-lab-ink-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary disabled:opacity-40"
+                  className={controlClass.quiet}
                 >
                   上移
                 </button>
@@ -113,7 +115,7 @@ export function PlaylistBoard({
                   type="button"
                   disabled={pending || index === tracks.length - 1}
                   onClick={() => onMove(track.id, 1)}
-                  className="inline-flex min-h-11 items-center px-3 text-sm text-lab-ink-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary disabled:opacity-40"
+                  className={controlClass.quiet}
                 >
                   下移
                 </button>
@@ -121,7 +123,7 @@ export function PlaylistBoard({
                   type="button"
                   disabled={pending}
                   onClick={() => onRemove(track.id)}
-                  className="inline-flex min-h-11 items-center px-3 text-sm text-lab-ink-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary disabled:opacity-40"
+                  className={controlClass.danger}
                 >
                   删除
                 </button>

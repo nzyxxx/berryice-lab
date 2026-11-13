@@ -3,10 +3,8 @@
 import { MobileNav } from "@/components/lab/mobile-nav";
 import { SupportButton } from "@/components/lab/support-button";
 import { ThemeToggle } from "@/components/lab/theme-toggle";
-import { Button } from "@/components/ui/button";
-import { moduleLinks } from "@/lib/site-config";
+import { headerNav, navIsCurrent, profileConfig } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -20,82 +18,52 @@ export function SiteHeader({
   minimal?: boolean;
 }) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
-  const showBack = backHref || (!isHome && !minimal);
-  const resolvedBackHref = backHref || "/";
-  const resolvedLabel = backHref ? backLabel : "首页";
+  const showBack = Boolean(backHref && backHref !== "/" && backHref !== pathname);
 
-  // 吸顶条的 backdrop-filter 每一个滚动帧都要重算一次背后的内容，
-  // 是全站最贵的一处模糊。iOS 27 的导航条本来就是薄玻璃：
-  // 半径减半、saturate 补色、底缘一道暗边把它跟内容切开。
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 border-b border-white/[0.08] bg-lab-canvas/55",
-        "backdrop-blur-lg backdrop-saturate-150",
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.45)]"
-      )}
-    >
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-4">
-          {showBack ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="h-11 px-2.5 text-lab-ink-subtle hover:bg-lab-surface-1 hover:text-lab-ink"
-            >
-              <Link href={resolvedBackHref}>
-                <ArrowLeft className="mr-1.5 size-4" />
-                {resolvedLabel}
-              </Link>
-            </Button>
-          ) : (
-            <Link href="/" className="flex items-center gap-2.5">
-              <span className="flex size-7 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-[11px] font-bold text-lab-ink">
-                B
-              </span>
-              <span className="text-sm font-medium tracking-tight text-lab-ink">
-                BerryIce<span className="text-lab-ink">.</span>Lab
-              </span>
-            </Link>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-50 border-b border-lab-hairline bg-lab-canvas/80 backdrop-blur-lg backdrop-saturate-150">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
+        <Link
+          href="/"
+          className="inline-flex min-h-11 items-baseline gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+        >
+          <span className="text-[15px] font-medium tracking-tight text-lab-ink">{profileConfig.displayName}</span>
+          <span className="hidden text-xs text-lab-ink-subtle sm:inline">{profileConfig.latinName}</span>
+        </Link>
+        {showBack ? (
+          <Link
+            href={backHref!}
+            className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle outline-none hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary"
+          >
+            {backLabel}
+          </Link>
+        ) : null}
+        <div className="ml-auto flex items-center gap-1">
+        {!minimal ? (
+          <nav className="hidden items-center gap-1 lg:flex" aria-label="站点">
+            {headerNav.map((item) => {
+              const active = navIsCurrent(item.href, pathname);
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "inline-flex min-h-11 items-center rounded-md px-2.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-lab-primary",
+                    active ? "text-lab-primary" : "text-lab-ink-subtle hover:text-lab-ink"
+                  )}
+                >
+                  {item.navLabel ?? item.title}
+                </Link>
+              );
+            })}
+          </nav>
+        ) : null}
+        <div className="flex items-center gap-1">
           <SupportButton />
-          {!minimal && (
-            <nav className="hidden items-center gap-5 text-sm text-lab-ink-subtle md:flex">
-              <Link
-                href="/"
-                aria-current={pathname === "/" ? "page" : undefined}
-                className={cn(
-                  "rounded-md outline-none transition-colors hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary",
-                  pathname === "/" && "text-lab-primary"
-                )}
-              >
-                首页
-              </Link>
-              {moduleLinks.map((m) => {
-                const active = pathname.startsWith(m.href);
-                return (
-                  <Link
-                    key={m.id}
-                    href={m.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "rounded-md outline-none transition-colors hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary",
-                      active && "text-lab-primary"
-                    )}
-                  >
-                    {m.navLabel ?? m.title}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
           <ThemeToggle />
-          <MobileNav />
+          {!minimal ? <MobileNav /> : null}
+        </div>
         </div>
       </div>
     </header>

@@ -1,9 +1,7 @@
 "use client";
 
-import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
-import { moduleLinks } from "@/lib/site-config";
+import { headerNav, moduleLinks, navIsCurrent } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -14,35 +12,23 @@ function subscribeToNothing() {
   return () => {};
 }
 
-/** 服务端和第一次水合都是 false，避免 portal 到还不存在的 document.body。 */
 function useIsClient() {
   return useSyncExternalStore(subscribeToNothing, () => true, () => false);
 }
 
-const NAV_ITEMS = [
-  { href: "/", title: "首页", description: "回到个人站点" },
-  ...moduleLinks.map((m) => ({
-    href: m.href,
-    title: m.navLabel ?? m.title,
-    description: m.description,
-  })),
-];
+const delta = moduleLinks.find((item) => item.id === "delta");
 
 /**
- * 移动端跨模块导航。抽屉必须 portal 到 body：
- * 顶栏带 backdrop-blur，会给 position:fixed 的后代创建包含块，
- * 直接挂在顶栏里的话抽屉会相对顶栏定位而不是视口。
+ * 抽屉必须 portal 到 body。顶栏的 backdrop-filter 会让 fixed 后代相对顶栏定位。
  */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const mounted = useIsClient();
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [pathWhenClosed, setPathWhenClosed] = useState(pathname);
 
-  // 路由变了就关掉。在渲染期间对齐状态，避免 effect 里同步 setState。
   if (pathname !== pathWhenClosed) {
     setPathWhenClosed(pathname);
     setOpen(false);
@@ -50,19 +36,30 @@ export function MobileNav() {
 
   useEffect(() => {
     if (!open) return;
-
     const trigger = triggerRef.current;
     const panel = panelRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const items = panel ? [...panel.querySelectorAll<HTMLElement>("a, button")] : [];
+    items[0]?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab" || items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKeyDown);
-
-    panel?.focus();
-
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
@@ -70,83 +67,64 @@ export function MobileNav() {
     };
   }, [open]);
 
-  const drawer = (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-[70] md:hidden"
-          initial={reduceMotion ? undefined : { opacity: 0 }}
-          animate={reduceMotion ? undefined : { opacity: 1 }}
-          exit={reduceMotion ? undefined : { opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+  const linkClass = (active: boolean, nested = false) =>
+    cn(
+      "flex min-h-11 items-center rounded-md text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-lab-primary",
+      nested ? "pl-8 pr-3 text-sm" : "px-3",
+      active ? "text-lab-primary" : "text-lab-ink hover:text-lab-ink"
+    );
+
+  const drawer = open ? (
+    <div className="fixed inset-0 z-[70] lg:hidden">
+      <button
+        type="button"
+        aria-label="关闭导航"
+        className="absolute inset-0 h-full w-full cursor-default bg-lab-canvas/70"
+        onClick={() => setOpen(false)}
+      />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="站点导航"
+        tabIndex={-1}
+        className="absolute inset-x-3 top-3 rounded-2xl border border-lab-hairline bg-lab-canvas p-3 outline-none"
+      >
+        <div className="flex items-center justify-between px-3 pb-1">
+          <span className="text-sm text-lab-ink-subtle">菜单</span>
           <button
             type="button"
-            aria-label="关闭导航"
-            className="absolute inset-0 h-full w-full cursor-default bg-lab-canvas/70 backdrop-blur-sm"
             onClick={() => setOpen(false)}
-          />
-
-          <motion.div
-            ref={panelRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="站点导航"
-            tabIndex={-1}
-            className={cn(
-              "absolute inset-x-3 top-3 rounded-3xl p-3 outline-none",
-              glassSurfaceClass("bg-lab-canvas/92")
-            )}
-            initial={reduceMotion ? undefined : { opacity: 0, y: -12 }}
-            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: -12 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            aria-label="关闭导航"
+            className="inline-flex size-11 items-center justify-center rounded-md text-lab-ink-subtle outline-none hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary"
           >
-            <div className="flex items-center justify-between px-2 pb-2 pt-1">
-              <span className="text-[11px] font-medium tracking-[0.18em] text-lab-primary">
-                导航
-              </span>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="关闭导航"
-                className="flex size-11 items-center justify-center rounded-full text-lab-ink-subtle transition-colors hover:bg-white/8 hover:text-lab-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-
-            <nav className="flex flex-col gap-1">
-              {NAV_ITEMS.map((item) => {
-                const active =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href);
-
-                return (
+            <X className="size-5" />
+          </button>
+        </div>
+        <nav className="flex flex-col">
+          {headerNav.map((item) => {
+            const active = navIsCurrent(item.href, pathname);
+            return (
+              <div key={item.id}>
+                <Link href={item.href} aria-current={active ? "page" : undefined} className={linkClass(active)}>
+                  {item.title}
+                </Link>
+                {item.id === "games" && delta ? (
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "flex min-h-[3.25rem] flex-col justify-center rounded-2xl px-4 py-2.5",
-                      "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40",
-                      active
-                        ? "bg-lab-primary/12 text-lab-primary"
-                        : "text-lab-ink hover:bg-white/6"
-                    )}
+                    href={delta.href}
+                    aria-current={pathname.startsWith(delta.href) ? "page" : undefined}
+                    className={linkClass(pathname.startsWith(delta.href), true)}
                   >
-                    <span className="text-[15px] font-medium tracking-tight">{item.title}</span>
-                    <span className="mt-0.5 text-xs text-lab-ink-subtle">{item.description}</span>
+                    {delta.navLabel ?? delta.title}
                   </Link>
-                );
-              })}
-            </nav>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+                ) : null}
+              </div>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
@@ -156,11 +134,7 @@ export function MobileNav() {
         onClick={() => setOpen(true)}
         aria-label="打开导航"
         aria-expanded={open}
-        className={cn(
-          "flex size-11 items-center justify-center rounded-full text-lab-ink-subtle md:hidden",
-          "transition-colors hover:bg-white/8 hover:text-lab-ink",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary/40"
-        )}
+        className="inline-flex size-11 items-center justify-center rounded-md text-lab-ink-subtle outline-none hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary lg:hidden"
       >
         <Menu className="size-5" />
       </button>

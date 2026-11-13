@@ -93,6 +93,9 @@ iOS 26 那版玻璃是厚磨砂，27 改了三件事，本站照抄：
 | 正文 | `text-sm` / `text-[15px]` | 14–15px |
 | 辅助说明 | `text-xs leading-relaxed` | 12px |
 | eyebrow | `text-[11px] uppercase tracking-[0.18em]` | 11px |
+| 首页主笔记标题 | `text-xl` | 20px |
+
+壳层导航用 14–15px，控件高 44px，顶栏和页脚宽 `max-w-6xl`。页面主标题仍用上面的 display 字阶。
 
 枪码、哈希、ID 一律 `font-mono`。
 标题一律带负字距（`tracking-tight` 或更紧），正文不带。
@@ -205,6 +208,8 @@ z-80   跳到主内容（焦点态）
 | 悬停聚光 | `SpotlightCard` | 整页 WebGL 油膜 |
 | 悬停抬起 | `hover:-translate-y-0.5` | `hover:scale-105` |
 | 页面骨架 | `SiteShell` + `PageContainer` | 每页自己写 min-h-screen |
+| 顶栏 / 页脚 | `SiteHeader` / `SiteFooter` | 内页用返回按钮换掉站名 |
+| 主次按钮 | `controlClass` | 另写一套药丸或玻璃按钮 |
 | 404 / 报错 | `StatusScreen` | 单独做一版 |
 | 列表为空 | `EmptyState` | 拿假数据占位 |
 
