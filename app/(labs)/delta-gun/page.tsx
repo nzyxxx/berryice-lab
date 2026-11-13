@@ -40,6 +40,14 @@ export default async function DeltaGunLabPage() {
         <p className="mt-4 max-w-xl text-base leading-relaxed text-lab-ink-subtle">
           本季的枪、码和排行。过季方案默认不出现。
         </p>
+        <p className="mt-3 text-sm text-lab-ink-subtle">
+          <Link
+            href="/games/delta"
+            className="inline-flex min-h-11 items-center text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+          >
+            攻略与技巧
+          </Link>
+        </p>
       </header>
       <DeltaStatRow weapons={guns.length} codes={codes} streamers={streamers} season={CURRENT_SEASON} />
 

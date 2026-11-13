@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { controlClass } from "@/components/lab/control";
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -95,9 +96,8 @@ export function SupportButton() {
           if (!readCompact()) place();
           setOpen(true);
         }}
-        className="inline-flex h-11 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3.5 text-sm text-lab-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] hover:border-white/30 hover:bg-white/[0.12]"
+        className={controlClass.quiet}
       >
-        <span aria-hidden className="size-1.5 rounded-full bg-lab-accent-glow" />
         投喂
       </button>
       <DialogContent
@@ -124,7 +124,7 @@ export function SupportButton() {
         <div className="px-5 pt-4 pb-5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] tracking-[0.18em] text-lab-ink-subtle">小小心意</p>
-            <DialogClose className="inline-flex h-11 shrink-0 items-center rounded-full px-3 text-xs text-lab-ink-subtle hover:text-lab-ink">
+            <DialogClose className={controlClass.quiet}>
               关闭
             </DialogClose>
           </div>

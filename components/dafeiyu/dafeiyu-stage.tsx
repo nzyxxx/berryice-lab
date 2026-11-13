@@ -90,12 +90,19 @@ export function DafeiyuStage({ xiaomeiReady }: { xiaomeiReady: boolean }) {
     if (!ready) return;
     const node = stageRef.current;
     if (!node) return;
-    const measure = () => {
+    const measure = (): {
+      width: number;
+      height: number;
+      ratio: number;
+      scheme: "dark" | "light";
+    } | null => {
       const width = Math.round(node.clientWidth);
       const height = Math.round(node.clientHeight);
       if (width < 64 || height < 64) return null;
       const ratio = window.devicePixelRatio || 1;
-      const scheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+      const scheme = (
+        document.documentElement.classList.contains("dark") ? "dark" : "light"
+      ) satisfies "dark" | "light";
       if (petSizeRef.current == null) petSizeRef.current = petSizeForStage(width, ratio);
       return { width, height, ratio, scheme };
     };

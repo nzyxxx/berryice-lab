@@ -38,9 +38,9 @@ function isEnoent(error: unknown): boolean {
   );
 }
 
-function notePath(slug: string): string {
+function notePath(slug: string, directory = wikiContentDir()): string {
   try {
-    return resolveWikiFile(wikiContentDir(), slug);
+    return resolveWikiFile(directory, slug);
   } catch {
     throw new WikiStoreError("invalid-slug", "slug 只能是字母、数字、点、下划线和连字符");
   }
@@ -68,10 +68,10 @@ async function readNoteFile(file: string): Promise<string | null> {
   }
 }
 
-export async function readWikiNote(slug: string): Promise<WikiNote | null> {
+export async function readWikiNote(slug: string, directory = wikiContentDir()): Promise<WikiNote | null> {
   let file: string;
   try {
-    file = notePath(slug);
+    file = notePath(slug, directory);
   } catch {
     return null;
   }
@@ -80,11 +80,11 @@ export async function readWikiNote(slug: string): Promise<WikiNote | null> {
   return { slug, ...parseWikiMarkdown(raw, slug) };
 }
 
-export async function listWikiNotes(): Promise<WikiNote[]> {
+export async function listWikiNotes(directory = wikiContentDir()): Promise<WikiNote[]> {
   let names: string[];
   try {
     // 目录可能来自 WIKI_CONTENT_DIR。不忽略的话，构建会把整个仓库算进 server 追踪。
-    names = await readdir(/*turbopackIgnore: true*/ wikiContentDir());
+    names = await readdir(/*turbopackIgnore: true*/ directory);
   } catch (error) {
     if (isEnoent(error)) return [];
     throw error;
@@ -93,7 +93,7 @@ export async function listWikiNotes(): Promise<WikiNote[]> {
   const notes: WikiNote[] = [];
   for (const name of names) {
     if (!name.endsWith(".md") || name.startsWith(".")) continue;
-    const note = await readWikiNote(name.slice(0, -".md".length));
+    const note = await readWikiNote(name.slice(0, -".md".length), directory);
     if (note) notes.push(note);
   }
 
@@ -108,7 +108,8 @@ export async function listWikiNotes(): Promise<WikiNote[]> {
 
 export async function writeWikiNote(
   slug: string,
-  markdown: string
+  markdown: string,
+  directory = wikiContentDir()
 ): Promise<{ created: boolean; title: string }> {
   const normalized = markdown.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   if (normalized.includes("\0")) {
@@ -121,8 +122,8 @@ export async function writeWikiNote(
     throw new WikiStoreError("too-large", "正文超过 200000 字");
   }
 
-  const root = wikiContentDir();
-  const target = notePath(slug);
+  const root = directory;
+  const target = notePath(slug, directory);
   await mkdir(/*turbopackIgnore: true*/ root, { recursive: true });
 
   const existing = await readNoteFile(target);

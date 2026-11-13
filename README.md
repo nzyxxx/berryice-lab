@@ -38,14 +38,27 @@
 - `CRON_SECRET`
 - `DELTA_STATS_BASE_URL`
 - `DELTA_STATS_API_KEY`
-- `DEEPSEEK_API_KEY`（小莓对话的主钥匙。只放服务器环境，不要加 `NEXT_PUBLIC_`，页面、接口和日志里都不会出现这把钥匙）
-- `DEEPSEEK_API_KEY_2`（可选备用。主钥匙遇到 401、429 或 5xx 时换这一把再试一次。单独配备用、不配主钥匙，对话仍然是 503）
-- `DEEPSEEK_BASE_URL`（可选，默认 `https://api.deepseek.com`）
-- `DEEPSEEK_MODEL`（可选，默认 `deepseek-chat`）
+- `XIAOMEI_UPSTREAM_PRIMARY_API_KEY`（公司中转的主钥匙。只放服务器环境，不要加 `NEXT_PUBLIC_`。没配主钥匙时对话是 503，备用钥匙不能单独顶上）
+- `XIAOMEI_UPSTREAM_PRIMARY_URL`（可选。默认 `https://www.viralaiai.com/v1/messages`，这是完整地址，代码不会再接 `/chat/completions`）
+- `XIAOMEI_UPSTREAM_PRIMARY_MODEL`（可选。默认 `deepseek-v4-1-flash-261017`）
+- `XIAOMEI_UPSTREAM_BACKUP_API_KEY`（个人备用。上线要配。官方 `POST https://api.deepseek.com/chat/completions`、`stream: true`、模型 `deepseek-chat` 已由单独环境验证返回 200。没配时状态是未配置，主上游失败也不会假装有备用）
+- `XIAOMEI_UPSTREAM_BACKUP_URL`（可选。默认 `https://api.deepseek.com`，实际请求 `https://api.deepseek.com/chat/completions`。指向主上游同一主机或 `/messages` 时，这把钥匙不会发出去）
+- `XIAOMEI_UPSTREAM_BACKUP_MODEL`（可选。默认 `deepseek-chat`）
 - `XIAO_MEI_CHAT_DISABLED`（设为 `1` 时关掉对话，不再请求上游）
 - `XIAO_MEI_DAILY_TOKEN_BUDGET`（可选。单机内存里的每日 token 软上限，用完返回 503）
 
-右下角的小莓要聊天时，浏览器只请求同源的 `POST /api/xiaomei/chat`。服务器再用上面的钥匙去调 DeepSeek 的 OpenAI 兼容接口。这台机器是 2 vCPU / 2 GiB，不要在上面跑本地模型，浏览器也不要直接请求 `api.deepseek.com`。
+旧变量不再参与请求，也不能当作回退。服务器环境里如果还在，清空它们（只删环境变量，不要把值写进仓库或日志）：
+
+- `DEEPSEEK_API_KEY`
+- `DEEPSEEK_API_KEY_2`
+- `DEEPSEEK_BASE_URL`
+- `DEEPSEEK_MODEL`
+
+站长状态页只显示新变量名和「已配置 / 未配置」。旧变量如果还在，只显示「已停用」，不写出旧名字，也不显示任何钥匙。
+
+钥匙在每次请求时从进程环境读取，不会写进浏览器包。在宝塔 → Node 项目 → berryice-lab 的环境变量里改完后，用宝塔重启这个项目，让进程重新拿到环境。只改文件、不重启，跑着的进程仍是旧环境。换钥匙本身不用为了这四项再构建一次。这次代码还没上线之前，不要在生产执行 `scripts/deploy.sh`。
+
+右下角的小莓要聊天时，浏览器只请求同源的 `POST /api/xiaomei/chat`。主上游按 Anthropic Messages 调用公司中转：`x-api-key`、`anthropic-version: 2023-06-01`，流式只把 `text_delta` 交给页面。个人备用仍是 DeepSeek 官方的 OpenAI Chat Completions，只在主上游返回 401、429 或 5xx 时使用，而且永远打自己的地址。这台机器是 2 vCPU / 2 GiB，不要在上面跑本地模型。
 
 没配主钥匙，或 `XIAO_MEI_CHAT_DISABLED=1`，接口返回 503，不会出站。每人（按 IP，另加一个 HttpOnly cookie）大约每分钟 20 次、每天 100 次，超出返回 429。请求体大约限制在 24KB，一轮只留最近 8 个来回，模型输出封顶 180 token。
 

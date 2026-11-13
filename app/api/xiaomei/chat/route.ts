@@ -10,7 +10,6 @@ import {
   isXiaomeiJailbreak,
   isXiaomeiSameOrigin,
   sanitizeXiaomeiMessages,
-  shouldRetryUpstream,
 } from "@/lib/xiaomei-chat";
 import { sanitizeXiaomeiMemory } from "@/lib/xiaomei-memory";
 import { sanitizeXiaomeiNapkin } from "@/lib/xiaomei-napkin";
@@ -19,8 +18,7 @@ import {
   XIAOMEI_REFUSAL,
   XIAOMEI_UPSTREAM_ERROR,
   cannedXiaomeiStream,
-  requestXiaomeiUpstream,
-  upstreamToClientSse,
+  openXiaomeiUpstream,
   xiaomeiBudgetSnapshot,
   xiaomeiChatDisabled,
   xiaomeiUpstreamConfig,
@@ -145,28 +143,14 @@ export async function POST(request: Request) {
     });
   }
 
-  try {
-    let upstream = await requestXiaomeiUpstream(config, config.primary, messages, memory, napkin);
-    if (!upstream.ok && config.backup && shouldRetryUpstream(upstream.status)) {
-      await upstream.body?.cancel().catch(() => undefined);
-      console.error("[xiaomei] upstream retry", upstream.status);
-      upstream = await requestXiaomeiUpstream(config, config.backup, messages, memory, napkin);
-    }
-    if (!upstream.ok || !upstream.body) {
-      await upstream.body?.cancel().catch(() => undefined);
-      console.error("[xiaomei] upstream status", upstream.status);
-      return jsonError(XIAOMEI_UPSTREAM_ERROR, 502, cookieHeader);
-    }
-    return new Response(upstreamToClientSse(upstream.body), {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        "X-Accel-Buffering": "no",
-        ...cookieHeader,
-      },
-    });
-  } catch (error) {
-    console.error("[xiaomei] upstream failed", error instanceof Error ? error.name : "error");
-    return jsonError(XIAOMEI_UPSTREAM_ERROR, 502, cookieHeader);
-  }
+  const opened = await openXiaomeiUpstream(config, messages, memory, napkin);
+  if (!opened.ok) return jsonError(XIAOMEI_UPSTREAM_ERROR, opened.status, cookieHeader);
+  return new Response(opened.stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
+      ...cookieHeader,
+    },
+  });
 }

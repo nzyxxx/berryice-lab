@@ -5,6 +5,7 @@
  */
 
 import { listWikiNotes } from "./content/wiki-store";
+import { publicWikiNotes } from "./games/knowledge";
 import { isWikiSlug } from "./content/wiki-parse";
 import { type XiaomeiScene } from "./xiaomei-memory";
 
@@ -236,7 +237,7 @@ export function formatWikiGroundBlock(pick: WikiGroundPick): string {
 }
 
 export async function loadWikiGroundCards(
-  readNotes: () => Promise<readonly WikiGroundSourceNote[]> = listWikiNotes,
+  readNotes: () => Promise<readonly WikiGroundSourceNote[]> = async () => publicWikiNotes(await listWikiNotes()),
 ): Promise<XiaomeiWikiCard[]> {
   try {
     const notes = await readNotes();

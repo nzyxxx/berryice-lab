@@ -36,11 +36,12 @@ export const profileConfig = {
   avatarInitials: process.env.NEXT_PUBLIC_AVATAR_INITIALS ?? "B",
 } as const;
 
-export type ModuleId = "delta" | "writing" | "wiki" | "about";
+export type ModuleId = "delta" | "writing" | "wiki" | "music" | "about" | "games";
 
 /**
- * 导航有四个去处：三角洲、写作、知识库、关于。
- * 清单只维护在这里，顶栏和移动端抽屉从它派生。
+ * 全站索引的顺序：知识库、游戏、三角洲、歌单、关于、写作。
+ * 顶栏只用 `headerNav`：游戏是一级，三角洲留在 `/delta-gun`，从游戏页进去。
+ * 写作没有公开文章，顶栏不占位，页脚仍链到 `/writing`。
  *
  * 首页不是这四块门户瓦片。雨夜首页的栏目在 `lib/content/home-modules.ts`。
  * 写作是自己的长文和随记。知识库是 Bear 收录的笔记，走 `/wiki`，
@@ -60,6 +61,20 @@ export const moduleLinks: {
   accent: string;
 }[] = [
   {
+    id: "wiki",
+    href: "/wiki",
+    title: "知识库",
+    description: "收录进来的笔记。",
+    accent: "#7dd3fc",
+  },
+  {
+    id: "games",
+    href: "/games",
+    title: "游戏",
+    description: "按游戏整理攻略与技巧，保留来源与适用版本。",
+    accent: "#38bdf8",
+  },
+  {
     id: "delta",
     href: "/delta-gun",
     title: "三角洲工具",
@@ -68,19 +83,11 @@ export const moduleLinks: {
     accent: "#f97316",
   },
   {
-    id: "writing",
-    href: "/writing",
-    title: "写作与随记",
-    navLabel: "写作",
-    description: "长文和短记。写完才会放上来。",
+    id: "music",
+    href: "/music",
+    title: "歌单",
+    description: "记在这台浏览器里。",
     accent: "#38bdf8",
-  },
-  {
-    id: "wiki",
-    href: "/wiki",
-    title: "知识库",
-    description: "Bear 收录的笔记，手机上翻阅。",
-    accent: "#7dd3fc",
   },
   {
     id: "about",
@@ -89,7 +96,26 @@ export const moduleLinks: {
     description: "我在做什么，以及怎么找到我。",
     accent: "#a78bfa",
   },
+  {
+    id: "writing",
+    href: "/writing",
+    title: "写作",
+    description: "长文和随记。",
+    accent: "#38bdf8",
+  },
 ];
+
+/** 顶栏和手机菜单。三角洲和写作不跟这些并列。 */
+export const headerNav = moduleLinks.filter((item) => item.id !== "delta" && item.id !== "writing");
+
+/** 当前页。人在三角洲工具里时，顶栏的「游戏」仍是当前项。 */
+export function navIsCurrent(href: string, pathname: string): boolean {
+  if (href === "/") return pathname === "/";
+  if (href === "/games") {
+    return pathname === "/games" || pathname.startsWith("/games/") || pathname.startsWith("/delta-gun");
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export type SocialIconId = "github" | "repo" | "kook" | "x" | "bilibili" | "mail";
 
