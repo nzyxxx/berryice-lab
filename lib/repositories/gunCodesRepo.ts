@@ -2,6 +2,7 @@ import type mysql from "mysql2/promise";
 import { clampCopyCount } from "@/lib/delta-gun/parse-copy-count";
 import { gameModeDbValues, normalizeGameMode } from "@/lib/delta-gun/game-modes";
 import type { GameMode } from "@/lib/delta-gun/game-modes";
+import { mysqlDateTime } from "@/lib/db/mysql-datetime";
 import { getDialect, getMySqlPool, getPgPool } from "@/lib/db";
 import type { GunCodeRecord, StoredGunCode, UpsertSummary } from "@/lib/types/gunCode";
 
@@ -235,7 +236,7 @@ export async function upsertGunCodes(records: GunCodeRecord[]): Promise<UpsertSu
         item.recommendation,
         item.rankPosition,
         item.season,
-        item.postedAt || null,
+        mysqlDateTime(item.postedAt),
       ]
     );
     return (existing as mysql.RowDataPacket[]).length > 0 ? "updated" : "inserted";

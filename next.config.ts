@@ -2,11 +2,16 @@ import type { NextConfig } from "next";
 
 const lowMemDeploy = process.env.SKIP_TYPECHECK === "1";
 
+/** HTML、RSC 和不带扩展名的数据路由。nginx 看到 no-store 就不会再按一年冻住。 */
+const DOCUMENT_NO_STORE = "private, no-cache, no-store, max-age=0, must-revalidate";
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  // 只作用于带数字 revalidate 的 ISR 页（主播页、sitemap）。
-  // 静态页的 Cache-Control 仍是 s-maxage=31536000，没有 stale-while-revalidate。
-  // 3600 的 revalidate 配上 7200，得到 s-maxage=3600, stale-while-revalidate=3600。
+  // 带数字 revalidate 的页（主播页）若没有被下面的文档头拦住，
+  // 3600 配上 7200 会得到 s-maxage=3600, stale-while-revalidate=3600。
+  // 静态 HTML 默认是 s-maxage=31536000。宝塔 nginx 的 cache_one 会按这个存一年，
+  // 公网首页就会停在旧构建。文档响应在 headers() 里改成 no-store。
+  // /_next/static 和带扩展名的 public 文件不改，旧 HTML 仍能命中旧哈希。
   expireTime: 7200,
   // 只在发布脚本里生效。本机 yarn build 仍做类型检查、仍用默认并行。
   // 线上是 2 vCPU / 2 GiB。tsc 再加默认 4 个静态生成 worker 会把内存顶满，
@@ -94,6 +99,14 @@ const nextConfig: NextConfig = {
             ].join("; "),
           },
         ],
+      },
+      {
+        source: "/",
+        headers: [{ key: "Cache-Control", value: DOCUMENT_NO_STORE }],
+      },
+      {
+        source: "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
+        headers: [{ key: "Cache-Control", value: DOCUMENT_NO_STORE }],
       },
     ];
   },

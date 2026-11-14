@@ -33,7 +33,7 @@ export function findPublicNoteStill(
     const relative = path.relative(root, file);
     if (relative.startsWith("..") || path.isAbsolute(relative)) continue;
     if (!existsSync(file)) continue;
-    return `/wiki-covers/${slug}${ext}`;
+    return `/media/note-still/${slug}${ext}`;
   }
   return null;
 }

@@ -22,9 +22,16 @@ function statusFor(error: WikiStoreError): number {
 export async function POST(request: Request) {
   if (!isWikiAdminAuthorized(request)) return wikiUnauthorized();
 
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declared) && declared > 250_000) {
+    return wikiJson({ ok: false, message: "请求太大" }, 413);
+  }
+
   let payload: unknown;
   try {
-    payload = await request.json();
+    const text = await request.text();
+    if (text.length > 250_000) return wikiJson({ ok: false, message: "请求太大" }, 413);
+    payload = JSON.parse(text);
   } catch {
     return wikiJson({ ok: false, message: "请求体不是 JSON" }, 400);
   }

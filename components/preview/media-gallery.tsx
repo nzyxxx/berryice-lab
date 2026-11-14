@@ -16,7 +16,7 @@ export function MediaGallery({ notes }: { notes: readonly WikiNote[] }) {
 
   return (
     <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-5 pb-16 sm:px-6">
-      <div className="grid grid-cols-1 items-center gap-x-10 gap-y-4 pt-6 lg:grid-cols-12 lg:pt-10">
+      <div className="grid grid-cols-1 items-start gap-x-10 gap-y-6 pt-4 lg:grid-cols-12 lg:items-center lg:pt-10">
         <div className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
           <p className="text-[11px] tracking-[0.18em] text-lab-primary">{profileConfig.latinName}</p>
           <h1 className="mt-2 text-display-hero">{profileConfig.displayName}</h1>
@@ -27,7 +27,7 @@ export function MediaGallery({ notes }: { notes: readonly WikiNote[] }) {
           <Link
             href="/dafeiyu?character=xiaomei"
             aria-label="小莓的房间"
-            className="inline-block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+            className="mx-auto block w-full max-w-[20rem] rounded-md outline-none focus-visible:ring-2 focus-visible:ring-lab-primary lg:mx-0 lg:max-w-none"
           >
             <img
               src={PORTRAIT.src}
@@ -36,7 +36,7 @@ export function MediaGallery({ notes }: { notes: readonly WikiNote[] }) {
               height={PORTRAIT.height}
               decoding="async"
               fetchPriority="low"
-              className="h-44 w-auto object-contain sm:h-52 lg:h-auto lg:max-h-[62vh] lg:max-w-full"
+              className="h-auto w-full object-contain lg:max-h-[62vh] lg:w-auto"
             />
           </Link>
         </figure>

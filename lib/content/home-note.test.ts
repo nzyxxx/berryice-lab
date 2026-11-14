@@ -25,4 +25,6 @@ test("the homepage does not explain the build to visitors", () => {
   assert.match(source, /idle-candd-24-still\.webp/);
   assert.match(source, /\/dafeiyu\?character=xiaomei/);
   assert.doesNotMatch(source, /idle-candd-24\.webp/);
+  assert.match(source, /h-auto w-full object-contain/);
+  assert.doesNotMatch(source, /h-44|object-fill|scale-y-/);
 });

@@ -27,7 +27,7 @@ test("public stills only resolve inside wiki-covers for a safe slug", () => {
   mkdirSync(dir);
   writeFileSync(path.join(dir, "note-a.webp"), "still");
 
-  assert.equal(findPublicNoteStill("note-a", root), "/wiki-covers/note-a.webp");
+  assert.equal(findPublicNoteStill("note-a", root), "/media/note-still/note-a.webp");
   assert.equal(findPublicNoteStill("missing", root), null);
   assert.equal(findPublicNoteStill("../note-a", root), null);
   assert.equal(findPublicNoteStill("note-a/../../etc/passwd", root), null);

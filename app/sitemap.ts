@@ -71,10 +71,12 @@ async function streamerEntries(siteUrl: string): Promise<MetadataRoute.Sitemap> 
     });
   } catch (error) {
     unstable_rethrow(error);
-    console.warn(
-      "sitemap: 主播页未写入:",
-      error instanceof Error ? error.message : error
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    if (!process.env.DATABASE_URL && message.includes("DATABASE_URL")) {
+      console.warn("sitemap: 未配置 DATABASE_URL，主播页不写入。生产已配置仍失败时查数据库，不是这批静态页。");
+      return [];
+    }
+    console.warn("sitemap: 主播页未写入:", message);
     throw error;
   }
 }
