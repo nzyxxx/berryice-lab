@@ -23,6 +23,8 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
+  // 线上笔记在请求时从 WIKI_CONTENT_DIR 或 content/wiki 现读，多数不在 git 里。
+  // connection() 让构建停在请求阶段，不会把构建当时的目录烤进静态页。
   await connection();
   const updates = assembleHomeFeed({
     notes: await listWikiNotes(),

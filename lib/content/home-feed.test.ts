@@ -1,15 +1,18 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { listWikiNotes } from "./wiki-store.ts";
+import { listWikiNotes, wikiContentDir } from "./wiki-store.ts";
 import { parseWikiMarkdown } from "./wiki-parse.ts";
 import type { WikiNote } from "./wiki-store.ts";
 import type { Article } from "./writing.ts";
 import { PUBLIC_GAMES } from "../games/catalog.ts";
 import {
   assembleHomeFeed,
+  homeFeedDateLabel,
   homeFeedEmptyCopy,
   homeFeedTime,
   selectHomeUpdates,
@@ -176,6 +179,128 @@ test("仓库里的公开笔记按入库时间排，游戏草稿不会被当成�
   const packed = JSON.stringify(updates);
   assert.equal(packed.includes("wiki/inbox"), false);
   assert.equal(packed.includes("wiki/sources"), false);
+});
+
+function fixtureNote(title: string, options: { ingested?: string; updated?: string; status?: string; game?: string } = {}) {
+  const lines = [`# ${title}`, "", "- 作者: 测试夹具"];
+  if (options.game) {
+    lines.push(`- 游戏: ${options.game}`, "- 类别: 技巧", "- 版本: 测试");
+  }
+  if (options.ingested) lines.push(`- 入库: ${options.ingested} Asia/Shanghai（测试数据，不是生产笔记）`);
+  if (options.updated) lines.push(`- 更新: ${options.updated}`);
+  if (options.status) lines.push(`- 状态: ${options.status}`);
+  lines.push("", "## 这条讲什么", "", `${title}。这是测试夹具，不是生产内容。`, "");
+  return lines.join("\n");
+}
+
+test("24 条测试夹具从目录现读，最新一条进首页，写入后能看见", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "berry-home-feed-"));
+  const previousDir = process.env.WIKI_CONTENT_DIR;
+  try {
+    const files: { slug: string; body: string }[] = [];
+    for (let index = 1; index <= 18; index += 1) {
+      const day = String(index).padStart(2, "0");
+      files.push({
+        slug: `fixture-w${day}`,
+        body: fixtureNote(`测试数据 笔记${day}`, { ingested: `2026-10-${day} 09:${day}` }),
+      });
+    }
+    files.push(
+      {
+        slug: "fixture-latest",
+        body: fixtureNote("测试数据 最新一条", { ingested: "2026-11-16 18:40" }),
+      },
+      {
+        slug: "fixture-game-public",
+        body: fixtureNote("测试数据 游戏知识", {
+          game: "delta",
+          ingested: "2026-09-01 08:00",
+          updated: "2026-11-02 08:00",
+          status: "公开",
+        }),
+      },
+      {
+        slug: "fixture-undated",
+        body: fixtureNote("测试数据 没有时间"),
+      },
+      {
+        slug: "fixture-bad-time",
+        body: fixtureNote("测试数据 时间无法解析", { ingested: "不是日期" }),
+      },
+      {
+        slug: "fixture-draft",
+        body: fixtureNote("测试数据 草稿笔记", { ingested: "2026-12-31 23:59", status: "草稿" }),
+      },
+      {
+        slug: "fixture-game-draft",
+        body: fixtureNote("测试数据 草稿攻略", {
+          game: "delta",
+          ingested: "2026-12-31 23:58",
+          status: "草稿",
+        }),
+      }
+    );
+    assert.equal(files.length, 24);
+    for (const file of files) {
+      await writeFile(path.join(directory, `${file.slug}.md`), file.body, "utf8");
+    }
+    // 入库最早的那篇最后写。若误用文件修改时间，它会排到最前。
+    await writeFile(path.join(directory, "fixture-w01.md"), files[0].body, "utf8");
+
+    const first = assembleHomeFeed({
+      notes: await listWikiNotes(directory),
+      games: PUBLIC_GAMES,
+      articles: [],
+    });
+    assert.equal(first[0]?.id, "wiki:fixture-latest");
+    assert.equal(first[0]?.title, "测试数据 最新一条");
+    assert.equal(first[0]?.at, "2026-11-16 18:40");
+    assert.equal(first[1]?.id, "game:fixture-game-public");
+    assert.equal(first[1]?.at, "2026-11-02 08:00");
+    assert.equal(first.some((item) => item.id === "wiki:fixture-game-public"), false);
+    assert.equal(first.some((item) => item.title.includes("草稿")), false);
+    const undated = first.filter((item) => item.at === null);
+    assert.deepEqual(
+      undated.map((item) => item.id),
+      ["wiki:fixture-bad-time", "wiki:fixture-undated"]
+    );
+    assert.equal(homeFeedDateLabel(undated[0]?.at ?? null), "时间未记");
+    const visible = selectHomeUpdates(first, "all");
+    assert.equal(visible.items[0]?.id, "wiki:fixture-latest");
+    assert.equal(visible.items.length, 8);
+    assert.equal(visible.hidden, first.length - 8);
+    assert.equal(JSON.stringify(first).includes("不是生产"), false);
+
+    await writeFile(
+      path.join(directory, "fixture-runtime.md"),
+      fixtureNote("测试数据 运行时新写入", { ingested: "2026-11-16 19:10" }),
+      "utf8"
+    );
+    process.env.WIKI_CONTENT_DIR = directory;
+    assert.equal(wikiContentDir(), path.resolve(directory));
+    const second = assembleHomeFeed({
+      notes: await listWikiNotes(),
+      games: PUBLIC_GAMES,
+      articles: [],
+    });
+    assert.equal(second[0]?.id, "wiki:fixture-runtime");
+    assert.equal(second[0]?.title, "测试数据 运行时新写入");
+    assert.equal(selectHomeUpdates(second, "all").items[0]?.id, "wiki:fixture-runtime");
+  } finally {
+    if (previousDir === undefined) delete process.env.WIKI_CONTENT_DIR;
+    else process.env.WIKI_CONTENT_DIR = previousDir;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("首页在请求时读笔记目录，不把仓库里的两篇写死", () => {
+  const page = readFileSync(new URL("../../app/page.tsx", import.meta.url), "utf8");
+  const config = readFileSync(new URL("../../next.config.ts", import.meta.url), "utf8");
+  assert.match(page, /await connection\(\)/);
+  assert.match(page, /listWikiNotes\(\)/);
+  assert.doesNotMatch(page, /20261027-douyin|content\/wiki\/.+\.md/);
+  assert.match(config, /source: "\/"/);
+  assert.match(config, /private, no-cache, no-store, max-age=0, must-revalidate/);
 });
 
 test("首页不把枪、歌单或动画静帧当成动态", () => {
