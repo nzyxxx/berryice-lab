@@ -14,14 +14,16 @@ import { usePathname } from "next/navigation";
  * 点击起来发涩，雨也从零重来 —— 一场连续的天气被切成一段一段。
  *
  * 夜雨挂在首页和 /dafeiyu，用的是同一个 RainField。
+ * 首页右侧要读字，雨的密度压低，不另加一层背景。
  * 闪电只留首页。其余页面不挂这层，底边的雨溅也不会跟过去。
  */
 export function SiteAtmosphere() {
-  const { rain, lightning } = atmosphereForPath(usePathname());
+  const pathname = usePathname();
+  const { rain, lightning } = atmosphereForPath(pathname);
 
   return (
     <>
-      {rain ? <RainField /> : null}
+      {rain ? <RainField density={pathname === "/" ? "low" : "normal"} /> : null}
       {lightning ? <LightningFlash /> : null}
       <ScrollAffordances />
     </>

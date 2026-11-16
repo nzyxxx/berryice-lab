@@ -80,6 +80,12 @@ function webpTimeline(file: URL) {
       width = bytes.readUIntLE(start + 4, 3) + 1;
       height = bytes.readUIntLE(start + 7, 3) + 1;
     }
+    // 修过边缘的静帧是无损 VP8L，没有 VP8X。动画成片仍走上面的 VP8X。
+    if (tag === "VP8L" && size >= 5 && bytes[start] === 0x2f && width === 0) {
+      const bits = bytes.readUInt32LE(start + 1);
+      width = (bits & 0x3fff) + 1;
+      height = ((bits >> 14) & 0x3fff) + 1;
+    }
     if (tag === "ANMF" && size >= 16) durations.push(bytes.readUIntLE(start + 12, 3));
     offset += 8 + size + (size & 1);
   }
@@ -151,6 +157,7 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   );
   const names = readdirSync(new URL("public/characters/xiaomei", root)).sort();
   assert.deepEqual(names, [
+    "idle-candd-24-still-clear.webp",
     "idle-candd-24-still.webp",
     "idle-candd-24.webp",
     "manifest.json",
@@ -175,7 +182,12 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   const still = webpTimeline(new URL("public/characters/xiaomei/idle-candd-24-still.webp", root));
   assert.deepEqual([still.width, still.height], [640, 853]);
   assert.equal(still.frames, 0);
+  assert.equal(still.sha256, "8689a62863b8dd1e8c4c4c09bb224526ab6a9d629fd19d4478757ffc3fcebc3c");
   assert.equal(still.sha256 === rejectedWalk, false);
+  const cleared = webpTimeline(new URL("public/characters/xiaomei/idle-candd-24-still-clear.webp", root));
+  assert.deepEqual([cleared.width, cleared.height], [640, 853]);
+  assert.equal(cleared.frames, 0);
+  assert.notEqual(cleared.sha256, still.sha256);
   const figure = slot.placeholderFigureSvg();
   assert.match(figure, /小莓占位/);
   assert.match(figure, /占位/);
