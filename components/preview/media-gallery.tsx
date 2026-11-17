@@ -5,8 +5,9 @@ import { profileConfig } from "@/lib/site-config";
 import Link from "next/link";
 
 // 1246×1661 按 640×853 静帧的身体占比补了透明边，人物像素没有缩放。
+// 带扩展名的静态图不走首页的 no-store，所以换新文件名，不覆盖已缓存的 hi。
 const PORTRAIT = {
-  src: "/characters/xiaomei/idle-candd-24-still-hi.webp",
+  src: "/characters/xiaomei/idle-candd-24-still-hi2.webp",
   width: 1246,
   height: 1661,
 } as const;
