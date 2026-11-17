@@ -91,8 +91,8 @@ export function HomeFeed({ updates }: { updates: readonly HomeUpdate[] }) {
 
       {lead ? (
         <div className="mt-4 w-full min-w-0 max-w-xl">
-          <h3 className="m-0 w-full min-w-0 font-medium tracking-tight">
-            <FeedLine item={lead} titleClass="text-[15px] sm:text-xl" />
+          <h3 className="m-0 w-full min-w-0">
+            <FeedLine item={lead} titleClass="text-[15px] font-medium tracking-tight sm:text-xl" />
           </h3>
           {lead.summary ? (
             <p className="mt-2 text-[15px] leading-relaxed text-lab-ink-muted">{lead.summary}</p>
