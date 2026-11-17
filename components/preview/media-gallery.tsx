@@ -5,7 +5,7 @@ import { profileConfig } from "@/lib/site-config";
 import Link from "next/link";
 
 const PORTRAIT = {
-  src: "/characters/xiaomei/idle-candd-24-still-clear.webp",
+  src: "/characters/xiaomei/idle-candd-24-still-matte.webp",
   width: 640,
   height: 853,
 } as const;
@@ -13,7 +13,7 @@ const PORTRAIT = {
 /** 首页：小莓全身静帧和人名是一幅构图，最新动态靠在旁边。 */
 export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
   return (
-    <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-5 pb-16 sm:px-6">
+    <main id="main" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-5 pb-8 sm:px-6">
       <div className="grid grid-cols-1 items-start gap-x-10 gap-y-6 pt-4 lg:grid-cols-12 lg:pt-10">
         <div className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
           <p className="text-[11px] tracking-[0.18em] text-lab-primary">{profileConfig.latinName}</p>

@@ -158,6 +158,7 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   const names = readdirSync(new URL("public/characters/xiaomei", root)).sort();
   assert.deepEqual(names, [
     "idle-candd-24-still-clear.webp",
+    "idle-candd-24-still-matte.webp",
     "idle-candd-24-still.webp",
     "idle-candd-24.webp",
     "manifest.json",
@@ -187,7 +188,12 @@ test("小莓清单是她自己的成片，空包规则还在，占位图不是�
   const cleared = webpTimeline(new URL("public/characters/xiaomei/idle-candd-24-still-clear.webp", root));
   assert.deepEqual([cleared.width, cleared.height], [640, 853]);
   assert.equal(cleared.frames, 0);
+  assert.equal(cleared.sha256, "9e8604e1858798e7f22e1268beb4fa3db674fccd8263a2ad36d1979ba9b974ed");
   assert.notEqual(cleared.sha256, still.sha256);
+  const matte = webpTimeline(new URL("public/characters/xiaomei/idle-candd-24-still-matte.webp", root));
+  assert.deepEqual([matte.width, matte.height], [640, 853]);
+  assert.equal(matte.frames, 0);
+  assert.notEqual(matte.sha256, cleared.sha256);
   const figure = slot.placeholderFigureSvg();
   assert.match(figure, /小莓占位/);
   assert.match(figure, /占位/);

@@ -13,13 +13,44 @@ import {
 import Link from "next/link";
 import { useState, type KeyboardEvent } from "react";
 
+/**
+ * 每一行共用这一套列。桌面三列，手机上日期和来源占第一行，标题独占下一行。
+ * 短标题若整组居中，长标题顶满，日期起点就对不齐。
+ */
+const lineGrid =
+  "grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 sm:grid-cols-[minmax(4.5rem,6.5rem)_minmax(2.75rem,4.5rem)_minmax(0,1fr)]";
+
 function FeedTime({ at }: { at: string | null }) {
   const label = homeFeedDateLabel(at);
   if (!at) return <span>{label}</span>;
   return (
-    <time dateTime={at} className="font-mono tabular-nums">
+    <time dateTime={at} className="tabular-nums">
       {label}
     </time>
+  );
+}
+
+function FeedLine({ item, titleClass }: { item: HomeUpdate; titleClass: string }) {
+  return (
+    <Link
+      href={item.href}
+      title={item.title}
+      data-feed-line=""
+      className={`${lineGrid} min-h-11 rounded-md py-1 outline-none hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-primary`}
+    >
+      <span data-feed-date="" className="font-mono text-xs text-lab-ink-subtle sm:col-start-1">
+        <FeedTime at={item.at} />
+      </span>
+      <span data-feed-source="" className="text-xs text-lab-ink-subtle sm:col-start-2">
+        {item.sourceLabel}
+      </span>
+      <span
+        data-feed-title=""
+        className={`col-span-2 block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-lab-ink sm:col-span-1 sm:col-start-3 ${titleClass}`}
+      >
+        {item.title}
+      </span>
+    </Link>
   );
 }
 
@@ -37,7 +68,7 @@ export function HomeFeed({ updates }: { updates: readonly HomeUpdate[] }) {
   }
 
   return (
-    <section aria-labelledby="home-feed" className="lg:col-span-7 lg:col-start-6" onKeyDown={onKeyDown}>
+    <section aria-labelledby="home-feed" className="min-w-0 lg:col-span-7 lg:col-start-6" onKeyDown={onKeyDown}>
       <h2 id="home-feed" className="text-[11px] tracking-[0.18em] text-lab-primary">
         最新动态
       </h2>
@@ -59,45 +90,26 @@ export function HomeFeed({ updates }: { updates: readonly HomeUpdate[] }) {
       </div>
 
       {lead ? (
-        <article className="mt-4 max-w-xl">
-          <p className="flex flex-wrap items-baseline gap-x-3 text-xs text-lab-ink-subtle">
-            <FeedTime at={lead.at} />
-            <span>{lead.sourceLabel}</span>
-          </p>
-          <h3 className="mt-2 text-xl font-medium leading-snug tracking-tight text-lab-ink">
-            <Link
-              href={lead.href}
-              className="inline-flex min-h-11 items-center rounded-md outline-none hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-primary"
-            >
-              {lead.title}
-            </Link>
+        <div className="mt-4 w-full min-w-0 max-w-xl">
+          <h3 className="m-0 w-full min-w-0 font-medium tracking-tight">
+            <FeedLine item={lead} titleClass="text-[15px] sm:text-xl" />
           </h3>
           {lead.summary ? (
-            <p className="mt-3 text-[15px] leading-relaxed text-lab-ink-muted">{lead.summary}</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-lab-ink-muted">{lead.summary}</p>
           ) : null}
-        </article>
+          {rest.length > 0 ? (
+            <ul className="mt-3 border-t border-lab-hairline">
+              {rest.map((item) => (
+                <li key={item.id} className="border-b border-lab-hairline">
+                  <FeedLine item={item} titleClass="text-[15px]" />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       ) : (
         <p className="mt-4 text-[15px] text-lab-ink-muted">{homeFeedEmptyCopy(filter)}</p>
       )}
-
-      {rest.length > 0 ? (
-        <ul className="mt-5 max-w-xl border-t border-lab-hairline">
-          {rest.map((item) => (
-            <li key={item.id} className="border-b border-lab-hairline">
-              <Link
-                href={item.href}
-                className="flex min-h-11 flex-col justify-center gap-0.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-lab-primary sm:flex-row sm:items-baseline sm:gap-3"
-              >
-                <span className="shrink-0 text-xs text-lab-ink-subtle sm:w-[6.5rem]">
-                  <FeedTime at={item.at} />
-                </span>
-                <span className="shrink-0 text-xs text-lab-ink-subtle sm:w-[4.5rem]">{item.sourceLabel}</span>
-                <span className="min-w-0 text-[15px] text-lab-ink hover:text-lab-primary">{item.title}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : null}
 
       {selected.hidden > 0 ? (
         moreHref ? (

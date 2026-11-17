@@ -22,7 +22,7 @@ test("the homepage does not explain the build to visitors", () => {
   const source = readFileSync(new URL("../../components/preview/media-gallery.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(source, /不是新画的封面|三套动画|原图还没|笔记 ·|还没有文章/);
   assert.match(source, /最新动态/);
-  assert.match(source, /idle-candd-24-still-clear\.webp/);
+  assert.match(source, /idle-candd-24-still-matte\.webp/);
   assert.match(source, /\/dafeiyu\?character=xiaomei/);
   assert.doesNotMatch(source, /awm\.webp/);
   assert.doesNotMatch(source, /idle-candd-24\.webp/);

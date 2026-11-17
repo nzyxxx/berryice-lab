@@ -14,7 +14,7 @@ const ICONS: Record<HomeChannelId, LucideIcon> = {
 /** 六个公开入口同一套尺寸和笔画。游戏用手柄，不用枪。 */
 export function HomeChannels() {
   return (
-    <nav aria-label="栏目" className="mt-16 border-t border-lab-hairline pt-8 md:mt-24">
+    <nav aria-label="栏目" className="mt-12 border-t border-lab-hairline pt-6 md:mt-16">
       <ul className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3 lg:grid-cols-6">
         {homeChannels.map((channel) => {
           const Icon = ICONS[channel.id];

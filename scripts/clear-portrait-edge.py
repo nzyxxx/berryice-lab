@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""把小莓静帧边缘上的黑底渗色换回邻近实色。
+"""把小莓静帧半透明边缘的底色换成旁边的实色。
 
-根因：半透明像素的 RGB 接近纯黑，旁边不透明像素才是银紫头发和衣服。
-这不是预乘可以反算回来的颜色，反预乘会把发丝算成随机色。
-只改这些被污染的半透明像素的 RGB，alpha 和所有不透明像素不动。
-画布仍是 640×853。不读、不写 idle / stretch / walk。
+根因：边缘半透明像素的 RGB 还留着黑底或白底，实心像素才是头发、发卡和衣服。
+反预乘算不回这些颜色。所有半透明像素的 RGB 都改成最近的不透明像素，alpha 不动。
+不透明的白领、高光和蓝莓白边不改。画布仍是 640×853。
+不读、不写 idle / stretch / walk。仓库里没有比这张更大的透明原图，不能补出新像素。
 
 依赖本机的 Pillow，不进线上构建。
 """
@@ -62,11 +62,7 @@ def clear_edge(source: Image.Image) -> Image.Image:
             color = nearest[y * width + x]
             if color is None:
                 continue
-            luminance = (red + green + blue) / 3
-            solid = (color[0] + color[1] + color[2]) / 3
-            neutral = abs(red - green) < 18 and abs(green - blue) < 18
-            if luminance + 25 < solid or (neutral and luminance + 8 < solid):
-                target[x, y] = (color[0], color[1], color[2], alpha)
+            target[x, y] = (color[0], color[1], color[2], alpha)
     return out
 
 
@@ -74,7 +70,7 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     source = Path(sys.argv[1]) if len(sys.argv) > 1 else root / "public/characters/xiaomei/idle-candd-24-still.webp"
     destination = (
-        Path(sys.argv[2]) if len(sys.argv) > 2 else root / "public/characters/xiaomei/idle-candd-24-still-clear.webp"
+        Path(sys.argv[2]) if len(sys.argv) > 2 else root / "public/characters/xiaomei/idle-candd-24-still-matte.webp"
     )
     original = Image.open(source)
     if original.size != (640, 853):

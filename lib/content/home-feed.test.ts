@@ -310,7 +310,16 @@ test("首页不把枪、歌单或动画静帧当成动态", () => {
   const channelView = readFileSync(new URL("../../components/preview/home-channels.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(feed, /playlist|localStorage|mtime|git /);
   assert.match(gallery, /最新动态/);
-  assert.match(gallery, /idle-candd-24-still-clear\.webp/);
+  assert.match(gallery, /idle-candd-24-still-matte\.webp/);
+  const feedView = readFileSync(new URL("../../components/preview/home-feed.tsx", import.meta.url), "utf8");
+  const footer = readFileSync(new URL("../../components/lab/site-footer.tsx", import.meta.url), "utf8");
+  assert.match(feedView, /minmax\(0,1fr\)/);
+  assert.match(feedView, /whitespace-nowrap/);
+  assert.match(feedView, /text-ellipsis/);
+  assert.doesNotMatch(feedView, /justify-center/);
+  assert.doesNotMatch(footer, /moduleLinks|ghs\.png/);
+  assert.match(footer, /icpNumber/);
+  assert.match(footer, /policeNumber/);
   assert.doesNotMatch(gallery, /awm\.webp|idle-candd-24\.webp/);
   assert.match(channelView, /Gamepad2/);
   assert.match(channelData, /href: "\/games"/);
