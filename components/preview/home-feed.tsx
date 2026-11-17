@@ -60,10 +60,9 @@ export function HomeFeed({ updates }: { updates: readonly HomeUpdate[] }) {
 
       {lead ? (
         <article className="mt-4 max-w-xl">
-          <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-lab-ink-subtle">
-            <span>{lead.sourceLabel}</span>
-            <span aria-hidden>·</span>
+          <p className="flex flex-wrap items-baseline gap-x-3 text-xs text-lab-ink-subtle">
             <FeedTime at={lead.at} />
+            <span>{lead.sourceLabel}</span>
           </p>
           <h3 className="mt-2 text-xl font-medium leading-snug tracking-tight text-lab-ink">
             <Link
@@ -89,10 +88,10 @@ export function HomeFeed({ updates }: { updates: readonly HomeUpdate[] }) {
                 href={item.href}
                 className="flex min-h-11 flex-col justify-center gap-0.5 py-2 outline-none focus-visible:ring-2 focus-visible:ring-lab-primary sm:flex-row sm:items-baseline sm:gap-3"
               >
-                <span className="shrink-0 text-xs text-lab-ink-subtle sm:w-28">
+                <span className="shrink-0 text-xs text-lab-ink-subtle sm:w-[6.5rem]">
                   <FeedTime at={item.at} />
                 </span>
-                <span className="shrink-0 text-xs text-lab-ink-subtle sm:w-16">{item.sourceLabel}</span>
+                <span className="shrink-0 text-xs text-lab-ink-subtle sm:w-[4.5rem]">{item.sourceLabel}</span>
                 <span className="min-w-0 text-[15px] text-lab-ink hover:text-lab-primary">{item.title}</span>
               </Link>
             </li>

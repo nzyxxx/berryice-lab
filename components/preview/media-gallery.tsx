@@ -14,7 +14,7 @@ const PORTRAIT = {
 export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
   return (
     <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-5 pb-16 sm:px-6">
-      <div className="grid grid-cols-1 items-start gap-x-10 gap-y-6 pt-4 lg:grid-cols-12 lg:items-center lg:pt-10">
+      <div className="grid grid-cols-1 items-start gap-x-10 gap-y-6 pt-4 lg:grid-cols-12 lg:pt-10">
         <div className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
           <p className="text-[11px] tracking-[0.18em] text-lab-primary">{profileConfig.latinName}</p>
           <h1 className="mt-2 text-display-hero">{profileConfig.displayName}</h1>
