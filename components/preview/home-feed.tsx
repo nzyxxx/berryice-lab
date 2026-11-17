@@ -15,10 +15,10 @@ import { useState, type KeyboardEvent } from "react";
 
 /**
  * 每一行共用这一套列。桌面三列，手机上日期和来源占第一行，标题独占下一行。
- * 短标题若整组居中，长标题顶满，日期起点就对不齐。
+ * 日期列有固定最小宽度。短的「时间未记」不会把来源起点往左拉。
  */
 const lineGrid =
-  "grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 sm:grid-cols-[minmax(4.5rem,6.5rem)_minmax(2.75rem,4.5rem)_minmax(0,1fr)]";
+  "grid w-full min-w-0 grid-cols-[minmax(4.5rem,6.5rem)_minmax(0,1fr)] items-center gap-x-3 sm:grid-cols-[minmax(4.5rem,6.5rem)_minmax(2.75rem,4.5rem)_minmax(0,1fr)]";
 
 function FeedTime({ at }: { at: string | null }) {
   const label = homeFeedDateLabel(at);

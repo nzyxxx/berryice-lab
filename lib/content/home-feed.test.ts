@@ -18,6 +18,7 @@ import {
   selectHomeUpdates,
   type HomeUpdate,
 } from "./home-feed.ts";
+import { assessFeedRows, TEXT_ZOOM_NOTE, type FeedRowBox } from "./feed-geometry.ts";
 
 const games = [
   { id: "delta", title: "三角洲行动" },
@@ -310,7 +311,7 @@ test("首页不把枪、歌单或动画静帧当成动态", () => {
   const channelView = readFileSync(new URL("../../components/preview/home-channels.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(feed, /playlist|localStorage|mtime|git /);
   assert.match(gallery, /最新动态/);
-  assert.match(gallery, /idle-candd-24-still-matte\.webp/);
+  assert.match(gallery, /idle-candd-24-still-hi\.webp/);
   const feedView = readFileSync(new URL("../../components/preview/home-feed.tsx", import.meta.url), "utf8");
   const footer = readFileSync(new URL("../../components/lab/site-footer.tsx", import.meta.url), "utf8");
   assert.match(feedView, /minmax\(0,1fr\)/);
@@ -327,4 +328,43 @@ test("首页不把枪、歌单或动画静帧当成动态", () => {
   for (const href of ["/wiki", "/games", "/music", "/stickers", "/about", "/writing"]) {
     assert.match(channelData, new RegExp(href.replaceAll("/", "\\/")));
   }
+});
+
+function row(overrides: Partial<FeedRowBox> = {}): FeedRowBox {
+  return {
+    dateX: 12,
+    sourceX: 90,
+    titleX: 160,
+    dateWidth: 72,
+    clientWidth: 180,
+    scrollWidth: 180,
+    text: "测试数据 短",
+    titleAttr: "测试数据 短",
+    rowHeight: 44,
+    dateLabel: "2026-11-16",
+    ...overrides,
+  };
+}
+
+test("八行动态列对齐，长标题省略，时间未记不把日期列撑宽", () => {
+  assert.match(TEXT_ZOOM_NOTE, /deviceScaleFactor 2/);
+  assert.match(TEXT_ZOOM_NOTE, /180/);
+  const long = "测试数据 这是一条故意写长的标题";
+  const rows = [
+    row({ text: long, titleAttr: long, scrollWidth: 420, clientWidth: 180 }),
+    row({ text: "测试数据 短", titleAttr: "测试数据 短" }),
+    row({ dateLabel: "时间未记", dateWidth: 48, text: long, titleAttr: long, scrollWidth: 400 }),
+    row(),
+    row(),
+    row(),
+    row(),
+    row(),
+  ];
+  assert.deepEqual(assessFeedRows(rows), []);
+  const shifted = rows.map((item, index) => (index === 3 ? { ...item, dateX: item.dateX + 8 } : item));
+  assert.match(assessFeedRows(shifted).join(" "), /dateX/);
+  const widened = rows.map((item) =>
+    item.dateLabel === "时间未记" ? { ...item, dateWidth: 120 } : item,
+  );
+  assert.match(assessFeedRows(widened).join(" "), /时间未记/);
 });

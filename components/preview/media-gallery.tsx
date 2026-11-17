@@ -4,10 +4,11 @@ import type { HomeUpdate } from "@/lib/content/home-feed";
 import { profileConfig } from "@/lib/site-config";
 import Link from "next/link";
 
+// 1246×1661 按 640×853 静帧的身体占比补了透明边，人物像素没有缩放。
 const PORTRAIT = {
-  src: "/characters/xiaomei/idle-candd-24-still-matte.webp",
-  width: 640,
-  height: 853,
+  src: "/characters/xiaomei/idle-candd-24-still-hi.webp",
+  width: 1246,
+  height: 1661,
 } as const;
 
 /** 首页：小莓全身静帧和人名是一幅构图，最新动态靠在旁边。 */
