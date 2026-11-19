@@ -1,3 +1,4 @@
+import { localImageSize } from "@/lib/content/local-image-size";
 import {
   parseWikiBlocks,
   parseWikiInlines,
@@ -120,6 +121,30 @@ function WikiBlock({ block }: { block: BlockNode }) {
     );
   }
 
+  if (block.type === "figure") {
+    const size = localImageSize(block.src);
+    return (
+      <figure className="min-w-0 max-w-full">
+        <a
+          href={block.src}
+          className="block min-w-0 max-w-full outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+        >
+          {/* 单独成段的图按原比例缩放。点开就是这张站内原图。 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={block.src}
+            alt={block.alt}
+            width={size?.width}
+            height={size?.height}
+            loading="lazy"
+            decoding="async"
+            className="h-auto max-w-full"
+          />
+        </a>
+      </figure>
+    );
+  }
+
   if (block.type === "paragraph") {
     return (
       <p className="text-[15px] leading-7 text-lab-ink-muted">
@@ -142,7 +167,7 @@ function WikiBlock({ block }: { block: BlockNode }) {
 
   if (block.type === "quote") {
     return (
-      <blockquote className="border-l border-lab-hairline-strong pl-4 text-lab-ink-subtle">
+      <blockquote className="border-l border-lab-hairline-strong pl-4 text-[13px] leading-6 text-lab-ink-subtle [&_p]:text-[13px] [&_p]:leading-6 [&_p]:text-lab-ink-subtle">
         <div className="flex flex-col gap-3">
           {block.blocks.map((child, index) => (
             <WikiBlock key={index} block={child} />

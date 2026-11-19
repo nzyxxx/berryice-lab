@@ -1,7 +1,7 @@
 /**
  * 笔记正文用的一小块 Markdown。
  * 覆盖标题、段落、有序/无序列表（含缩进）、引用、代码、行内加粗/代码/链接、
- * 同站图片、表格，以及表格里单独的 <br>。不渲染其它原始 HTML。
+ * 同站图片、单独成段的整图、表格，以及表格里单独的 <br>。不渲染其它原始 HTML。
  */
 
 export type InlineNode =
@@ -27,6 +27,7 @@ export type BlockNode =
   | { type: "code"; text: string }
   | { type: "quote"; blocks: BlockNode[] }
   | { type: "hr" }
+  | { type: "figure"; alt: string; src: string }
   | { type: "table"; align: TableAlign[]; header: InlineNode[][]; rows: InlineNode[][][] };
 
 const SAFE_HREF = /^(https?:|mailto:|\/(?!\/))/i;
@@ -323,7 +324,13 @@ function parseLines(
       paragraph.push(nextTrimmed);
       index += 1;
     }
-    blocks.push({ type: "paragraph", children: parseWikiInlines(paragraph.join(" ")) });
+    const children = parseWikiInlines(paragraph.join(" "));
+    const only = children.length === 1 ? children[0] : null;
+    if (paragraph.length === 1 && only?.type === "image" && /^!\[[^\]]*\]\([^)]+\)$/.test(paragraph[0].trim())) {
+      blocks.push({ type: "figure", alt: only.alt, src: only.src });
+    } else {
+      blocks.push({ type: "paragraph", children });
+    }
   }
 
   return { blocks, index };
