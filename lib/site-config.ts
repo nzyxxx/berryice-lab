@@ -39,17 +39,10 @@ export const profileConfig = {
 export type ModuleId = "delta" | "writing" | "wiki" | "music" | "about" | "games";
 
 /**
- * 全站索引的顺序：知识库、游戏、三角洲、歌单、关于、写作。
- * 顶栏只用 `headerNav`：游戏是一级，三角洲留在 `/delta-gun`，从游戏页进去。
- * 写作没有公开文章，顶栏不占位，页脚仍链到 `/writing`。
- *
- * 首页不是这四块门户瓦片。雨夜首页的栏目在 `lib/content/home-modules.ts`。
- * 写作是自己的长文和随记。知识库是 Bear 收录的笔记，走 `/wiki`，
- * 有单独的收录和删除，不塞进写作。
- *
- * 更早是五个平级模块（三角洲 / 音乐 / 文章 / 笔记 / 联系）。
- * 文章和笔记合成「写作」；音乐和联系降进 /about。
- * 三角洲留在导航里，是专栏，不是封面。
+ * 访客看见的顺序只有一份：知识库、游戏、歌单、表情、写作、关于。
+ * 顶栏、手机菜单、首页六栏都读 `siteIndex`。
+ * 三角洲不跟这六项并列，留在 `/delta-gun`，从游戏页进去。
+ * `moduleLinks` 仍是旧的六项索引（含三角洲、不含表情），给还在用它的瓦片。
  */
 export const moduleLinks: {
   id: ModuleId;
@@ -105,8 +98,47 @@ export const moduleLinks: {
   },
 ];
 
-/** 顶栏和手机菜单。三角洲和写作不跟这些并列。 */
-export const headerNav = moduleLinks.filter((item) => item.id !== "delta" && item.id !== "writing");
+/** 顶栏、手机菜单、首页栏目共用这一份。三角洲不在里面。 */
+export const siteIndex = [
+  {
+    id: "wiki",
+    href: "/wiki",
+    title: "知识库",
+    description: "收录进来的笔记。",
+  },
+  {
+    id: "games",
+    href: "/games",
+    title: "游戏",
+    description: "攻略和技巧，按游戏分开。",
+  },
+  {
+    id: "music",
+    href: "/music",
+    title: "歌单",
+    description: "记在这台浏览器里。",
+  },
+  {
+    id: "stickers",
+    href: "/stickers",
+    title: "表情",
+    description: "方形表情，对外只看橱窗。",
+  },
+  {
+    id: "writing",
+    href: "/writing",
+    title: "写作",
+    description: "长文和随记。",
+  },
+  {
+    id: "about",
+    href: "/about",
+    title: "关于",
+    description: "现在在做什么。",
+  },
+] as const;
+
+export const headerNav = siteIndex;
 
 /** 当前页。人在三角洲工具里时，顶栏的「游戏」仍是当前项。 */
 export function navIsCurrent(href: string, pathname: string): boolean {

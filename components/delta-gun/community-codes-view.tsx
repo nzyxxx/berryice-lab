@@ -341,6 +341,17 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
         <Panel className="py-16 text-center">
           <p className="text-lg font-medium text-lab-ink">暂无匹配方案</p>
           <p className="mt-2 text-sm text-lab-ink-subtle">调整筛选条件。社区枪码由服务端定时同步。</p>
+          <button
+            type="button"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full px-4 text-sm text-lab-ink outline-none hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-primary"
+            onClick={() => {
+              setSearchQuery("");
+              setActiveCategory("all");
+              setWeaponFilter("all");
+            }}
+          >
+            清除条件
+          </button>
         </Panel>
       ) : ring ? (
         <CodeRing items={filteredCodes.slice(0, 12)} onCopy={(code) => void copyCode(code)} />

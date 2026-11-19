@@ -533,6 +533,37 @@
   }
 }
 
+/* 栏目卡片不依赖 Tailwind 的 hover 媒体查询，键盘和触控按下也能看到同一套变化。 */
+a.channel-card:hover .channel-title,
+a.channel-card:focus-visible .channel-title,
+a.channel-card:active .channel-title,
+a.channel-card:hover .channel-icon,
+a.channel-card:focus-visible .channel-icon,
+a.channel-card:active .channel-icon {
+  color: var(--lab-primary);
+}
+a.channel-card:hover .channel-desc,
+a.channel-card:focus-visible .channel-desc,
+a.channel-card:active .channel-desc {
+  color: var(--lab-ink);
+}
+a.channel-card:hover .channel-line,
+a.channel-card:focus-visible .channel-line,
+a.channel-card:active .channel-line {
+  transform: scaleX(1);
+}
+a.channel-card:hover .channel-arrow,
+a.channel-card:focus-visible .channel-arrow {
+  transform: translateX(0.25rem);
+}
+a.channel-card:hover,
+a.channel-card:focus-visible {
+  transform: translateY(-0.25rem);
+}
+a.channel-card:active {
+  transform: translateY(0) scale(0.98);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

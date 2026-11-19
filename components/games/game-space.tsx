@@ -24,6 +24,16 @@ export function GameSearch({ gameId, query }: { gameId: string; query: GameQuery
           查找
         </button>
       </div>
+      {query.q || query.kind ? (
+        <p className="mt-3">
+          <Link
+            href={gameId === "unsorted" ? "/games/unsorted" : `/games/${gameId}`}
+            className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle outline-none hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary"
+          >
+            清除条件
+          </Link>
+        </p>
+      ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <KindLink gameId={gameId} query={query} kind="" label="全部" />
         {GAME_KINDS.map((kind) => (

@@ -1,3 +1,4 @@
+import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { PageContainer } from "@/components/lab/page-container";
 import { PageShell } from "@/components/lab/page-shell";
 import { PUBLIC_GAMES, UNSORTED_GAME_ID } from "@/lib/games/catalog";
@@ -50,8 +51,36 @@ export default async function GamesPage() {
                   </Link>
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-lab-ink-subtle">{game.blurb}</p>
+                {game.tools.length > 0 ? (
+                  <div className={glassSurfaceClass("mt-4 rounded-2xl p-4")}>
+                    <p className="text-[11px] tracking-[0.18em] text-lab-primary">工具</p>
+                    <Link
+                      href="/delta-gun/community"
+                      className="mt-2 inline-flex min-h-11 items-center text-[15px] font-medium tracking-tight text-lab-ink outline-none transition-colors hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-primary"
+                    >
+                      社区改枪码
+                    </Link>
+                    <p className="text-xs leading-relaxed text-lab-ink-subtle">
+                      筛选、搜索和复制都在原来的改枪页。
+                    </p>
+                    <ul className="mt-2 flex flex-wrap gap-x-4">
+                      {game.tools
+                        .filter((tool) => tool.href !== "/delta-gun/community")
+                        .map((tool) => (
+                          <li key={tool.href}>
+                            <Link
+                              href={tool.href}
+                              className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle outline-none hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary"
+                            >
+                              {tool.label}
+                            </Link>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <p className="mt-3 text-sm text-lab-ink-muted">
-                  {page.total === 0 ? "还没有攻略。" : `${page.total} 条。`}
+                  {page.total === 0 ? "公开攻略还没有条目。" : `公开攻略 ${page.total} 条。`}
                 </p>
               </li>
             );
