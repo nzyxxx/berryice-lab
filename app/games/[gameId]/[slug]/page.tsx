@@ -45,7 +45,7 @@ export default async function GameEntryPage({ params }: PageProps) {
 
   return (
       <PageShell backHref={backHref} backLabel={game ? `回到${game.title}` : "回到待整理"}>
-      <PageContainer className="max-w-[40rem]">
+      <PageContainer className="min-w-0 max-w-[40rem]">
         <p className="text-[11px] tracking-[0.18em] text-lab-primary">
           {gameKindLabel(entry.kind)} · 版本 {entry.season || "未知"}
         </p>

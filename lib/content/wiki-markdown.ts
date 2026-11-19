@@ -1,12 +1,14 @@
 /**
  * 笔记正文用的一小块 Markdown。
- * 只覆盖知识库实际会出现的结构：标题、段落、有序/无序列表（含缩进）、
- * 引用、代码、行内加粗/代码/链接。不渲染原始 HTML。
+ * 覆盖标题、段落、有序/无序列表（含缩进）、引用、代码、行内加粗/代码/链接、
+ * 同站图片、表格，以及表格里单独的 <br>。不渲染其它原始 HTML。
  */
 
 export type InlineNode =
   | { type: "text"; text: string }
   | { type: "code"; text: string }
+  | { type: "break" }
+  | { type: "image"; alt: string; src: string }
   | { type: "strong"; children: InlineNode[] }
   | { type: "em"; children: InlineNode[] }
   | { type: "link"; href: string; children: InlineNode[] };
@@ -16,19 +18,33 @@ export type ListItem = {
   blocks: BlockNode[];
 };
 
+export type TableAlign = "left" | "center" | "right";
+
 export type BlockNode =
   | { type: "heading"; level: 2 | 3 | 4 | 5 | 6; children: InlineNode[] }
   | { type: "paragraph"; children: InlineNode[] }
   | { type: "list"; ordered: boolean; items: ListItem[] }
   | { type: "code"; text: string }
   | { type: "quote"; blocks: BlockNode[] }
-  | { type: "hr" };
+  | { type: "hr" }
+  | { type: "table"; align: TableAlign[]; header: InlineNode[][]; rows: InlineNode[][][] };
 
 const SAFE_HREF = /^(https?:|mailto:|\/(?!\/))/i;
 
 export function safeWikiHref(href: string): string | null {
   const trimmed = href.trim();
   if (!SAFE_HREF.test(trimmed)) return null;
+  return trimmed;
+}
+
+/** 正文图片只收站内路径。中文文件名可以，远程地址、协议和上级目录不行。 */
+export function safeWikiImageSrc(src: string): string | null {
+  const trimmed = src.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return null;
+  if (trimmed.includes("..") || /[\\?#\s:]/.test(trimmed)) return null;
+  if (!/\.(?:webp|png|gif|jpe?g)$/i.test(trimmed)) return null;
+  const parts = trimmed.slice(1).split("/");
+  if (parts.some((part) => part === "" || part === "." || part === "..")) return null;
   return trimmed;
 }
 
@@ -71,6 +87,30 @@ export function parseWikiInlines(input: string): InlineNode[] {
         nodes.push({ type: "em", children: parseWikiInlines(input.slice(index + 1, end)) });
         index = end + 1;
         continue;
+      }
+    }
+
+    const lineBreak = input.slice(index).match(/^<br\s*\/?>/i);
+    if (lineBreak) {
+      flush();
+      nodes.push({ type: "break" });
+      index += lineBreak[0].length;
+      continue;
+    }
+
+    if (input.startsWith("![", index)) {
+      const altEnd = input.indexOf("]", index + 2);
+      if (altEnd !== -1 && input[altEnd + 1] === "(") {
+        const srcEnd = input.indexOf(")", altEnd + 2);
+        if (srcEnd !== -1) {
+          const alt = input.slice(index + 2, altEnd);
+          const src = safeWikiImageSrc(input.slice(altEnd + 2, srcEnd));
+          flush();
+          if (src) nodes.push({ type: "image", alt, src });
+          else nodes.push({ type: "text", text: alt });
+          index = srcEnd + 1;
+          continue;
+        }
       }
     }
 
@@ -119,8 +159,45 @@ function isBlockStart(trimmed: string): boolean {
     /^#{1,6}\s+/.test(trimmed) ||
     /^(-|\d+\.)\s+/.test(trimmed) ||
     trimmed.startsWith(">") ||
-    /^(-{3,}|\*{3,})$/.test(trimmed.trim())
+    /^(-{3,}|\*{3,})$/.test(trimmed.trim()) ||
+    trimmed.startsWith("|")
   );
+}
+
+function splitTableRow(line: string): string[] | null {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|") || trimmed.length < 2) return null;
+  const body = trimmed.slice(1, -1);
+  const cells: string[] = [];
+  let current = "";
+  for (let index = 0; index < body.length; index += 1) {
+    if (body[index] === "\\" && body[index + 1] === "|") {
+      current += "|";
+      index += 1;
+      continue;
+    }
+    if (body[index] === "|") {
+      cells.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += body[index];
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
+function tableAlign(line: string): TableAlign[] | null {
+  const cells = splitTableRow(line);
+  if (!cells || cells.length === 0) return null;
+  const align: TableAlign[] = [];
+  for (const cell of cells) {
+    if (!/^:?-{3,}:?$/.test(cell)) return null;
+    if (cell.startsWith(":") && cell.endsWith(":")) align.push("center");
+    else if (cell.endsWith(":")) align.push("right");
+    else align.push("left");
+  }
+  return align;
 }
 
 function parseLines(
@@ -178,6 +255,27 @@ function parseLines(
         index += 1;
       }
       blocks.push({ type: "quote", blocks: parseLines(quoted, 0, quoted.length, 0).blocks });
+      continue;
+    }
+
+    const headerCells = indent === baseIndent ? splitTableRow(trimmed) : null;
+    const align = headerCells && index + 1 < end ? tableAlign(lines[index + 1].trim()) : null;
+    if (headerCells && align && headerCells.length === align.length) {
+      const width = headerCells.length;
+      const fit = (cells: string[]) =>
+        Array.from({ length: width }, (_, cell) => parseWikiInlines(cells[cell] ?? ""));
+      const rows: InlineNode[][][] = [];
+      index += 2;
+      while (index < end) {
+        const current = lines[index];
+        if (current.trim() === "") break;
+        if (indentOf(current) !== baseIndent) break;
+        const cells = splitTableRow(current.trim());
+        if (!cells) break;
+        rows.push(fit(cells));
+        index += 1;
+      }
+      blocks.push({ type: "table", align, header: fit(headerCells), rows });
       continue;
     }
 

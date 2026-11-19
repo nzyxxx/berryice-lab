@@ -10,6 +10,23 @@ import type { ReactNode } from "react";
 function WikiInlines({ nodes }: { nodes: InlineNode[] }) {
   return nodes.map((node, index) => {
     if (node.type === "text") return <span key={index}>{node.text}</span>;
+    if (node.type === "break") return <br key={index} />;
+    if (node.type === "image") {
+      return (
+        // 站内小图标。宽高写死，避免加载前后把表格撑跳。
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={index}
+          src={node.src}
+          alt={node.alt}
+          width={32}
+          height={32}
+          loading="lazy"
+          decoding="async"
+          className="mx-0.5 inline-block size-8 align-middle"
+        />
+      );
+    }
     if (node.type === "code") {
       return (
         <code
@@ -62,6 +79,43 @@ function WikiBlock({ block }: { block: BlockNode }) {
       >
         <WikiInlines nodes={block.children} />
       </Tag>
+    );
+  }
+
+  if (block.type === "table") {
+    return (
+      <div className="max-w-full overflow-x-auto">
+        <table className="w-max min-w-full border-collapse text-sm text-lab-ink">
+          <thead>
+            <tr>
+              {block.header.map((cell, index) => (
+                <th
+                  key={index}
+                  style={{ textAlign: block.align[index] ?? "left" }}
+                  className="border-b border-lab-hairline px-2 py-2 align-middle font-medium"
+                >
+                  <WikiInlines nodes={cell} />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {block.rows.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {row.map((cell, index) => (
+                  <td
+                    key={index}
+                    style={{ textAlign: block.align[index] ?? "left" }}
+                    className="border-b border-lab-hairline px-2 py-2 align-middle"
+                  >
+                    <WikiInlines nodes={cell} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   }
 
@@ -121,13 +175,30 @@ function WikiBlock({ block }: { block: BlockNode }) {
   );
 }
 
+function plainText(nodes: InlineNode[]): string {
+  return nodes
+    .map((node) => {
+      if (node.type === "text" || node.type === "code") return node.text;
+      if (node.type === "image") return node.alt;
+      if (node.type === "break") return "";
+      if ("children" in node) return plainText(node.children);
+      return "";
+    })
+    .join("");
+}
+
 export function WikiMarkdown({ source }: { source: string }) {
   const blocks = parseWikiBlocks(source);
   if (blocks.length === 0) return null;
+  const sourceFrom = blocks.findIndex(
+    (block) => block.type === "heading" && plainText(block.children).trim() === "来源"
+  );
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex min-w-0 max-w-full flex-col gap-5">
       {blocks.map((block, index) => (
-        <WikiBlock key={index} block={block} />
+        <div key={index} className={sourceFrom !== -1 && index >= sourceFrom ? "text-sm text-lab-ink-subtle" : undefined}>
+          <WikiBlock block={block} />
+        </div>
       ))}
     </div>
   );

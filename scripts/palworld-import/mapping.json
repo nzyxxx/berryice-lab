@@ -1,0 +1,960 @@
+{
+  "website_image_prefix": "/palworld/guides-20261119",
+  "images": [
+    {
+      "original_ref": "assets/items/原始的炉子__T_icon_buildObject_BlastFurnace.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/原始的炉子__T_icon_buildObject_BlastFurnace.webp",
+      "source_bytes": 20174,
+      "source_sha256": "15dbd4dfed3d5504d1f463b06d34126eddb69524c9cfcc12e07b6037baf94f1a",
+      "website_path": "/palworld/guides-20261119/原始的炉子__T_icon_buildObject_BlastFurnace.webp",
+      "pack_assets_path": "assets/items/原始的炉子__T_icon_buildObject_BlastFurnace.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/原始的炉子__T_icon_buildObject_BlastFurnace.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/家畜牧场__T_icon_buildObject_MonsterFarm.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/家畜牧场__T_icon_buildObject_MonsterFarm.webp",
+      "source_bytes": 18908,
+      "source_sha256": "84cd3f5e9977106fb1a394cc5487864745cd73097ea93747fa6ea0d054141b7c",
+      "website_path": "/palworld/guides-20261119/家畜牧场__T_icon_buildObject_MonsterFarm.webp",
+      "pack_assets_path": "assets/items/家畜牧场__T_icon_buildObject_MonsterFarm.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/家畜牧场__T_icon_buildObject_MonsterFarm.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/帕鲁浓缩机__T_icon_buildObject_CharacterRankUp.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/帕鲁浓缩机__T_icon_buildObject_CharacterRankUp.webp",
+      "source_bytes": 20548,
+      "source_sha256": "58af5a083dd57aa08c644c847ebb50ee63b48a9f177dd7f05285629412634ae8",
+      "website_path": "/palworld/guides-20261119/帕鲁浓缩机__T_icon_buildObject_CharacterRankUp.webp",
+      "pack_assets_path": "assets/items/帕鲁浓缩机__T_icon_buildObject_CharacterRankUp.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/帕鲁浓缩机__T_icon_buildObject_CharacterRankUp.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/应用牧场学Ⅰ__T_itemicon_Consume_PalWorkLvUp_12.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/应用牧场学Ⅰ__T_itemicon_Consume_PalWorkLvUp_12.webp",
+      "source_bytes": 8298,
+      "source_sha256": "0c2b9974145c3f318956fbe987cd7db4506121cba941f21eacdd78013125bf7c",
+      "website_path": "/palworld/guides-20261119/应用牧场学Ⅰ__T_itemicon_Consume_PalWorkLvUp_12.webp",
+      "pack_assets_path": "assets/items/应用牧场学Ⅰ__T_itemicon_Consume_PalWorkLvUp_12.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/应用牧场学Ⅰ__T_itemicon_Consume_PalWorkLvUp_12.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/温泉__T_icon_buildObject_Spa.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/温泉__T_icon_buildObject_Spa.webp",
+      "source_bytes": 18624,
+      "source_sha256": "e562e992882d19ab8970bb8e19418f609634d37cc5bccf613a21a8272c7dde77",
+      "website_path": "/palworld/guides-20261119/温泉__T_icon_buildObject_Spa.webp",
+      "pack_assets_path": "assets/items/温泉__T_icon_buildObject_Spa.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/温泉__T_icon_buildObject_Spa.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/火绒狐的背带__T_itemicon_Essential_SkillUnlock_Harness.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/火绒狐的背带__T_itemicon_Essential_SkillUnlock_Harness.webp",
+      "source_bytes": 18690,
+      "source_sha256": "8c438d465d32f437ec71df5e4002b1e77b692e10a801bf946bf28393c88f8a8f",
+      "website_path": "/palworld/guides-20261119/火绒狐的背带__T_itemicon_Essential_SkillUnlock_Harness.webp",
+      "pack_assets_path": "assets/items/火绒狐的背带__T_itemicon_Essential_SkillUnlock_Harness.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/火绒狐的背带__T_itemicon_Essential_SkillUnlock_Harness.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/特制蛋糕__T_itemicon_food_Cake05.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/特制蛋糕__T_itemicon_food_Cake05.webp",
+      "source_bytes": 14244,
+      "source_sha256": "cce8d3ad2e4332b2841b1fbbc9d10a2c434bcece1917554bde6ea0fc69ed471d",
+      "website_path": "/palworld/guides-20261119/特制蛋糕__T_itemicon_food_Cake05.webp",
+      "pack_assets_path": "assets/items/特制蛋糕__T_itemicon_food_Cake05.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/特制蛋糕__T_itemicon_food_Cake05.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/监控台__T_icon_buildObject_BaseCampWorkHard.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/监控台__T_icon_buildObject_BaseCampWorkHard.webp",
+      "source_bytes": 17526,
+      "source_sha256": "4dbb7267d6aab346991272d7bf6b1b0839622e7963cc64a1010ba979a160fa73",
+      "website_path": "/palworld/guides-20261119/监控台__T_icon_buildObject_BaseCampWorkHard.webp",
+      "pack_assets_path": "assets/items/监控台__T_icon_buildObject_BaseCampWorkHard.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/监控台__T_icon_buildObject_BaseCampWorkHard.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/空涡龙的导弹发射器__T_itemicon_Essential_SkillUnlock_MultiMissile.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/空涡龙的导弹发射器__T_itemicon_Essential_SkillUnlock_MultiMissile.webp",
+      "source_bytes": 17356,
+      "source_sha256": "e059106ec25b762a814acb3cf0a9bf24a43be1b4a325fc01480b352b722bd9b9",
+      "website_path": "/palworld/guides-20261119/空涡龙的导弹发射器__T_itemicon_Essential_SkillUnlock_MultiMissile.webp",
+      "pack_assets_path": "assets/items/空涡龙的导弹发射器__T_itemicon_Essential_SkillUnlock_MultiMissile.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/空涡龙的导弹发射器__T_itemicon_Essential_SkillUnlock_MultiMissile.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/篝火__T_icon_buildObject_CampFire.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/篝火__T_icon_buildObject_CampFire.webp",
+      "source_bytes": 18094,
+      "source_sha256": "bd28624b24ed46d3290ef65b090b74f2c2ad5b0894c1b461658a499d95b6a2a4",
+      "website_path": "/palworld/guides-20261119/篝火__T_icon_buildObject_CampFire.webp",
+      "pack_assets_path": "assets/items/篝火__T_icon_buildObject_CampFire.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/篝火__T_icon_buildObject_CampFire.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/蔬菜蛋糕__T_itemicon_food_Cake03.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/蔬菜蛋糕__T_itemicon_food_Cake03.webp",
+      "source_bytes": 9608,
+      "source_sha256": "534df1b45373e4c70a9b8723befc64271d22378f3fdf09a40205418453c29c23",
+      "website_path": "/palworld/guides-20261119/蔬菜蛋糕__T_itemicon_food_Cake03.webp",
+      "pack_assets_path": "assets/items/蔬菜蛋糕__T_itemicon_food_Cake03.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/蔬菜蛋糕__T_itemicon_food_Cake03.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/蘑菇蛋糕__T_itemicon_food_Cake02.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/蘑菇蛋糕__T_itemicon_food_Cake02.webp",
+      "source_bytes": 9632,
+      "source_sha256": "550be191cb28a95e74d0eddf60281d3f0c8fadc67e1788655e54097049b1051c",
+      "website_path": "/palworld/guides-20261119/蘑菇蛋糕__T_itemicon_food_Cake02.webp",
+      "pack_assets_path": "assets/items/蘑菇蛋糕__T_itemicon_food_Cake02.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/蘑菇蛋糕__T_itemicon_food_Cake02.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/诊疗所__T_icon_buildObject_Clinic.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/诊疗所__T_icon_buildObject_Clinic.webp",
+      "source_bytes": 6968,
+      "source_sha256": "eae6d7818746849b868ed07ecc95964cb412106129d536fcc23bb34112f7df77",
+      "website_path": "/palworld/guides-20261119/诊疗所__T_icon_buildObject_Clinic.webp",
+      "pack_assets_path": "assets/items/诊疗所__T_icon_buildObject_Clinic.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/诊疗所__T_icon_buildObject_Clinic.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/豪华蔬菜蛋糕__T_itemicon_food_Cake04.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/豪华蔬菜蛋糕__T_itemicon_food_Cake04.webp",
+      "source_bytes": 9630,
+      "source_sha256": "e31e07e8bf369924798ab1da256294a3661ef8e272e7e8cecfad7389fe30286b",
+      "website_path": "/palworld/guides-20261119/豪华蔬菜蛋糕__T_itemicon_food_Cake04.webp",
+      "pack_assets_path": "assets/items/豪华蔬菜蛋糕__T_itemicon_food_Cake04.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/豪华蔬菜蛋糕__T_itemicon_food_Cake04.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/配种牧场__T_icon_buildObject_BreedFarm.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/配种牧场__T_icon_buildObject_BreedFarm.webp",
+      "source_bytes": 24500,
+      "source_sha256": "e1b5ed24d4e16b3f1b1ff6e2945994222e33e7908a1425be772de319ad8a0076",
+      "website_path": "/palworld/guides-20261119/配种牧场__T_icon_buildObject_BreedFarm.webp",
+      "pack_assets_path": "assets/items/配种牧场__T_icon_buildObject_BreedFarm.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/配种牧场__T_icon_buildObject_BreedFarm.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/items/霜牙王的巨锤__T_itemicon_Essential_SkillUnlock_Hammer.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/items/霜牙王的巨锤__T_itemicon_Essential_SkillUnlock_Hammer.webp",
+      "source_bytes": 15450,
+      "source_sha256": "9de19ac22d7fd11c67f65c5682d8b778439c6d26567520f09b13422183627c16",
+      "website_path": "/palworld/guides-20261119/霜牙王的巨锤__T_itemicon_Essential_SkillUnlock_Hammer.webp",
+      "pack_assets_path": "assets/items/霜牙王的巨锤__T_itemicon_Essential_SkillUnlock_Hammer.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/霜牙王的巨锤__T_itemicon_Essential_SkillUnlock_Hammer.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Anubis_阿努比斯.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Anubis_阿努比斯.webp",
+      "source_bytes": 13682,
+      "source_sha256": "5877092580035d686a66c7f2668c8029c313966521fc1026f8f1351d40442767",
+      "website_path": "/palworld/guides-20261119/Anubis_阿努比斯.webp",
+      "pack_assets_path": "assets/pals/Anubis_阿努比斯.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Anubis_阿努比斯.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Bastigor_霜牙王.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Bastigor_霜牙王.webp",
+      "source_bytes": 16172,
+      "source_sha256": "02d4802417d93793f28a4a346f56c7ed058c3886fd24ddb4a713f0abb331051a",
+      "website_path": "/palworld/guides-20261119/Bastigor_霜牙王.webp",
+      "pack_assets_path": "assets/pals/Bastigor_霜牙王.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Bastigor_霜牙王.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Beakon_迅雷鸟.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Beakon_迅雷鸟.webp",
+      "source_bytes": 13690,
+      "source_sha256": "2c5cf16a5f972b0d2f3a8a1acf2065a21364c29a4a25c40eaa84536d8584e832",
+      "website_path": "/palworld/guides-20261119/Beakon_迅雷鸟.webp",
+      "pack_assets_path": "assets/pals/Beakon_迅雷鸟.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Beakon_迅雷鸟.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Beegarde_骑士蜂.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Beegarde_骑士蜂.webp",
+      "source_bytes": 17056,
+      "source_sha256": "4db22b0edc854a87a48591851e96a9e4a3a6084ea2ba24201433e9164b18b538",
+      "website_path": "/palworld/guides-20261119/Beegarde_骑士蜂.webp",
+      "pack_assets_path": "assets/pals/Beegarde_骑士蜂.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Beegarde_骑士蜂.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Bristla_荆棘魔仙.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Bristla_荆棘魔仙.webp",
+      "source_bytes": 19650,
+      "source_sha256": "06ea73aae14901d0202b4c65da9a97be717b42512fa0c9006a78dd9f4684714a",
+      "website_path": "/palworld/guides-20261119/Bristla_荆棘魔仙.webp",
+      "pack_assets_path": "assets/pals/Bristla_荆棘魔仙.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Bristla_荆棘魔仙.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Bushi_浪刃武士.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Bushi_浪刃武士.webp",
+      "source_bytes": 23860,
+      "source_sha256": "40584d1e9930e98eccae77eb020e2d43d38375371b97042b222ff1a09dfd5a45",
+      "website_path": "/palworld/guides-20261119/Bushi_浪刃武士.webp",
+      "pack_assets_path": "assets/pals/Bushi_浪刃武士.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Bushi_浪刃武士.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Cattiva_捣蛋猫.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Cattiva_捣蛋猫.webp",
+      "source_bytes": 20110,
+      "source_sha256": "37099fcd43d96527eb0cbff9e03142ab25cf1e533c21a6842caaef59a600e8a7",
+      "website_path": "/palworld/guides-20261119/Cattiva_捣蛋猫.webp",
+      "pack_assets_path": "assets/pals/Cattiva_捣蛋猫.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Cattiva_捣蛋猫.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Celesdir_净世鹿.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Celesdir_净世鹿.webp",
+      "source_bytes": 15258,
+      "source_sha256": "47dd28727a827132960739f888245ac01d7db7834529abcfbcea1821d8a1b30b",
+      "website_path": "/palworld/guides-20261119/Celesdir_净世鹿.webp",
+      "pack_assets_path": "assets/pals/Celesdir_净世鹿.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Celesdir_净世鹿.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Chikipi_皮皮鸡.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Chikipi_皮皮鸡.webp",
+      "source_bytes": 11562,
+      "source_sha256": "830ec2c8d1e8c9ac65338eef65b79da1f4bbe08d9b72c8fe7c59cd6f6ef76c12",
+      "website_path": "/palworld/guides-20261119/Chikipi_皮皮鸡.webp",
+      "pack_assets_path": "assets/pals/Chikipi_皮皮鸡.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Chikipi_皮皮鸡.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Chillet_疾旋鼬.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Chillet_疾旋鼬.webp",
+      "source_bytes": 13238,
+      "source_sha256": "e42cf78bf949bc63792175bf8a1a2692022cab9e78e656f4b759e32bd9d45f2f",
+      "website_path": "/palworld/guides-20261119/Chillet_疾旋鼬.webp",
+      "pack_assets_path": "assets/pals/Chillet_疾旋鼬.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Chillet_疾旋鼬.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Clovee_幸叶茸.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Clovee_幸叶茸.webp",
+      "source_bytes": 3710,
+      "source_sha256": "315a44f3b1669abd2a8336e261c03efb78e10aa86030760fb4c605d0a060379e",
+      "website_path": "/palworld/guides-20261119/Clovee_幸叶茸.webp",
+      "pack_assets_path": "assets/pals/Clovee_幸叶茸.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Clovee_幸叶茸.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Dandilord_夜蔓爵.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Dandilord_夜蔓爵.webp",
+      "source_bytes": 5010,
+      "source_sha256": "161a275d952df7849aeefd374edf1c8092b1d18df8aa38fd5b09c3bca3163a27",
+      "website_path": "/palworld/guides-20261119/Dandilord_夜蔓爵.webp",
+      "pack_assets_path": "assets/pals/Dandilord_夜蔓爵.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Dandilord_夜蔓爵.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Direhowl_猎狼.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Direhowl_猎狼.webp",
+      "source_bytes": 32192,
+      "source_sha256": "051afe861417388f784673053dc5b9683402ddffec51d206719abb187c6703c2",
+      "website_path": "/palworld/guides-20261119/Direhowl_猎狼.webp",
+      "pack_assets_path": "assets/pals/Direhowl_猎狼.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Direhowl_猎狼.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Eidrolon_灵曦龙.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Eidrolon_灵曦龙.webp",
+      "source_bytes": 4388,
+      "source_sha256": "09f4e46a251bd56fb5027f9294d94c323b41fcb43ac71bac1353884b639b5db3",
+      "website_path": "/palworld/guides-20261119/Eidrolon_灵曦龙.webp",
+      "pack_assets_path": "assets/pals/Eidrolon_灵曦龙.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Eidrolon_灵曦龙.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Eikthyrdeer_紫霞鹿.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Eikthyrdeer_紫霞鹿.webp",
+      "source_bytes": 19020,
+      "source_sha256": "27ae4f09237582c31b972c1ff8b8babcd06f898e38dae752dba8bd0804358370",
+      "website_path": "/palworld/guides-20261119/Eikthyrdeer_紫霞鹿.webp",
+      "pack_assets_path": "assets/pals/Eikthyrdeer_紫霞鹿.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Eikthyrdeer_紫霞鹿.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Faleris_荷鲁斯.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Faleris_荷鲁斯.webp",
+      "source_bytes": 14774,
+      "source_sha256": "d82b97d13ca4e8c25f8ddf644df4b9392234601909e6b4d9816b107db4d3eb40",
+      "website_path": "/palworld/guides-20261119/Faleris_荷鲁斯.webp",
+      "pack_assets_path": "assets/pals/Faleris_荷鲁斯.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Faleris_荷鲁斯.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Foxparks_火绒狐.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Foxparks_火绒狐.webp",
+      "source_bytes": 20504,
+      "source_sha256": "a821ef9c03650a69cbf0f2feabdc49238fe08d47e0271f2fb2fff881376e4f94",
+      "website_path": "/palworld/guides-20261119/Foxparks_火绒狐.webp",
+      "pack_assets_path": "assets/pals/Foxparks_火绒狐.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Foxparks_火绒狐.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Frostallion_Noct_唤夜兽.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Frostallion_Noct_唤夜兽.webp",
+      "source_bytes": 13596,
+      "source_sha256": "478cdd9645d1a0bb680c72515851dbeb0754e529dcd66de7aca891d8c7718823",
+      "website_path": "/palworld/guides-20261119/Frostallion_Noct_唤夜兽.webp",
+      "pack_assets_path": "assets/pals/Frostallion_Noct_唤夜兽.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Frostallion_Noct_唤夜兽.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Frostallion_唤冬兽.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Frostallion_唤冬兽.webp",
+      "source_bytes": 15634,
+      "source_sha256": "d8221ca1da45b300d7f9262ba909cba3a54e9fe9c2180e094aee6a34135c6bc8",
+      "website_path": "/palworld/guides-20261119/Frostallion_唤冬兽.webp",
+      "pack_assets_path": "assets/pals/Frostallion_唤冬兽.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Frostallion_唤冬兽.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Galeclaw_天擒鸟.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Galeclaw_天擒鸟.webp",
+      "source_bytes": 15702,
+      "source_sha256": "ec2667d80cf2ac401f2f4d47622ae79e167567494ed7458daadbf4f60444f4ad",
+      "website_path": "/palworld/guides-20261119/Galeclaw_天擒鸟.webp",
+      "pack_assets_path": "assets/pals/Galeclaw_天擒鸟.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Galeclaw_天擒鸟.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Incineram_炎魔羊.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Incineram_炎魔羊.webp",
+      "source_bytes": 20184,
+      "source_sha256": "e205e6842d10bc53bb7aa265b2a51fa8244d75330b4ae8165c9dce8ca3b48810",
+      "website_path": "/palworld/guides-20261119/Incineram_炎魔羊.webp",
+      "pack_assets_path": "assets/pals/Incineram_炎魔羊.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Incineram_炎魔羊.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Jetragon_空涡龙.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Jetragon_空涡龙.webp",
+      "source_bytes": 12116,
+      "source_sha256": "398841c71b059c591877145a2dea36146f63e5ef270333ec952004d66fd1c2a4",
+      "website_path": "/palworld/guides-20261119/Jetragon_空涡龙.webp",
+      "pack_assets_path": "assets/pals/Jetragon_空涡龙.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Jetragon_空涡龙.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Jormuntide_覆海龙.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Jormuntide_覆海龙.webp",
+      "source_bytes": 22984,
+      "source_sha256": "967a054c0976941a5f93ccd3c1979b26a697588945134f79205fc9dd7b4f3b95",
+      "website_path": "/palworld/guides-20261119/Jormuntide_覆海龙.webp",
+      "pack_assets_path": "assets/pals/Jormuntide_覆海龙.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Jormuntide_覆海龙.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Knocklem_泰锋.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Knocklem_泰锋.webp",
+      "source_bytes": 17988,
+      "source_sha256": "660792639b88d5d0288f849b9310880a82e7d8400cce212d15b0dadf4abda386",
+      "website_path": "/palworld/guides-20261119/Knocklem_泰锋.webp",
+      "pack_assets_path": "assets/pals/Knocklem_泰锋.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Knocklem_泰锋.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Lamball_棉悠悠.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Lamball_棉悠悠.webp",
+      "source_bytes": 25578,
+      "source_sha256": "50f0d564559545d80f1d71e84c25a2d07bd317c9fb6853dc3b633def85635e05",
+      "website_path": "/palworld/guides-20261119/Lamball_棉悠悠.webp",
+      "pack_assets_path": "assets/pals/Lamball_棉悠悠.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Lamball_棉悠悠.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Lifmunk_翠叶鼠.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Lifmunk_翠叶鼠.webp",
+      "source_bytes": 19282,
+      "source_sha256": "fb31e4bc06c72141c9d95977e969ab68c4612684a3d5c71ed228ea7f1aa0c675",
+      "website_path": "/palworld/guides-20261119/Lifmunk_翠叶鼠.webp",
+      "pack_assets_path": "assets/pals/Lifmunk_翠叶鼠.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Lifmunk_翠叶鼠.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Lyleen_百合女王.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Lyleen_百合女王.webp",
+      "source_bytes": 26046,
+      "source_sha256": "51c40851efc5967cdae9d81d523b1a3497cfeb2729a02d7f07315b24dd8efbef",
+      "website_path": "/palworld/guides-20261119/Lyleen_百合女王.webp",
+      "pack_assets_path": "assets/pals/Lyleen_百合女王.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Lyleen_百合女王.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Melpaca_美露帕.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Melpaca_美露帕.webp",
+      "source_bytes": 9842,
+      "source_sha256": "76b3850adeee936ff7caaa83b502d6693fc1c156cc6ff1af6dd2bd1ee8fb0c3f",
+      "website_path": "/palworld/guides-20261119/Melpaca_美露帕.webp",
+      "pack_assets_path": "assets/pals/Melpaca_美露帕.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Melpaca_美露帕.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Necromus_混沌骑士.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Necromus_混沌骑士.webp",
+      "source_bytes": 14952,
+      "source_sha256": "e82c7207a8d00cd16d273af2af1a3d68c5297768c55bd619bb9e70632420061f",
+      "website_path": "/palworld/guides-20261119/Necromus_混沌骑士.webp",
+      "pack_assets_path": "assets/pals/Necromus_混沌骑士.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Necromus_混沌骑士.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Neptilius_海皇鲸.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Neptilius_海皇鲸.webp",
+      "source_bytes": 22642,
+      "source_sha256": "2d3281c13dd310ae4c36bed19f097475c0c6fd357bd8eac264a717bcff8d4800",
+      "website_path": "/palworld/guides-20261119/Neptilius_海皇鲸.webp",
+      "pack_assets_path": "assets/pals/Neptilius_海皇鲸.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Neptilius_海皇鲸.webp",
+      "used_in": [
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Nitewing_疾风隼.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Nitewing_疾风隼.webp",
+      "source_bytes": 17418,
+      "source_sha256": "08344ef7460afb186c6532720e5b33d3667f443a32b6f5181d388ead4dfd2857",
+      "website_path": "/palworld/guides-20261119/Nitewing_疾风隼.webp",
+      "pack_assets_path": "assets/pals/Nitewing_疾风隼.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Nitewing_疾风隼.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Orserk_波鲁杰克斯.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Orserk_波鲁杰克斯.webp",
+      "source_bytes": 16932,
+      "source_sha256": "46207bff2c03ebfb3604fe19ab01dcc520a6b20eda2a7cd1713c297b259176c1",
+      "website_path": "/palworld/guides-20261119/Orserk_波鲁杰克斯.webp",
+      "pack_assets_path": "assets/pals/Orserk_波鲁杰克斯.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Orserk_波鲁杰克斯.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Paladius_圣光骑士.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Paladius_圣光骑士.webp",
+      "source_bytes": 20706,
+      "source_sha256": "e37e9665bbe73e0e9ba49f0b14a1666d5d6353d599e155eee97b15dfc4c6de05",
+      "website_path": "/palworld/guides-20261119/Paladius_圣光骑士.webp",
+      "pack_assets_path": "assets/pals/Paladius_圣光骑士.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Paladius_圣光骑士.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Pengullet_企丸丸.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Pengullet_企丸丸.webp",
+      "source_bytes": 14888,
+      "source_sha256": "af60d358bce1e4c62f4873281eb64b9eb4cc1462c968d4f0a023d834cd6871e7",
+      "website_path": "/palworld/guides-20261119/Pengullet_企丸丸.webp",
+      "pack_assets_path": "assets/pals/Pengullet_企丸丸.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Pengullet_企丸丸.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Penking_企丸王.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Penking_企丸王.webp",
+      "source_bytes": 18422,
+      "source_sha256": "042b053ba57c9edfdb371d7676a04341002c48583a60f5dbb9cbe792a54a85f1",
+      "website_path": "/palworld/guides-20261119/Penking_企丸王.webp",
+      "pack_assets_path": "assets/pals/Penking_企丸王.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Penking_企丸王.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Petallia_花丽娜.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Petallia_花丽娜.webp",
+      "source_bytes": 22108,
+      "source_sha256": "ad3e0fbb17f1bba40276950e1dd15f97dbc426643d461d59dda156a1ad1f95ef",
+      "website_path": "/palworld/guides-20261119/Petallia_花丽娜.webp",
+      "pack_assets_path": "assets/pals/Petallia_花丽娜.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Petallia_花丽娜.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Pupperai_宗铭丸.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Pupperai_宗铭丸.webp",
+      "source_bytes": 3532,
+      "source_sha256": "002a850dd736b8d77b0c32856b582d160c8cbde7ecb614dc2b73bb68223a63c9",
+      "website_path": "/palworld/guides-20261119/Pupperai_宗铭丸.webp",
+      "pack_assets_path": "assets/pals/Pupperai_宗铭丸.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Pupperai_宗铭丸.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Quivern_天羽龙.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Quivern_天羽龙.webp",
+      "source_bytes": 16892,
+      "source_sha256": "b887a9ea36fa676a0fb9d2435b2ac8848ee7da06488bc19eccae5017585aa893",
+      "website_path": "/palworld/guides-20261119/Quivern_天羽龙.webp",
+      "pack_assets_path": "assets/pals/Quivern_天羽龙.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Quivern_天羽龙.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Renjishi_燎火舞伶.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Renjishi_燎火舞伶.webp",
+      "source_bytes": 3896,
+      "source_sha256": "1eed54197124d50c0ad72cae212c639d51018433e0a3394f25d2f7a66e75383c",
+      "website_path": "/palworld/guides-20261119/Renjishi_燎火舞伶.webp",
+      "pack_assets_path": "assets/pals/Renjishi_燎火舞伶.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Renjishi_燎火舞伶.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Ribbuny_姬小兔.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Ribbuny_姬小兔.webp",
+      "source_bytes": 15088,
+      "source_sha256": "31d0fce02ad7a385790218329b875fb4b86fb0f32de84a5811b9f2f279884534",
+      "website_path": "/palworld/guides-20261119/Ribbuny_姬小兔.webp",
+      "pack_assets_path": "assets/pals/Ribbuny_姬小兔.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Ribbuny_姬小兔.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Shaolong_霄龙.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Shaolong_霄龙.webp",
+      "source_bytes": 4876,
+      "source_sha256": "541cd9817e09b3afab723434813c73ae988d8f325baeafe50cc9d985895a8592",
+      "website_path": "/palworld/guides-20261119/Shaolong_霄龙.webp",
+      "pack_assets_path": "assets/pals/Shaolong_霄龙.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Shaolong_霄龙.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Silvance_暮尘蛾.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Silvance_暮尘蛾.webp",
+      "source_bytes": 4120,
+      "source_sha256": "ff6beb27060e05f791dafe321c432059361e54d2154a74a46ade684161b82574",
+      "website_path": "/palworld/guides-20261119/Silvance_暮尘蛾.webp",
+      "pack_assets_path": "assets/pals/Silvance_暮尘蛾.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Silvance_暮尘蛾.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Solenne_墨罗娜.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Solenne_墨罗娜.webp",
+      "source_bytes": 3484,
+      "source_sha256": "8c877e6485a23e5b760307b21cb4aff271dd96644c4bbfb13d22458d38736e64",
+      "website_path": "/palworld/guides-20261119/Solenne_墨罗娜.webp",
+      "pack_assets_path": "assets/pals/Solenne_墨罗娜.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Solenne_墨罗娜.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Sparkit_伏特喵.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Sparkit_伏特喵.webp",
+      "source_bytes": 28896,
+      "source_sha256": "043adef96390b5dca3ff09c71d524d83fef2ffe11422e5a4a50a85cebcb55eed",
+      "website_path": "/palworld/guides-20261119/Sparkit_伏特喵.webp",
+      "pack_assets_path": "assets/pals/Sparkit_伏特喵.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Sparkit_伏特喵.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Surfent_滑水蛇.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Surfent_滑水蛇.webp",
+      "source_bytes": 13090,
+      "source_sha256": "7148ba49e29915138582c8cf9b75affa433a48e13b4d6f2c96f909ea5d7808e2",
+      "website_path": "/palworld/guides-20261119/Surfent_滑水蛇.webp",
+      "pack_assets_path": "assets/pals/Surfent_滑水蛇.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Surfent_滑水蛇.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Suzaku_朱雀.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Suzaku_朱雀.webp",
+      "source_bytes": 16604,
+      "source_sha256": "0040e64ece0b0963b07cc2a735a561d42f196e4196d0bae1630b46655286db66",
+      "website_path": "/palworld/guides-20261119/Suzaku_朱雀.webp",
+      "pack_assets_path": "assets/pals/Suzaku_朱雀.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Suzaku_朱雀.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Tombat_猫蝠怪.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Tombat_猫蝠怪.webp",
+      "source_bytes": 17204,
+      "source_sha256": "174c7f29c248fdcc8fc83a371382cbede719fab08a58f06cd1d5a09dd730feea",
+      "website_path": "/palworld/guides-20261119/Tombat_猫蝠怪.webp",
+      "pack_assets_path": "assets/pals/Tombat_猫蝠怪.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Tombat_猫蝠怪.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Vanwyrm_烽歌龙.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Vanwyrm_烽歌龙.webp",
+      "source_bytes": 13836,
+      "source_sha256": "d5c6ef0f0820a8d12641355f6f4942a935c450e1a29153adaff5d68a7cd85ef0",
+      "website_path": "/palworld/guides-20261119/Vanwyrm_烽歌龙.webp",
+      "pack_assets_path": "assets/pals/Vanwyrm_烽歌龙.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Vanwyrm_烽歌龙.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Vixy_玉藻狐.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Vixy_玉藻狐.webp",
+      "source_bytes": 18894,
+      "source_sha256": "578e34a9cbeb96ce5ab2aa681b7791d9a7977de68dbb3678fcbb1f06918aca59",
+      "website_path": "/palworld/guides-20261119/Vixy_玉藻狐.webp",
+      "pack_assets_path": "assets/pals/Vixy_玉藻狐.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Vixy_玉藻狐.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/pals/Wixen_焰巫狐.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/pals/Wixen_焰巫狐.webp",
+      "source_bytes": 16628,
+      "source_sha256": "bf1cde11d54a6877e3c0e5784fe4816c5dc3254000450e77621969550b3efae5",
+      "website_path": "/palworld/guides-20261119/Wixen_焰巫狐.webp",
+      "pack_assets_path": "assets/pals/Wixen_焰巫狐.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/Wixen_焰巫狐.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md",
+        "02_帕鲁词条预设与使用.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/cooling_冷却__T_icon_palwork_10.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/cooling_冷却__T_icon_palwork_10.webp",
+      "source_bytes": 986,
+      "source_sha256": "a3af2180654867422519ff40c7a1280d1024a45a927dc88c9ad6a8bbc07d39c8",
+      "website_path": "/palworld/guides-20261119/cooling_冷却__T_icon_palwork_10.webp",
+      "pack_assets_path": "assets/work/cooling_冷却__T_icon_palwork_10.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/cooling_冷却__T_icon_palwork_10.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/farming_牧场__T_icon_palwork_12.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/farming_牧场__T_icon_palwork_12.webp",
+      "source_bytes": 1106,
+      "source_sha256": "f0afccad8168a9edd8abd3484003e2b6eea229828f516e808fe1d4b7258c3216",
+      "website_path": "/palworld/guides-20261119/farming_牧场__T_icon_palwork_12.webp",
+      "pack_assets_path": "assets/work/farming_牧场__T_icon_palwork_12.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/farming_牧场__T_icon_palwork_12.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/gathering_采集__T_icon_palwork_05.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/gathering_采集__T_icon_palwork_05.webp",
+      "source_bytes": 822,
+      "source_sha256": "f5807ee7548c2b0f50fd4a5692a60b18267bb2ab6e019a90c84f8d30fc8b2fd3",
+      "website_path": "/palworld/guides-20261119/gathering_采集__T_icon_palwork_05.webp",
+      "pack_assets_path": "assets/work/gathering_采集__T_icon_palwork_05.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/gathering_采集__T_icon_palwork_05.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/generating-electricity_发电__T_icon_palwork_03.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/generating-electricity_发电__T_icon_palwork_03.webp",
+      "source_bytes": 602,
+      "source_sha256": "b3a153481c06d927f2e797f4085b5df4d0164c5aee388538739e9be0ce2eba7c",
+      "website_path": "/palworld/guides-20261119/generating-electricity_发电__T_icon_palwork_03.webp",
+      "pack_assets_path": "assets/work/generating-electricity_发电__T_icon_palwork_03.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/generating-electricity_发电__T_icon_palwork_03.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/handiwork_手工作业__T_icon_palwork_04.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/handiwork_手工作业__T_icon_palwork_04.webp",
+      "source_bytes": 744,
+      "source_sha256": "7f289e1243cb92e08d42f4dae80ae602770bbabf68cc1c207c5230cb81882f34",
+      "website_path": "/palworld/guides-20261119/handiwork_手工作业__T_icon_palwork_04.webp",
+      "pack_assets_path": "assets/work/handiwork_手工作业__T_icon_palwork_04.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/handiwork_手工作业__T_icon_palwork_04.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/kindling_生火__T_icon_palwork_00.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/kindling_生火__T_icon_palwork_00.webp",
+      "source_bytes": 884,
+      "source_sha256": "95d098f2d344d7145648a9a3cd8fbb1c2dfed3fc3b13ddef0d2e86280d121321",
+      "website_path": "/palworld/guides-20261119/kindling_生火__T_icon_palwork_00.webp",
+      "pack_assets_path": "assets/work/kindling_生火__T_icon_palwork_00.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/kindling_生火__T_icon_palwork_00.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/lumbering_伐木__T_icon_palwork_06.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/lumbering_伐木__T_icon_palwork_06.webp",
+      "source_bytes": 800,
+      "source_sha256": "4700347f45739545f4b01a8f804747eac7ce1a3146216f3bd2c317fb157880a4",
+      "website_path": "/palworld/guides-20261119/lumbering_伐木__T_icon_palwork_06.webp",
+      "pack_assets_path": "assets/work/lumbering_伐木__T_icon_palwork_06.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/lumbering_伐木__T_icon_palwork_06.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/medicine-production_制药__T_icon_palwork_08.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/medicine-production_制药__T_icon_palwork_08.webp",
+      "source_bytes": 566,
+      "source_sha256": "cda6382a97258656cb73b672a5f22d2a6bab58b73c4a1bfd544520182c15c9a2",
+      "website_path": "/palworld/guides-20261119/medicine-production_制药__T_icon_palwork_08.webp",
+      "pack_assets_path": "assets/work/medicine-production_制药__T_icon_palwork_08.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/medicine-production_制药__T_icon_palwork_08.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/mining_采矿__T_icon_palwork_07.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/mining_采矿__T_icon_palwork_07.webp",
+      "source_bytes": 728,
+      "source_sha256": "05042c4d8aa81d95b159fdaebc27659dfb0a7c0dbf8f3e4751c9277e83111c31",
+      "website_path": "/palworld/guides-20261119/mining_采矿__T_icon_palwork_07.webp",
+      "pack_assets_path": "assets/work/mining_采矿__T_icon_palwork_07.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/mining_采矿__T_icon_palwork_07.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/planting_播种__T_icon_palwork_02.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/planting_播种__T_icon_palwork_02.webp",
+      "source_bytes": 802,
+      "source_sha256": "3d995cfd517e371f4702bcdd7db02acad058977709001f6d0ee68d1c046dcef5",
+      "website_path": "/palworld/guides-20261119/planting_播种__T_icon_palwork_02.webp",
+      "pack_assets_path": "assets/work/planting_播种__T_icon_palwork_02.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/planting_播种__T_icon_palwork_02.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/transporting_搬运__T_icon_palwork_11.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/transporting_搬运__T_icon_palwork_11.webp",
+      "source_bytes": 842,
+      "source_sha256": "8df8d1710f6d31f90b4a3bc397f3c593fede7d114a583bf4c4aae63181bc108b",
+      "website_path": "/palworld/guides-20261119/transporting_搬运__T_icon_palwork_11.webp",
+      "pack_assets_path": "assets/work/transporting_搬运__T_icon_palwork_11.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/transporting_搬运__T_icon_palwork_11.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    },
+    {
+      "original_ref": "assets/work/watering_浇水__T_icon_palwork_01.webp",
+      "source_resolved": "/workspace/palworld/team_traits_2026-11-17/revision_v3/assets/work/watering_浇水__T_icon_palwork_01.webp",
+      "source_bytes": 712,
+      "source_sha256": "14effb9cdbb289ed9f21478a2896d0d341e944fab0a87c806c89dad28443b436",
+      "website_path": "/palworld/guides-20261119/watering_浇水__T_icon_palwork_01.webp",
+      "pack_assets_path": "assets/work/watering_浇水__T_icon_palwork_01.webp",
+      "pack_public_hint": "public/palworld/guides-20261119/watering_浇水__T_icon_palwork_01.webp",
+      "used_in": [
+        "01_外出队伍与据点分工.md"
+      ]
+    }
+  ]
+}
