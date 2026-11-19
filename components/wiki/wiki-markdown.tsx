@@ -4,6 +4,7 @@ import {
   type BlockNode,
   type InlineNode,
 } from "@/lib/content/wiki-markdown";
+import { WikiTableScroll } from "@/components/wiki/wiki-table-scroll";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -84,8 +85,8 @@ function WikiBlock({ block }: { block: BlockNode }) {
 
   if (block.type === "table") {
     return (
-      <div className="max-w-full overflow-x-auto">
-        <table className="w-max min-w-full border-collapse text-sm text-lab-ink">
+      <WikiTableScroll>
+        <table className="w-max border-collapse text-sm text-lab-ink">
           <thead>
             <tr>
               {block.header.map((cell, index) => (
@@ -115,7 +116,7 @@ function WikiBlock({ block }: { block: BlockNode }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </WikiTableScroll>
     );
   }
 

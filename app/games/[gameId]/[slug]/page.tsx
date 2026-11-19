@@ -42,12 +42,15 @@ export default async function GameEntryPage({ params }: PageProps) {
   const game = entry.gameId === UNSORTED_GAME_ID ? null : publicGame(entry.gameId);
   const backHref = entry.gameId === UNSORTED_GAME_ID ? "/games/unsorted" : `/games/${entry.gameId}`;
   const sourceOk = entry.sourceHref?.startsWith("https://") ?? false;
+  const version = entry.season && entry.season !== "未知" ? entry.season : null;
 
   return (
       <PageShell backHref={backHref} backLabel={game ? `回到${game.title}` : "回到待整理"}>
-      <PageContainer className="min-w-0 max-w-[40rem]">
+      <PageContainer className="w-full min-w-0 max-w-[40rem]">
+      <article className="min-w-0 max-w-full">
         <p className="text-[11px] tracking-[0.18em] text-lab-primary">
-          {gameKindLabel(entry.kind)} · 版本 {entry.season || "未知"}
+          {gameKindLabel(entry.kind)}
+          {version ? ` · 版本 ${version}` : ""}
         </p>
         <h1 className="mt-3 text-balance text-[1.75rem] font-semibold leading-[1.22] tracking-tight text-lab-ink">
           {entry.title}
@@ -84,14 +87,12 @@ export default async function GameEntryPage({ params }: PageProps) {
                 )}
               </dd>
             </div>
-          ) : (
-            <div>来源没有写。</div>
-          )}
-          {entry.ingestedAt ? <div>收录 {entry.ingestedAt}</div> : <div>收录时间未知。</div>}
+          ) : null}
+          {entry.ingestedAt ? <div>收录 {entry.ingestedAt}</div> : null}
           {entry.updatedAt ? <div>更新 {entry.updatedAt}</div> : null}
         </dl>
         {entry.prose ? (
-          <div className="mt-12">
+          <div className="mt-12 min-w-0 max-w-full">
             <WikiMarkdown source={entry.prose} />
           </div>
         ) : null}
@@ -103,6 +104,7 @@ export default async function GameEntryPage({ params }: PageProps) {
             {game ? `回到${game.title}` : "回到待整理"}
           </Link>
         </p>
+      </article>
       </PageContainer>
     </PageShell>
   );

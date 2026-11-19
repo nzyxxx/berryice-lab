@@ -93,6 +93,34 @@ test("两篇帕鲁原稿改成本地图后，五档、表格和行内图都能�
     path.join(root, "scripts/palworld-import/20261119-palworld-passive-traits.md"),
     "utf8"
   );
+  const partyPayload = JSON.parse(
+    await readFile(path.join(root, "scripts/palworld-import/payloads/20261119-palworld-party-and-base.json"), "utf8")
+  ) as { slug: string; gameId: string; kind: string; title: string; body: string; publish: boolean; sourceHref?: string; season?: string };
+  const traitsPayload = JSON.parse(
+    await readFile(path.join(root, "scripts/palworld-import/payloads/20261119-palworld-passive-traits.json"), "utf8")
+  ) as { slug: string; gameId: string; kind: string; title: string; body: string; publish: boolean; sourceHref?: string; season?: string };
+  assert.equal(party.startsWith(`# ${partyPayload.title}\n\n${partyPayload.body}`), true);
+  assert.equal(traits.startsWith(`# ${traitsPayload.title}\n\n${traitsPayload.body}`), true);
+  let imageRefs = 0;
+  for (const payload of [partyPayload, traitsPayload]) {
+    assert.equal(payload.gameId, "palworld");
+    assert.equal(payload.kind, "guide");
+    assert.equal(payload.publish, true);
+    assert.equal("sourceHref" in payload, false);
+    assert.equal("sourceLabel" in payload, false);
+    assert.equal("season" in payload, false);
+    assert.equal(payload.body.startsWith("# "), false);
+    assert.equal(payload.body.includes(payload.title), false);
+    imageRefs += payload.body.match(/!\[[^\]]*\]\([^)]+\)/g)?.length ?? 0;
+  }
+  assert.equal(imageRefs, 119);
+  const page = await readFile(path.join(root, "app/games/[gameId]/[slug]/page.tsx"), "utf8");
+  assert.equal(page.includes("来源没有写"), false);
+  assert.equal(page.includes("收录时间未知"), false);
+  assert.equal(page.includes('entry.season || "未知"'), false);
+  const scroll = await readFile(path.join(root, "components/wiki/wiki-table-scroll.tsx"), "utf8");
+  assert.equal(scroll.includes('tabIndex={0}'), true);
+  assert.equal(scroll.includes("可横向滚动的表格"), true);
   for (const source of [party, traits]) {
     assert.equal(source.includes("未发布"), false);
     assert.equal(source.includes("](assets/"), false);
