@@ -26,8 +26,8 @@ export function HomeChannels() {
   useStagger(list);
 
   return (
-    <nav aria-label="栏目" className="mt-12 border-t border-lab-hairline pt-6 md:mt-16">
-      <ul ref={list} className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+    <nav id="channels" aria-label="栏目" className="mt-12 border-t border-lab-hairline pt-6 md:mt-16">
+      <ul ref={list} className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3 lg:grid-cols-6">
         {homeChannels.map((channel, index) => {
           const Icon = ICONS[channel.id];
           return (
@@ -41,7 +41,7 @@ export function HomeChannels() {
                 href={channel.href}
                 onPointerMove={spotMove}
                 className={glassSurfaceClass(
-                  "channel-card group flex min-h-11 min-w-0 flex-col gap-3 rounded-2xl p-3 text-lab-ink-subtle outline-none transition-[transform,box-shadow] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-lab-primary motion-reduce:transition-none"
+                  "channel-card group flex h-44 min-w-0 flex-col gap-3 rounded-2xl p-3 text-lab-ink-subtle outline-none transition-[transform,box-shadow] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-lab-primary motion-reduce:transition-none"
                 )}
               >
                 {channel.id === "games" ? <span aria-hidden className="channel-beam" /> : null}
@@ -57,7 +57,7 @@ export function HomeChannels() {
                   <span className="channel-title block text-[15px] font-medium tracking-tight text-lab-ink visited:text-lab-ink">
                     {channel.title}
                   </span>
-                  <span className="channel-desc mt-1 block text-xs leading-relaxed text-inherit opacity-80">
+                  <span className="channel-desc mt-1 line-clamp-2 min-h-10 text-xs leading-5 text-inherit opacity-80">
                     {channel.description}
                   </span>
                 </span>

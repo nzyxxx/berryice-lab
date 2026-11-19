@@ -37,7 +37,7 @@ export default function WritingPage() {
           >
             动效笔记
           </Link>
-          记的是这个站怎么动。它不是攻略，也不进游戏目录。
+          把那段动效课落到页面上的记录。
         </p>
 
         {empty ? (

@@ -622,11 +622,23 @@ a.channel-card > * {
 }
 
 .stagger-item.is-in {
-  animation: stagger-in 280ms ease-out both;
+  animation: stagger-in 280ms ease-out;
 }
 @keyframes stagger-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stagger-item,
+  .stagger-item.is-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.portrait-still {
+  object-view-box: inset(19% 29% 14% 29%);
 }
 
 .hero-wash {

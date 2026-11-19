@@ -9,11 +9,11 @@ import {
 import Link from "next/link";
 
 /**
- * 每一行共用这一套列。桌面三列，手机上日期和来源占第一行，标题独占下一行。
- * 日期列有固定最小宽度。短的「时间未记」不会把来源起点往左拉。
+ * 每一行都是日期、来源、标题，手机和桌面同一套三列。
+ * 标题过长就省略，完整标题在链接的 title 上。
  */
 const lineGrid =
-  "grid w-full min-w-0 grid-cols-[minmax(4.5rem,6.5rem)_minmax(0,1fr)] items-center gap-x-3 sm:grid-cols-[minmax(4.5rem,6.5rem)_minmax(2.75rem,4.5rem)_minmax(0,1fr)]";
+  "grid w-full min-w-0 grid-cols-[4.75rem_3.5rem_minmax(0,1fr)] items-center gap-x-2";
 
 function FeedTime({ at }: { at: string | null }) {
   const label = homeFeedDateLabel(at);
@@ -33,15 +33,16 @@ function FeedLine({ item, titleClass }: { item: HomeUpdate; titleClass: string }
       data-feed-line=""
       className={`${lineGrid} min-h-11 rounded-md py-1 outline-none hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-primary`}
     >
-      <span data-feed-date="" className="font-mono text-xs text-lab-ink-subtle sm:col-start-1">
+      <span data-feed-date="" className="truncate font-mono text-xs text-lab-ink-subtle" title={item.at ? item.at.slice(0, 10) : "时间未记"}>
         <FeedTime at={item.at} />
       </span>
-      <span data-feed-source="" className="text-xs text-lab-ink-subtle sm:col-start-2">
+      <span data-feed-source="" className="truncate text-xs text-lab-ink-subtle" title={item.sourceLabel}>
+        <span className="sr-only">来源 </span>
         {item.sourceLabel}
       </span>
       <span
         data-feed-title=""
-        className={`col-span-2 block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-lab-ink sm:col-span-1 sm:col-start-3 ${titleClass}`}
+        className={`block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-lab-ink ${titleClass}`}
       >
         {item.title}
       </span>
@@ -54,7 +55,7 @@ export function HomeFeed({ updates, className = "" }: { updates: readonly HomeUp
   const selected = selectHomeUpdates(updates, "all");
 
   return (
-    <section aria-labelledby="home-feed" className={`min-w-0 lg:col-span-7 lg:col-start-6 ${className}`}>
+    <section aria-labelledby="home-feed" className={`min-w-0 ${className}`}>
       <h2 id="home-feed" className="text-[11px] tracking-[0.18em] text-lab-primary">
         最新动态
       </h2>

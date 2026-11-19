@@ -22,7 +22,7 @@ export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
         className="hero-wash pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--lab-primary)_28%,transparent),transparent_62%)]"
       />
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-x-4 gap-y-6 pt-4 lg:grid-cols-12 lg:items-start lg:gap-x-10 lg:pt-10">
-        <figure className="col-start-1 row-start-1 lg:col-span-5 lg:row-span-2">
+        <figure className="col-start-1 row-start-1 lg:col-span-4 lg:row-span-2">
           <Link
             href="/dafeiyu?character=xiaomei"
             aria-label="小莓的房间"
@@ -38,13 +38,13 @@ export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
                 height={PORTRAIT.height}
                 decoding="async"
                 fetchPriority="low"
-                className="h-auto max-h-40 w-auto max-w-[6.25rem] object-contain min-[420px]:max-h-56 min-[420px]:max-w-[9.5rem] sm:max-h-72 sm:max-w-[14rem] lg:h-auto lg:max-h-[62vh] lg:w-full lg:max-w-full"
+                className="portrait-still h-auto max-h-72 w-auto object-contain sm:max-h-80 lg:max-h-[68vh] lg:w-full lg:max-w-full"
               />
             </Tilt>
           </Link>
         </figure>
 
-        <div className="col-start-2 row-start-1 min-w-0 self-center lg:col-span-7 lg:col-start-6 lg:self-start">
+        <div className="col-start-2 row-start-1 min-w-0 self-center lg:col-span-8 lg:col-start-5 lg:self-start">
           <p className="text-[11px] tracking-[0.18em] text-lab-primary">{profileConfig.latinName}</p>
           <h1 className="mt-2 text-display-hero max-[420px]:text-[1.7rem] max-[420px]:leading-tight">{profileConfig.displayName}</h1>
           <p className="mt-3 text-sm text-lab-ink-muted">{profileConfig.tags.join(" · ")}</p>
@@ -58,7 +58,7 @@ export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
           </Magnetic>
         </div>
 
-        <HomeFeed updates={updates} className="col-span-2 lg:col-span-7 lg:col-start-6" />
+        <HomeFeed updates={updates} className="col-span-2 lg:col-span-8 lg:col-start-5" />
       </div>
       <HomeChannels />
     </main>
