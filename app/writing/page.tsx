@@ -30,6 +30,15 @@ export default function WritingPage() {
           description="长文和随记。"
           headingLevel="h1"
         />
+        <p className="mt-6 max-w-xl text-sm leading-relaxed text-lab-ink-subtle">
+          <Link
+            href="/writing/motion"
+            className="text-lab-ink underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-lab-primary"
+          >
+            动效笔记
+          </Link>
+          把那段动效课落到页面上的记录。
+        </p>
 
         {empty ? (
           <div className="mt-12">

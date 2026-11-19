@@ -49,11 +49,14 @@ export function SiteHeader({
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "inline-flex min-h-11 items-center rounded-md px-2.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-lab-primary",
-                    active ? "text-lab-primary" : "text-lab-ink-subtle hover:text-lab-ink"
+                    "relative inline-flex min-h-11 items-center rounded-md px-2.5 text-sm outline-none transition-transform duration-200 active:translate-y-px motion-reduce:transition-none motion-reduce:active:translate-y-0 focus-visible:ring-2 focus-visible:ring-lab-primary",
+                    "after:absolute after:inset-x-2.5 after:bottom-1.5 after:h-px after:origin-left after:bg-lab-primary after:transition-transform after:duration-200 motion-reduce:after:transition-none",
+                    active
+                      ? "text-lab-primary after:scale-x-100"
+                      : "text-lab-ink-subtle after:scale-x-0 visited:text-lab-ink-subtle hover:text-lab-ink hover:after:scale-x-100 focus-visible:text-lab-ink focus-visible:after:scale-x-100"
                   )}
                 >
-                  {item.navLabel ?? item.title}
+                  {item.title}
                 </Link>
               );
             })}

@@ -533,6 +533,223 @@
   }
 }
 
+/* 栏目卡片不依赖 Tailwind 的 hover 媒体查询，键盘和触控按下也能看到同一套变化。 */
+a.channel-card:hover .channel-title,
+a.channel-card:focus-visible .channel-title,
+a.channel-card:active .channel-title,
+a.channel-card:hover .channel-icon,
+a.channel-card:focus-visible .channel-icon,
+a.channel-card:active .channel-icon {
+  color: var(--lab-primary);
+}
+a.channel-card:hover .channel-desc,
+a.channel-card:focus-visible .channel-desc,
+a.channel-card:active .channel-desc {
+  color: var(--lab-ink);
+}
+a.channel-card:hover .channel-line,
+a.channel-card:focus-visible .channel-line,
+a.channel-card:active .channel-line {
+  transform: scaleX(1);
+}
+a.channel-card:hover .channel-arrow,
+a.channel-card:focus-visible .channel-arrow {
+  transform: translateX(0.25rem);
+}
+a.channel-card:hover,
+a.channel-card:focus-visible {
+  transform: translateY(-0.25rem);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lab-primary) 35%, transparent),
+    0 16px 36px -18px color-mix(in srgb, var(--lab-primary) 45%, transparent);
+}
+a.channel-card:active {
+  transform: translateY(0) scale(0.98);
+}
+a.channel-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease-out;
+}
+a.channel-card > * {
+  position: relative;
+  z-index: 1;
+}
+@media (pointer: fine) {
+  a.channel-card[data-lit="true"]:hover::after {
+    opacity: 1;
+    background: radial-gradient(
+      140px circle at var(--spot-x, 50%) var(--spot-y, 30%),
+      color-mix(in srgb, var(--lab-primary) 42%, transparent),
+      transparent 68%
+    );
+  }
+}
+a.channel-card:focus-visible::after {
+  opacity: 1;
+  background: radial-gradient(
+    140px circle at 50% 30%,
+    color-mix(in srgb, var(--lab-primary) 42%, transparent),
+    transparent 68%
+  );
+}
+.spotlight-pad[data-lit="true"] {
+  background: radial-gradient(
+    80px circle at var(--spot-x, 50%) var(--spot-y, 30%),
+    color-mix(in srgb, var(--lab-primary) 55%, transparent),
+    transparent 70%
+  );
+}
+
+@property --beam {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.channel-beam {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--beam), transparent 0 74%, var(--lab-primary) 86%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+}
+@media (pointer: fine) {
+  a.channel-card:hover .channel-beam,
+  a.channel-card:focus-visible .channel-beam {
+    opacity: 1;
+    animation: beam-spin 2.6s linear infinite;
+  }
+}
+@keyframes beam-spin {
+  to { --beam: 360deg; }
+}
+
+.stagger-item.is-in {
+  animation: stagger-in 280ms ease-out;
+}
+@keyframes stagger-in {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stagger-item,
+  .stagger-item.is-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.portrait-still {
+  object-view-box: inset(19% 29% 14% 29%);
+}
+
+.hero-wash {
+  pointer-events: none;
+}
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .hero-wash {
+    animation: hero-wash-drift linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 50vh;
+  }
+}
+@keyframes hero-wash-drift {
+  to { transform: translateY(28px); }
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 32%, color-mix(in srgb, white 55%, transparent) 50%, transparent 68%);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+@media (pointer: fine) {
+  .btn-shimmer:hover::after,
+  .btn-shimmer:focus-visible::after {
+    animation: shimmer-pass 640ms ease-out 1;
+  }
+}
+@keyframes shimmer-pass {
+  to { transform: translateX(130%); }
+}
+
+.nav-drawer {
+  animation: nav-spring 280ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
+}
+@keyframes nav-spring {
+  0% { transform: translateY(-10px) scale(0.95); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-run 22s linear infinite;
+}
+.beam-demo {
+  opacity: 1;
+  animation: beam-spin 2.6s linear infinite;
+}
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track,
+.marquee[data-paused="true"] .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-run {
+  to { transform: translateX(-50%); }
+}
+
+.type-caret {
+  display: inline-block;
+  width: 1px;
+  height: 1em;
+  margin-left: 2px;
+  background: var(--lab-primary);
+  vertical-align: text-bottom;
+  animation: caret-blink 1s steps(1) infinite;
+}
+@keyframes caret-blink {
+  50% { opacity: 0; }
+}
+
+.ease-track > span {
+  display: block;
+  width: 2.5rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: var(--lab-primary);
+}
+.ease-track.is-playing > span.ease-linear {
+  animation: ease-slide 900ms linear 1;
+}
+.ease-track.is-playing > span.ease-out {
+  animation: ease-slide 900ms cubic-bezier(0.22, 1, 0.36, 1) 1;
+}
+@keyframes ease-slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(min(18rem, 60vw)); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -540,6 +757,18 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .marquee-track,
+  .type-caret,
+  .channel-beam,
+  .beam-demo {
+    animation: none !important;
+  }
+  .marquee-track {
+    transform: none !important;
+  }
+  .type-caret {
+    opacity: 1 !important;
   }
 }
 

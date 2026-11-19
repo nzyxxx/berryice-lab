@@ -1,5 +1,8 @@
+import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
+import { CountUp } from "@/components/lab/motion-play";
 import { PageContainer } from "@/components/lab/page-container";
 import { PageShell } from "@/components/lab/page-shell";
+import { guns } from "@/lib/data/guns-catalog";
 import { PUBLIC_GAMES, UNSORTED_GAME_ID } from "@/lib/games/catalog";
 import { filterGameEntries } from "@/lib/games/knowledge";
 import { listGameIndex } from "@/lib/games/store";
@@ -29,7 +32,7 @@ export default async function GamesPage() {
 
   return (
     <PageShell backHref="/" backLabel="首页">
-      <PageContainer className="max-w-3xl">
+      <PageContainer>
         <p className="text-[11px] tracking-[0.18em] text-lab-primary">01 / 游戏</p>
         <h1 className="mt-3 text-display-section text-balance">游戏</h1>
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-lab-ink-muted">
@@ -50,8 +53,41 @@ export default async function GamesPage() {
                   </Link>
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-lab-ink-subtle">{game.blurb}</p>
+                {game.tools.length > 0 ? (
+                  <div className={glassSurfaceClass("mt-4 rounded-2xl p-4")}>
+                    <p className="text-[11px] tracking-[0.18em] text-lab-primary">工具</p>
+                    <Link
+                      href="/delta-gun/community"
+                      className="mt-2 inline-flex min-h-11 items-center text-[15px] font-medium tracking-tight text-lab-ink outline-none transition-colors hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-primary"
+                    >
+                      社区改枪码
+                    </Link>
+                    <p className="text-xs leading-relaxed text-lab-ink-subtle">
+                      筛选、搜索和复制都在原来的改枪页。枪械库{" "}
+                      <CountUp value={guns.length} /> 支，按目录现数，不是访客数。
+                    </p>
+                    <ul className="mt-2 flex flex-wrap gap-x-4">
+                      {game.tools
+                        .filter((tool) => tool.href !== "/delta-gun/community")
+                        .map((tool) => (
+                          <li key={tool.href}>
+                            <Link
+                              href={tool.href}
+                              className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle outline-none hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary"
+                            >
+                              {tool.label}
+                            </Link>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <p className="mt-3 text-sm text-lab-ink-muted">
-                  {page.total === 0 ? "还没有攻略。" : `${page.total} 条。`}
+                  {page.total === 0
+                    ? game.tools.length > 0
+                      ? "攻略目录还是空的。上面的工具照常开。"
+                      : "攻略目录还是空的。"
+                    : `公开攻略 ${page.total} 条。`}
                 </p>
               </li>
             );

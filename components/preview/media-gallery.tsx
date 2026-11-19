@@ -1,5 +1,6 @@
 import { HomeChannels } from "@/components/preview/home-channels";
 import { HomeFeed } from "@/components/preview/home-feed";
+import { Magnetic, Tilt } from "@/components/lab/motion-play";
 import type { HomeUpdate } from "@/lib/content/home-feed";
 import { profileConfig } from "@/lib/site-config";
 import Link from "next/link";
@@ -15,33 +16,49 @@ const PORTRAIT = {
 /** 首页：小莓全身静帧和人名是一幅构图，最新动态靠在旁边。 */
 export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
   return (
-    <main id="main" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-5 pb-8 sm:px-6">
-      <div className="grid grid-cols-1 items-start gap-x-10 gap-y-6 pt-4 lg:grid-cols-12 lg:pt-10">
-        <div className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
-          <p className="text-[11px] tracking-[0.18em] text-lab-primary">{profileConfig.latinName}</p>
-          <h1 className="mt-2 text-display-hero">{profileConfig.displayName}</h1>
-          <p className="mt-3 text-sm text-lab-ink-muted">{profileConfig.tags.join(" · ")}</p>
-        </div>
-
-        <figure className="lg:col-span-5 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+    <main id="main" className="relative mx-auto w-full min-w-0 max-w-6xl flex-1 px-5 pb-8 sm:px-6">
+      <div
+        aria-hidden
+        className="hero-wash pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--lab-primary)_28%,transparent),transparent_62%)]"
+      />
+      <div className="grid grid-cols-[minmax(0,max-content)_minmax(11.5rem,1fr)] items-end gap-x-4 gap-y-6 pt-4 lg:grid-cols-12 lg:items-start lg:gap-x-10 lg:pt-10">
+        <figure className="col-start-1 row-start-1 min-w-0 lg:col-span-4 lg:row-span-2">
           <Link
             href="/dafeiyu?character=xiaomei"
             aria-label="小莓的房间"
-            className="mx-auto block w-full max-w-[20rem] rounded-md outline-none focus-visible:ring-2 focus-visible:ring-lab-primary lg:mx-0 lg:max-w-none"
+            className="block w-fit max-w-full min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
           >
-            <img
-              src={PORTRAIT.src}
-              alt="小莓"
-              width={PORTRAIT.width}
-              height={PORTRAIT.height}
-              decoding="async"
-              fetchPriority="low"
-              className="h-auto w-full object-contain lg:max-h-[62vh] lg:w-auto"
-            />
+            <Tilt>
+              {/* 定稿静帧，保持原比例。窄屏让出名字的一行宽度，不另裁人物。 */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={PORTRAIT.src}
+                alt="小莓"
+                width={PORTRAIT.width}
+                height={PORTRAIT.height}
+                decoding="async"
+                fetchPriority="low"
+                className="portrait-still h-auto max-h-72 w-auto min-w-0 max-w-full object-contain sm:max-h-80 lg:max-h-[68vh] lg:w-full lg:max-w-full"
+              />
+            </Tilt>
           </Link>
         </figure>
 
-        <HomeFeed updates={updates} />
+        <div className="col-start-2 row-start-1 min-w-0 self-center lg:col-span-8 lg:col-start-5 lg:self-start">
+          <p className="text-[11px] tracking-[0.18em] text-lab-primary">{profileConfig.latinName}</p>
+          <h1 className="mt-2 whitespace-nowrap text-display-hero">{profileConfig.displayName}</h1>
+          <p className="mt-3 text-sm text-lab-ink-muted">{profileConfig.tags.join(" · ")}</p>
+          <Magnetic className="mt-4">
+            <Link
+              href="/dafeiyu?character=xiaomei"
+              className="btn-shimmer inline-flex min-h-11 items-center rounded-full border border-lab-primary/35 bg-lab-primary/12 px-4 text-sm text-lab-primary outline-none transition-colors duration-200 ease-out hover:bg-lab-primary/18 focus-visible:ring-2 focus-visible:ring-lab-primary"
+            >
+              进小莓的房间
+            </Link>
+          </Magnetic>
+        </div>
+
+        <HomeFeed updates={updates} className="col-span-2 lg:col-span-8 lg:col-start-5" />
       </div>
       <HomeChannels />
     </main>

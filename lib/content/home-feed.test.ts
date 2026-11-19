@@ -307,7 +307,7 @@ test("首页在请求时读笔记目录，不把仓库里的两篇写死", () =>
 test("首页不把枪、歌单或动画静帧当成动态", () => {
   const feed = readFileSync(new URL("./home-feed.ts", import.meta.url), "utf8");
   const gallery = readFileSync(new URL("../../components/preview/media-gallery.tsx", import.meta.url), "utf8");
-  const channelData = readFileSync(new URL("./home-channels.ts", import.meta.url), "utf8");
+  const channelData = readFileSync(new URL("../site-config.ts", import.meta.url), "utf8");
   const channelView = readFileSync(new URL("../../components/preview/home-channels.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(feed, /playlist|localStorage|mtime|git /);
   assert.match(gallery, /最新动态/);
@@ -318,12 +318,15 @@ test("首页不把枪、歌单或动画静帧当成动态", () => {
   assert.match(feedView, /whitespace-nowrap/);
   assert.match(feedView, /text-ellipsis/);
   assert.doesNotMatch(feedView, /justify-center/);
-  assert.doesNotMatch(footer, /moduleLinks|ghs\.png/);
+  assert.doesNotMatch(footer, /moduleLinks/);
+  assert.match(footer, /\/beian\/ghs\.png/);
+  assert.doesNotMatch(footer, /beian\.gov\.cn\/img\/ghs/);
   assert.match(footer, /icpNumber/);
   assert.match(footer, /policeNumber/);
   assert.doesNotMatch(gallery, /awm\.webp|idle-candd-24\.webp/);
   assert.match(channelView, /Gamepad2/);
   assert.match(channelData, /href: "\/games"/);
+  assert.match(channelData, /siteIndex/);
   assert.doesNotMatch(channelView, /delta-gun|awm|Crosshair/);
   for (const href of ["/wiki", "/games", "/music", "/stickers", "/about", "/writing"]) {
     assert.match(channelData, new RegExp(href.replaceAll("/", "\\/")));

@@ -1,4 +1,5 @@
 import { GameEntryList, GameSearch } from "@/components/games/game-space";
+import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
 import { PageContainer } from "@/components/lab/page-container";
 import { PageShell } from "@/components/lab/page-shell";
 import { PUBLIC_GAMES, UNSORTED_GAME_ID, publicGame } from "@/lib/games/catalog";
@@ -68,24 +69,32 @@ export default async function GameSpacePage({ params, searchParams }: PageProps)
 
   return (
     <PageShell backHref="/games" backLabel="游戏">
-      <PageContainer className="max-w-3xl">
+      <PageContainer>
         <p className="text-[11px] tracking-[0.18em] text-lab-primary">02 / {game.title}</p>
         <h1 className="mt-3 text-display-section text-balance">{game.title}</h1>
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-lab-ink-muted">{game.blurb}</p>
         {game.tools.length > 0 ? (
-          <nav aria-label="工具" className="mt-6">
-            <p className="text-[11px] tracking-[0.18em] text-lab-ink-subtle">常用工具</p>
+          <nav aria-label="工具" className={glassSurfaceClass("mt-6 rounded-2xl p-4")}>
+            <p className="text-[11px] tracking-[0.18em] text-lab-primary">工具</p>
+            <Link
+              href="/delta-gun/community"
+              className="mt-2 inline-flex min-h-11 items-center text-[15px] font-medium tracking-tight text-lab-ink outline-none hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-primary"
+            >
+              社区改枪码
+            </Link>
             <ul className="mt-1 flex flex-wrap gap-x-4">
-              {game.tools.map((tool) => (
-                <li key={tool.href}>
-                  <Link
-                    href={tool.href}
-                    className="inline-flex min-h-11 items-center text-sm text-lab-ink outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
-                  >
-                    {tool.label}
-                  </Link>
-                </li>
-              ))}
+              {game.tools
+                .filter((tool) => tool.href !== "/delta-gun/community")
+                .map((tool) => (
+                  <li key={tool.href}>
+                    <Link
+                      href={tool.href}
+                      className="inline-flex min-h-11 items-center text-sm text-lab-ink-subtle outline-none hover:text-lab-ink focus-visible:ring-2 focus-visible:ring-lab-primary"
+                    >
+                      {tool.label}
+                    </Link>
+                  </li>
+                ))}
             </ul>
           </nav>
         ) : null}

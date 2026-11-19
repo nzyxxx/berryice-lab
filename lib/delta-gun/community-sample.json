@@ -1,0 +1,88 @@
+{
+  "source": "https://berryice.cn/api/gun-codes?limit=8",
+  "sampledAt": "2026-11-19T11:08:12Z",
+  "note": "生产公开只读样本，只给筛选和复制回归。不是要写进页面的总数。",
+  "countAtSample": 8,
+  "data": [
+    {
+      "game": "大战场",
+      "weapon": "K437突击步枪",
+      "fullCode": "6JQ3PG00FKLSP2R6J3NCE",
+      "description": "红点 高性价比·很稳",
+      "valueText": "30W",
+      "season": "当季",
+      "postedAt": "Wed Nov 18 2026 20:17:06 GMT+0800 (China Standard Time)",
+      "source": "g.aitags.cn"
+    },
+    {
+      "game": "烽火",
+      "weapon": "K437",
+      "fullCode": "K437突击步枪-烽火地带-6JQ3PG00FKLSP2R6J3NCE",
+      "description": "红点 高性价比·很稳",
+      "valueText": "30W",
+      "season": "当季",
+      "postedAt": "Mon Nov 16 2026 20:17:02 GMT+0800 (China Standard Time)",
+      "source": "g.aitags.cn"
+    },
+    {
+      "game": "大战场",
+      "weapon": "AS Val",
+      "fullCode": "6GL0C5O094898G9NDDGRT",
+      "description": "半改",
+      "valueText": "39W",
+      "season": "当季",
+      "postedAt": "Wed Nov 18 2026 20:17:05 GMT+0800 (China Standard Time)",
+      "source": "g.aitags.cn"
+    },
+    {
+      "game": "大战场",
+      "weapon": "M4A1",
+      "fullCode": "6G94AKO0FHI6PKF6C3P0U",
+      "description": "适合机密",
+      "valueText": "33W",
+      "season": "当季",
+      "postedAt": "Wed Nov 18 2026 20:17:04 GMT+0800 (China Standard Time)",
+      "source": "g.aitags.cn"
+    },
+    {
+      "game": "大战场",
+      "weapon": "SR-25",
+      "fullCode": "6GRAP2S0AV5BVPK0VDMCD",
+      "description": "3/7倍镜",
+      "valueText": "52W",
+      "season": "当季",
+      "postedAt": "Wed Nov 18 2026 20:17:04 GMT+0800 (China Standard Time)",
+      "source": "g.aitags.cn"
+    },
+    {
+      "game": "大战场",
+      "weapon": "KC17突击步枪",
+      "fullCode": "6HH8PD802AMR3AEE8LQVJ",
+      "description": "纯粑粑配件，好压",
+      "valueText": "25W",
+      "season": "当季",
+      "postedAt": "Wed Nov 18 2026 20:17:03 GMT+0800 (China Standard Time)",
+      "source": "g.aitags.cn"
+    },
+    {
+      "game": "大战场",
+      "weapon": "SR-3M",
+      "fullCode": "6GS6MS006U3GLSPD6DRKM",
+      "description": "92腰射·红外",
+      "valueText": "23W",
+      "season": "当季",
+      "postedAt": "Wed Nov 18 2026 20:17:05 GMT+0800 (China Standard Time)",
+      "source": "g.aitags.cn"
+    },
+    {
+      "game": "大战场",
+      "weapon": "AUG突击步枪",
+      "fullCode": "6HFTMTK0EAR06C6UBJ9VT",
+      "description": "集成3倍镜",
+      "valueText": "21W",
+      "season": "当季",
+      "postedAt": "Wed Nov 18 2026 20:17:05 GMT+0800 (China Standard Time)",
+      "source": "g.aitags.cn"
+    }
+  ]
+}

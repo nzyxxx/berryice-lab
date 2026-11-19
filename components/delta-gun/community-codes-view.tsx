@@ -10,11 +10,11 @@ import { MotionReveal } from "@/components/lab/motion-reveal";
 import { Panel } from "@/components/lab/module-card";
 import { GameModeTabs } from "@/components/delta-gun/game-mode-tabs";
 import { GAME_MODES, type GameMode } from "@/lib/delta-gun/game-modes";
+import { filterCommunityCodes } from "@/lib/delta-gun/community-filter";
 import { isStaleCode } from "@/lib/delta-gun/season";
 import {
   artworkForWeaponName,
   inferWeaponType,
-  parseValueScore,
   weaponTypeLabel,
 } from "@/lib/delta-gun/weapon-utils";
 import type { GunType } from "@/lib/types/gun";
@@ -116,36 +116,21 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
   }, [communityCodes]);
 
   const filteredCodes = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    let list = [...communityCodes];
-
-    if (activeCategory !== "all") {
-      list = list.filter((item) => inferWeaponType(item.weapon) === activeCategory);
-    }
-    if (weaponFilter !== "all") {
-      list = list.filter((item) => item.weapon === weaponFilter);
-    }
-    if (!showStale) {
-      list = list.filter(
-        (item) => !isStaleCode({ season: item.season, postedAt: item.postedAt || item.collectedAt })
-      );
-    }
-
-    if (q) {
-      list = list.filter(
-        (item) =>
-          item.weapon.toLowerCase().includes(q) ||
-          item.fullCode.toLowerCase().includes(q) ||
-          item.description.toLowerCase().includes(q)
-      );
-    }
-
-    list.sort((a, b) => {
-      if (sortBy === "value") return parseValueScore(b.valueText) - parseValueScore(a.valueText);
-      return b.copyCount - a.copyCount;
-    });
-
-    return list;
+    const fresh = showStale
+      ? communityCodes
+      : communityCodes.filter(
+          (item) => !isStaleCode({ season: item.season, postedAt: item.postedAt || item.collectedAt })
+        );
+    return filterCommunityCodes(
+      fresh,
+      {
+        q: searchQuery,
+        category: activeCategory,
+        weapon: weaponFilter,
+        sort: sortBy,
+      },
+      inferWeaponType
+    );
   }, [communityCodes, searchQuery, sortBy, activeCategory, weaponFilter, showStale]);
 
   const hotRankMap = useMemo(() => {
@@ -315,6 +300,19 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
             显示 {filteredCodes.length} / {communityCodes.length} 条
             {activeCategory !== "all" && ` · ${weaponTypeLabel(activeCategory)}`}
             {weaponFilter !== "all" && ` · ${weaponFilter}`}
+            {(searchQuery || activeCategory !== "all" || weaponFilter !== "all") && (
+              <button
+                type="button"
+                className="ml-3 inline-flex min-h-11 items-center underline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveCategory("all");
+                  setWeaponFilter("all");
+                }}
+              >
+                清除条件
+              </button>
+            )}
             <button type="button" className="ml-3 underline" onClick={() => setShowStale((value) => !value)}>
               {showStale ? "隐藏过季" : "显示过季"}
             </button>
@@ -337,10 +335,21 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
             <CommunityCodeCardSkeleton key={i} />
           ))}
         </div>
-      ) : filteredCodes.length === 0 ? (
+      ) : error ? null : filteredCodes.length === 0 ? (
         <Panel className="py-16 text-center">
           <p className="text-lg font-medium text-lab-ink">暂无匹配方案</p>
           <p className="mt-2 text-sm text-lab-ink-subtle">调整筛选条件。社区枪码由服务端定时同步。</p>
+          <button
+            type="button"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full px-4 text-sm text-lab-ink outline-none hover:text-lab-primary focus-visible:ring-2 focus-visible:ring-lab-primary"
+            onClick={() => {
+              setSearchQuery("");
+              setActiveCategory("all");
+              setWeaponFilter("all");
+            }}
+          >
+            清除条件
+          </button>
         </Panel>
       ) : ring ? (
         <CodeRing items={filteredCodes.slice(0, 12)} onCopy={(code) => void copyCode(code)} />

@@ -71,7 +71,7 @@ export function MobileNav() {
     cn(
       "flex min-h-11 items-center rounded-md text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-lab-primary",
       nested ? "pl-8 pr-3 text-sm" : "px-3",
-      active ? "text-lab-primary" : "text-lab-ink hover:text-lab-ink"
+      active ? "text-lab-primary" : "text-lab-ink hover:text-lab-primary focus-visible:text-lab-primary"
     );
 
   const drawer = open ? (
@@ -88,7 +88,7 @@ export function MobileNav() {
         aria-modal="true"
         aria-label="站点导航"
         tabIndex={-1}
-        className="absolute inset-x-3 top-3 rounded-2xl border border-lab-hairline bg-lab-canvas p-3 outline-none"
+        className="nav-drawer absolute inset-x-3 top-3 rounded-2xl border border-lab-hairline bg-lab-canvas p-3 outline-none"
       >
         <div className="flex items-center justify-between px-3 pb-1">
           <span className="text-sm text-lab-ink-subtle">菜单</span>

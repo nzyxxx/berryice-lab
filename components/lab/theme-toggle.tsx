@@ -15,7 +15,8 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={isDark ? "切换到浅色主题" : "切换到深色主题"}
       className={cn(
         "inline-flex size-11 items-center justify-center rounded-md text-lab-ink-subtle",
-        "transition-colors hover:text-lab-ink",
+        "transition-transform duration-200 hover:text-lab-ink active:translate-y-px active:scale-95",
+        "motion-reduce:transition-none motion-reduce:active:translate-y-0 motion-reduce:active:scale-100",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lab-primary",
         className
       )}
