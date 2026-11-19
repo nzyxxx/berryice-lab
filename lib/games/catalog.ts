@@ -1,5 +1,6 @@
 /**
- * 公开游戏只列站上已经确认、并且另有工具页的游戏。
+ * 公开游戏。有工具页的才把地址放进 tools。
+ * 只有攻略、没有工具的，tools 留空，不要链到不存在的页。
  * 测试可以再传入别的 id，那些 id 不会出现在这个清单里。
  */
 export const PUBLIC_GAMES = [
@@ -13,6 +14,12 @@ export const PUBLIC_GAMES = [
       { href: "/delta-gun/community", label: "社区改枪码" },
       { href: "/delta-gun/streamers", label: "主播配装" },
     ],
+  },
+  {
+    id: "palworld",
+    title: "幻兽帕鲁",
+    blurb: "外出配队、据点用工和词条。",
+    tools: [],
   },
 ] as const;
 

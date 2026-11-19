@@ -102,8 +102,9 @@ export function resolveListedGame(
   if (value === "" || value === UNSORTED_GAME_ID || value === "未归类") {
     return { gameId: UNSORTED_GAME_ID, unresolvedGame: null };
   }
-  if (games.some((game) => game.id === value)) {
-    return { gameId: value, unresolvedGame: null };
+  const listed = games.find((game) => game.id === value || game.title === value);
+  if (listed) {
+    return { gameId: listed.id, unresolvedGame: null };
   }
   return { gameId: UNSORTED_GAME_ID, unresolvedGame: value };
 }

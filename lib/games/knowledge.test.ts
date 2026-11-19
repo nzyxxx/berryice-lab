@@ -8,7 +8,7 @@ import test from "node:test";
 import { listWikiNotes } from "../content/wiki-store.ts";
 import { PUBLIC_GAMES } from "./catalog.ts";
 import { handleGameKnowledgeGet, handleGameKnowledgePost } from "./http.ts";
-import { filterGameEntries, readGameEntry, wikiIngestConflict } from "./knowledge.ts";
+import { filterGameEntries, prepareGameWrite, readGameEntry, wikiIngestConflict } from "./knowledge.ts";
 import { listGameEntries, saveGameKnowledge } from "./store.ts";
 
 const games = [
@@ -35,11 +35,36 @@ function entry(slug: string, gameId: string, title: string, extra: Record<string
   };
 }
 
-test("公开游戏只有已确认的三角洲，夹具游戏不在清单里", () => {
+test("公开游戏是三角洲和幻兽帕鲁，帕鲁没有工具页", () => {
   assert.deepEqual(
     PUBLIC_GAMES.map((game) => game.id),
-    ["delta"]
+    ["delta", "palworld"]
   );
+  assert.deepEqual(PUBLIC_GAMES.find((game) => game.id === "palworld")?.tools, []);
+  const accepted = prepareGameWrite(
+    {
+      slug: "20261119-palworld-party-and-base",
+      gameId: "幻兽帕鲁",
+      kind: "攻略",
+      title: "幻兽帕鲁0–80级配队与基地用工推荐",
+      body: "外出五格按这次要做的事换。",
+      publish: true,
+    },
+    PUBLIC_GAMES
+  );
+  assert.equal("gameId" in accepted ? accepted.gameId : "", "palworld");
+  const rejected = prepareGameWrite(
+    {
+      slug: "not-a-game",
+      gameId: "valorant",
+      kind: "guide",
+      title: "不会归进帕鲁",
+      body: "正文。",
+    },
+    PUBLIC_GAMES
+  );
+  assert.equal("ok" in rejected && rejected.ok === false, true);
+  if ("ok" in rejected && rejected.ok === false) assert.equal(rejected.status, 400);
   const nav = readFileSyncNav();
   for (const href of [
     "/delta-gun",

@@ -35,7 +35,7 @@ export function SiteShell({
       >
         跳到主内容
       </a>
-      <div className="relative z-10 flex flex-1 flex-col">{children}</div>
+      <div className="relative z-10 flex w-full min-w-0 flex-1 flex-col">{children}</div>
       {!hideFooter && <SiteFooter />}
     </div>
   );

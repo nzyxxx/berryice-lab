@@ -1,0 +1,361 @@
+{
+  "generated_at": "2026-11-19 17:36:46 Asia/Shanghai",
+  "status": "v5 website draft only, not published, do not import",
+  "website_image_prefix": "/palworld/guides-v5-20261119",
+  "does_not_touch_old_namespace": "/palworld/guides-20261119",
+  "originals": [
+    {
+      "file": "post_01.md",
+      "bytes": 16778,
+      "sha256": "0882c627c52d4704544f38a51304d09080c7fbd5ffeed9a7cc53acefe13d2bab",
+      "pack_path": "originals/post_01.md"
+    },
+    {
+      "file": "post_02.md",
+      "bytes": 9681,
+      "sha256": "3729f9d176f3648ff8b5d9819536ce3e98af64110eab8d8c855bac80ae6675ab",
+      "pack_path": "originals/post_02.md"
+    }
+  ],
+  "adapted": [
+    {
+      "original_file": "post_01.md",
+      "original_sha256": "0882c627c52d4704544f38a51304d09080c7fbd5ffeed9a7cc53acefe13d2bab",
+      "original_bytes": 16778,
+      "adapted_file": "website-adapted/20261119-palworld-party-and-base.md",
+      "adapted_sha256": "117253ca2ee0111bb1102da783a0a371fcd3157f2cc7131acdd07fa27eb9f260",
+      "payload_file": "payloads/20261119-palworld-party-and-base.json",
+      "payload_sha256": "5a7708dc80ecb2866977314b88ce7b216f25ccd303480e4eec9f50b030a39a0e",
+      "slug": "20261119-palworld-party-and-base",
+      "title": "幻兽帕鲁0–80级配队与基地用工推荐",
+      "gameId": "palworld",
+      "kind": "guide",
+      "publish": false,
+      "image_refs": 11,
+      "note": "草稿与 payload 均不得导入生产。publish=false。等待父级确认范围后再谈上线。未沿用 v4 payload。"
+    },
+    {
+      "original_file": "post_02.md",
+      "original_sha256": "3729f9d176f3648ff8b5d9819536ce3e98af64110eab8d8c855bac80ae6675ab",
+      "original_bytes": 9681,
+      "adapted_file": "website-adapted/20261119-palworld-passive-traits.md",
+      "adapted_sha256": "1c1427fba7f70a8b300db552b365eba69cd82657dabb4e8f4578450850968f05",
+      "payload_file": "payloads/20261119-palworld-passive-traits.json",
+      "payload_sha256": "96191cb0a257ede16df022e32dc117158e7de8244eb8f3145fddba4a1d604cfb",
+      "slug": "20261119-palworld-passive-traits",
+      "title": "幻兽帕鲁词条推荐：战斗、跑图和基地怎么配",
+      "gameId": "palworld",
+      "kind": "guide",
+      "publish": false,
+      "image_refs": 9,
+      "note": "草稿与 payload 均不得导入生产。publish=false。等待父级确认范围后再谈上线。未沿用 v4 payload。"
+    }
+  ],
+  "images": [
+    {
+      "original_ref": "images/01_00_20_base.jpg",
+      "filename": "01_00_20_base.jpg",
+      "source_bytes": 177669,
+      "source_sha256": "063e1df80367dc61c45346c6cfc079499370af4c88d2a9d2803c79a38a58b3c9",
+      "width": 1600,
+      "height": 1918,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_00_20_base.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "base_card"
+    },
+    {
+      "original_ref": "images/01_00_20_items.jpg",
+      "filename": "01_00_20_items.jpg",
+      "source_bytes": 55597,
+      "source_sha256": "4bce77bc77e2fec85ba7fe20d68bc76d25e7d9c9107fc4242ac93f367fdcf39e",
+      "width": 1600,
+      "height": 396,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_00_20_items.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/01_00_20_team.jpg",
+      "filename": "01_00_20_team.jpg",
+      "source_bytes": 160828,
+      "source_sha256": "5a0f5f853ce154280ebfd2f4027cf43ecb3bb2ebcb58f6b41671c6f22de115a5",
+      "width": 1600,
+      "height": 780,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_00_20_team.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "team_card"
+    },
+    {
+      "original_ref": "images/01_20_40_base.jpg",
+      "filename": "01_20_40_base.jpg",
+      "source_bytes": 166841,
+      "source_sha256": "08a7e66be0d9d8ec181b01a1068f4a9fe1ecd702a7b500ee7fcadac141522676",
+      "width": 1600,
+      "height": 1708,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_20_40_base.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "base_card"
+    },
+    {
+      "original_ref": "images/01_20_40_team.jpg",
+      "filename": "01_20_40_team.jpg",
+      "source_bytes": 153421,
+      "source_sha256": "ff0494617f6de173254beb18d18cee37a1ee24a2be5344a5d01f2e3d684a2523",
+      "width": 1600,
+      "height": 780,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_20_40_team.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "team_card"
+    },
+    {
+      "original_ref": "images/01_40_60_base.jpg",
+      "filename": "01_40_60_base.jpg",
+      "source_bytes": 165202,
+      "source_sha256": "786bd8d87f9c1bc6aad477550e7ac3d307e50d940875e12f45012738695c3500",
+      "width": 1600,
+      "height": 1708,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_40_60_base.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "base_card"
+    },
+    {
+      "original_ref": "images/01_40_60_team.jpg",
+      "filename": "01_40_60_team.jpg",
+      "source_bytes": 159763,
+      "source_sha256": "544c30509214d5407d77114cabf5448de8f0adfed316852a4c5812e1ef6d96ce",
+      "width": 1600,
+      "height": 780,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_40_60_team.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "team_card"
+    },
+    {
+      "original_ref": "images/01_60_80_base.jpg",
+      "filename": "01_60_80_base.jpg",
+      "source_bytes": 221284,
+      "source_sha256": "83926120871963fef57a72949d72c5969f3fc59dcfd5479120eba4fd9ed662c9",
+      "width": 1600,
+      "height": 2100,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_60_80_base.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "base_card"
+    },
+    {
+      "original_ref": "images/01_60_80_team.jpg",
+      "filename": "01_60_80_team.jpg",
+      "source_bytes": 198204,
+      "source_sha256": "3bf6e9098536a868b8c9956aba71741b8ee4790ff88e9ca43b90c665f543557b",
+      "width": 1600,
+      "height": 1036,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_60_80_team.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "team_card"
+    },
+    {
+      "original_ref": "images/01_80_100_base.jpg",
+      "filename": "01_80_100_base.jpg",
+      "source_bytes": 269404,
+      "source_sha256": "e35ba7601604c17b8afe85b60307dc5c5bb4f96df4cfbbcdfd69f7a831887712",
+      "width": 1600,
+      "height": 2492,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_80_100_base.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "base_card"
+    },
+    {
+      "original_ref": "images/01_80_100_team.jpg",
+      "filename": "01_80_100_team.jpg",
+      "source_bytes": 180188,
+      "source_sha256": "3e058c94c7ca638e2c36b5ecf9e90601d444b4d60de651e18cf736602c87df9f",
+      "width": 1600,
+      "height": 780,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/01_80_100_team.jpg",
+      "used_in": [
+        "post_01.md"
+      ],
+      "kind_guess": "team_card"
+    },
+    {
+      "original_ref": "images/02_base_facilities.jpg",
+      "filename": "02_base_facilities.jpg",
+      "source_bytes": 47404,
+      "source_sha256": "0c0c88061e5fd7a6c886d3169bd6c5258f9586a2e2c3b30b8ff5640a95bd4568",
+      "width": 1600,
+      "height": 396,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_base_facilities.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/02_breeding.jpg",
+      "filename": "02_breeding.jpg",
+      "source_bytes": 90154,
+      "source_sha256": "c92e337c1e7199fec70f1b1f25be62cbb16a13ad52cfe24b7ac239a399e8093e",
+      "width": 1600,
+      "height": 396,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_breeding.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/02_elec_cool.jpg",
+      "filename": "02_elec_cool.jpg",
+      "source_bytes": 39845,
+      "source_sha256": "c60a58b33bff7820e4e260130bb3e3980c6283f8a8e467f552ed2d1a64b5ad33",
+      "width": 1600,
+      "height": 396,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_elec_cool.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/02_legend_pals.jpg",
+      "filename": "02_legend_pals.jpg",
+      "source_bytes": 91324,
+      "source_sha256": "cfeb6ab6e78bfb59b4088d0682031a695e96aab49453b5fdd37069e28c9a575d",
+      "width": 1600,
+      "height": 370,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_legend_pals.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/02_partner_skills.jpg",
+      "filename": "02_partner_skills.jpg",
+      "source_bytes": 99329,
+      "source_sha256": "cd6e2531dfd999c646e1e1597a20083a01e342441d443deb1bf17cdad15d13f2",
+      "width": 1600,
+      "height": 400,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_partner_skills.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/02_ranch_items.jpg",
+      "filename": "02_ranch_items.jpg",
+      "source_bytes": 56824,
+      "source_sha256": "c0419509ca2a86b15756e83809b8f17c5635580d45175c145a50e68d927a9ae3",
+      "width": 1600,
+      "height": 396,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_ranch_items.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/02_ranch_pals.jpg",
+      "filename": "02_ranch_pals.jpg",
+      "source_bytes": 70798,
+      "source_sha256": "115c0183035199d4f6934b4f0ec510358e10e669612cd2491743cc45bfe32bdf",
+      "width": 1600,
+      "height": 397,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_ranch_pals.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/02_tools.jpg",
+      "filename": "02_tools.jpg",
+      "source_bytes": 76149,
+      "source_sha256": "f8e9989c74ed3ceb22d588c6e4a3c2357b8b0526e8d08f059f6510d2d0b4f8bc",
+      "width": 1600,
+      "height": 665,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_tools.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    },
+    {
+      "original_ref": "images/02_transport.jpg",
+      "filename": "02_transport.jpg",
+      "source_bytes": 40772,
+      "source_sha256": "84606f99bc9c491697e2a2510199b5a4929fdc5599d7ace66b3e311aae0f2435",
+      "width": 1600,
+      "height": 396,
+      "mode": "RGB",
+      "format": "JPEG",
+      "website_path": "/palworld/guides-v5-20261119/02_transport.jpg",
+      "used_in": [
+        "post_02.md"
+      ],
+      "kind_guess": "row_card"
+    }
+  ],
+  "representatives": [
+    "01_00_20_team.jpg",
+    "01_00_20_base.jpg",
+    "02_legend_pals.jpg"
+  ]
+}
