@@ -1,6 +1,6 @@
 "use client";
 
-import { CountUp, Magnetic, Tilt, spotMove } from "@/components/lab/motion-play";
+import { CountUp, DemoBeam, Magnetic, Marquee, Tilt, TypeCaret, spotLeave, spotMove } from "@/components/lab/motion-play";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -127,7 +127,7 @@ const CHAPTERS = [
     en: "Marquee",
     title: "跑马灯",
     time: "04:07–04:22",
-    body: "两段相同的名字并排，匀速移到一半就接上，看起来没有断点。悬停、焦点停在组件里、或按下暂停，都会把 animation-play-state 设成 paused。滚动的那一层不进无障碍树，下面的章节标题才是可访问的正文。",
+    body: "两段相同的名字并排，匀速移到一半就接上，看起来没有断点。悬停、焦点落在灯带上、或按下暂停，都会把当前位移定住，之后的滚动和再移入不再改这个位置。离开屏幕或切到别的标签也停。减少动效时灯带停在起点，动画是 none，不是把时长压到 0.01 毫秒。滚动的那一层不进无障碍树，章节标题才是可访问的正文。",
     where: "仅本页示例",
     href: "#marquee",
   },
@@ -236,14 +236,16 @@ export function MotionStage({
             {chapter.id === "spotlight" ? (
               <div
                 data-demo="spotlight"
+                data-lit="false"
                 onPointerMove={spotMove}
-                className="relative mt-4 h-24 overflow-hidden rounded-2xl border border-lab-hairline"
-                style={{ background: `radial-gradient(80px circle at var(--spot-x, 50%) var(--spot-y, 30%), color-mix(in srgb, var(--lab-primary) 55%, transparent), transparent 70%)` }}
+                onPointerLeave={spotLeave}
+                onPointerCancel={spotLeave}
+                className="spotlight-pad relative mt-4 h-24 overflow-hidden rounded-2xl border border-lab-hairline"
               />
             ) : null}
             {chapter.id === "beam" ? (
               <div data-demo="beam" className="channel-card relative mt-4 h-16 rounded-2xl border border-lab-hairline">
-                <span className="channel-beam" style={{ opacity: 1, animation: "beam-spin 2.6s linear infinite" }} />
+                <DemoBeam />
               </div>
             ) : null}
             {chapter.id === "magnetic" ? (
@@ -289,7 +291,7 @@ export function MotionStage({
               <div className="mt-4" data-demo="type" data-final={TYPE_LINE}>
                 <p aria-hidden className="min-h-7 font-mono text-lg text-lab-ink">
                   {typed}
-                  <span className="type-caret" />
+                  <TypeCaret />
                 </p>
                 <p className="sr-only">{TYPE_LINE}</p>
                 <button type="button" className="mt-3 inline-flex min-h-11 items-center text-sm text-lab-primary outline-none focus-visible:ring-2 focus-visible:ring-lab-primary" onClick={() => { setTyped(""); setTyping((value) => value + 1); }}>
@@ -299,12 +301,10 @@ export function MotionStage({
             ) : null}
             {chapter.id === "marquee" ? (
               <div className="mt-4">
-                <div data-demo="marquee" className="marquee overflow-hidden rounded-xl border border-lab-hairline py-3" data-paused={paused ? "true" : "false"}>
-                  <div className="marquee-track gap-8 px-4 text-sm text-lab-ink-subtle">
-                    <span aria-hidden>{CHAPTERS.map((item) => item.title).join("  ·  ")} · </span>
-                    <span aria-hidden>{CHAPTERS.map((item) => item.title).join("  ·  ")} · </span>
-                  </div>
-                </div>
+                <Marquee paused={paused}>
+                  <span aria-hidden>{CHAPTERS.map((item) => item.title).join("  ·  ")} · </span>
+                  <span aria-hidden>{CHAPTERS.map((item) => item.title).join("  ·  ")} · </span>
+                </Marquee>
                 <button type="button" className="mt-3 inline-flex min-h-11 items-center text-sm text-lab-primary outline-none focus-visible:ring-2 focus-visible:ring-lab-primary" onClick={() => setPaused((value) => !value)}>
                   {paused ? "继续滚动" : "暂停"}
                 </button>

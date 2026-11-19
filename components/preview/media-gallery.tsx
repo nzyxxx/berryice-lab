@@ -21,15 +21,15 @@ export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
         aria-hidden
         className="hero-wash pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(ellipse_at_top_left,color-mix(in_srgb,var(--lab-primary)_28%,transparent),transparent_62%)]"
       />
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-x-4 gap-y-6 pt-4 lg:grid-cols-12 lg:items-start lg:gap-x-10 lg:pt-10">
-        <figure className="col-start-1 row-start-1 lg:col-span-4 lg:row-span-2">
+      <div className="grid grid-cols-[minmax(0,max-content)_minmax(11.5rem,1fr)] items-end gap-x-4 gap-y-6 pt-4 lg:grid-cols-12 lg:items-start lg:gap-x-10 lg:pt-10">
+        <figure className="col-start-1 row-start-1 min-w-0 lg:col-span-4 lg:row-span-2">
           <Link
             href="/dafeiyu?character=xiaomei"
             aria-label="小莓的房间"
-            className="block w-fit rounded-md outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
+            className="block w-fit max-w-full min-w-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-lab-primary"
           >
             <Tilt>
-              {/* 定稿静帧，保持原比例。 */}
+              {/* 定稿静帧，保持原比例。窄屏让出名字的一行宽度，不另裁人物。 */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={PORTRAIT.src}
@@ -38,7 +38,7 @@ export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
                 height={PORTRAIT.height}
                 decoding="async"
                 fetchPriority="low"
-                className="portrait-still h-auto max-h-72 w-auto object-contain sm:max-h-80 lg:max-h-[68vh] lg:w-full lg:max-w-full"
+                className="portrait-still h-auto max-h-72 w-auto min-w-0 max-w-full object-contain sm:max-h-80 lg:max-h-[68vh] lg:w-full lg:max-w-full"
               />
             </Tilt>
           </Link>
@@ -46,7 +46,7 @@ export function MediaGallery({ updates }: { updates: readonly HomeUpdate[] }) {
 
         <div className="col-start-2 row-start-1 min-w-0 self-center lg:col-span-8 lg:col-start-5 lg:self-start">
           <p className="text-[11px] tracking-[0.18em] text-lab-primary">{profileConfig.latinName}</p>
-          <h1 className="mt-2 text-display-hero max-[420px]:text-[1.7rem] max-[420px]:leading-tight">{profileConfig.displayName}</h1>
+          <h1 className="mt-2 whitespace-nowrap text-display-hero">{profileConfig.displayName}</h1>
           <p className="mt-3 text-sm text-lab-ink-muted">{profileConfig.tags.join(" · ")}</p>
           <Magnetic className="mt-4">
             <Link

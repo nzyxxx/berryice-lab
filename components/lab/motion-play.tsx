@@ -1,7 +1,8 @@
 "use client";
 
-import type { PointerEvent, ReactNode } from "react";
+import type { PointerEvent, ReactNode, RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
+import { marqueeDelaySeconds } from "@/lib/content/motion-hold";
 
 function fineMotion(): boolean {
   if (typeof window === "undefined") return false;
@@ -15,8 +16,18 @@ function fineMotion(): boolean {
 export function spotMove(event: PointerEvent<HTMLElement>) {
   if (event.pointerType === "touch") return;
   const rect = event.currentTarget.getBoundingClientRect();
-  event.currentTarget.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
-  event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
+  const node = event.currentTarget;
+  node.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
+  node.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
+  node.dataset.lit = "true";
+}
+
+/** 离开后关掉这一层光，并清掉上次的坐标，避免停在边缘。 */
+export function spotLeave(event: PointerEvent<HTMLElement>) {
+  const node = event.currentTarget;
+  node.dataset.lit = "false";
+  node.style.removeProperty("--spot-x");
+  node.style.removeProperty("--spot-y");
 }
 
 /** 靠近时轻轻跟上，离开回到原位。不用在会旋转的那一层。 */
@@ -141,4 +152,205 @@ export function CountUp({ value }: { value: number }) {
       </span>
     </>
   );
+}
+
+const MARQUEE_SECONDS = 22;
+
+function readTranslateX(transform: string): number {
+  const match = /matrix(?:3d)?\(([^)]+)\)/.exec(transform);
+  if (!match) return 0;
+  const parts = match[1].split(",").map((part) => Number(part.trim()));
+  const tx = parts.length === 16 ? parts[12] : parts[4];
+  return Number.isFinite(tx) ? tx : 0;
+}
+
+/**
+ * 跑马灯只在屏内、页面可见、没有悬停或焦点、也没有手动暂停时走。
+ * 停的时候把当前位移写进 inline transform 并关掉动画，后面的交互不再改这个值。
+ * 减少动效时停在起点，不用 0.01ms 把轨道送到 -50%。
+ */
+export function Marquee({ paused, children }: { paused: boolean; children: ReactNode }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(paused);
+
+  useEffect(() => {
+    const box = boxRef.current;
+    const track = trackRef.current;
+    if (!box || !track) return;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let held = 0;
+    let mode: "run" | "hold" | "rest" = "rest";
+    let onScreen = false;
+    let hovered = false;
+    let focused = false;
+
+    const want = () => !pausedRef.current && !reduce.matches && !document.hidden && onScreen && !hovered && !focused;
+
+    const rest = () => {
+      held = 0;
+      track.style.animation = "none";
+      track.style.animationDelay = "0s";
+      track.style.transform = "none";
+      mode = "rest";
+    };
+    const holdAt = (tx: number) => {
+      held = tx;
+      track.style.animation = "none";
+      track.style.animationDelay = "0s";
+      track.style.transform = `translateX(${tx}px)`;
+      mode = "hold";
+    };
+    const run = () => {
+      const delay = marqueeDelaySeconds(held, track.offsetWidth, MARQUEE_SECONDS);
+      track.style.transform = "";
+      track.style.animation = "";
+      track.style.animationDelay = `${delay}s`;
+      mode = "run";
+    };
+    const sync = () => {
+      if (reduce.matches) {
+        rest();
+        return;
+      }
+      if (want()) {
+        if (mode !== "run") run();
+        return;
+      }
+      if (mode === "run") holdAt(readTranslateX(getComputedStyle(track).transform));
+      else if (mode !== "hold") holdAt(0);
+    };
+
+    const observer = new IntersectionObserver(([entry]) => {
+      onScreen = Boolean(entry?.isIntersecting);
+      sync();
+    });
+    observer.observe(box);
+    const onVis = () => sync();
+    const onReduce = () => sync();
+    const onEnter = () => {
+      hovered = true;
+      sync();
+    };
+    const onLeave = () => {
+      hovered = false;
+      sync();
+    };
+    const onFocus = () => {
+      focused = true;
+      sync();
+    };
+    const onBlur = () => {
+      focused = false;
+      sync();
+    };
+    const onPaused = () => sync();
+    document.addEventListener("visibilitychange", onVis);
+    reduce.addEventListener("change", onReduce);
+    box.addEventListener("pointerenter", onEnter);
+    box.addEventListener("pointerleave", onLeave);
+    box.addEventListener("focusin", onFocus);
+    box.addEventListener("focusout", onBlur);
+    box.addEventListener("marquee-pause", onPaused);
+    sync();
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+      reduce.removeEventListener("change", onReduce);
+      box.removeEventListener("pointerenter", onEnter);
+      box.removeEventListener("pointerleave", onLeave);
+      box.removeEventListener("focusin", onFocus);
+      box.removeEventListener("focusout", onBlur);
+      box.removeEventListener("marquee-pause", onPaused);
+      track.style.animation = "none";
+      track.style.transform = "none";
+    };
+  }, []);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+    boxRef.current?.dispatchEvent(new Event("marquee-pause"));
+  }, [paused]);
+
+  return (
+    <div
+      ref={boxRef}
+      data-demo="marquee"
+      data-paused={paused ? "true" : "false"}
+      tabIndex={-1}
+      className="marquee overflow-hidden rounded-xl border border-lab-hairline py-3 outline-none"
+    >
+      <div ref={trackRef} className="marquee-track gap-8 px-4 text-sm text-lab-ink-subtle">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** 离屏、隐藏标签或减少动效时关掉循环。卸载时也关掉。 */
+function usePauseOffstage(ref: RefObject<HTMLElement | null>, kind: "caret" | "beam") {
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let onScreen = false;
+    let stopped = false;
+
+    const halt = () => {
+      if (stopped) return;
+      if (kind === "beam") node.style.setProperty("--beam", getComputedStyle(node).getPropertyValue("--beam"));
+      node.style.animation = "none";
+      if (kind === "caret") node.style.opacity = "1";
+      stopped = true;
+    };
+    const release = () => {
+      if (!stopped) return;
+      node.style.animation = "";
+      node.style.opacity = "";
+      node.style.removeProperty("--beam");
+      stopped = false;
+    };
+    const sync = () => {
+      if (reduce.matches || document.hidden || !onScreen) halt();
+      else release();
+    };
+
+    const observer = new IntersectionObserver(([entry]) => {
+      onScreen = Boolean(entry?.isIntersecting);
+      sync();
+    });
+    observer.observe(node);
+    const onVis = () => sync();
+    const onReduce = () => sync();
+    document.addEventListener("visibilitychange", onVis);
+    reduce.addEventListener("change", onReduce);
+    sync();
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+      reduce.removeEventListener("change", onReduce);
+      node.style.animation = "none";
+    };
+  }, [kind, ref]);
+}
+
+export function TypeCaret() {
+  const ref = useRef<HTMLSpanElement>(null);
+  usePauseOffstage(ref, "caret");
+  return <span ref={ref} className="type-caret" />;
+}
+
+export function DemoBeam() {
+  const ref = useRef<HTMLSpanElement>(null);
+  usePauseOffstage(ref, "beam");
+  return <span ref={ref} aria-hidden className="channel-beam beam-demo" />;
+}
+
+export function ChannelBeam() {
+  const ref = useRef<HTMLSpanElement>(null);
+  usePauseOffstage(ref, "beam");
+  return <span ref={ref} aria-hidden className="channel-beam" />;
 }

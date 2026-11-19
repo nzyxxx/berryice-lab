@@ -1,7 +1,7 @@
 "use client";
 
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
-import { spotMove, useStagger } from "@/components/lab/motion-play";
+import { ChannelBeam, spotLeave, spotMove, useStagger } from "@/components/lab/motion-play";
 import { homeChannels, type HomeChannelId } from "@/lib/content/home-channels";
 import { Gamepad2, Library, ListMusic, PenLine, Sticker, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -40,11 +40,13 @@ export function HomeChannels() {
               <Link
                 href={channel.href}
                 onPointerMove={spotMove}
+                onPointerLeave={spotLeave}
+                onPointerCancel={spotLeave}
                 className={glassSurfaceClass(
                   "channel-card group flex h-44 min-w-0 flex-col gap-3 rounded-2xl p-3 text-lab-ink-subtle outline-none transition-[transform,box-shadow] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-lab-primary motion-reduce:transition-none"
                 )}
               >
-                {channel.id === "games" ? <span aria-hidden className="channel-beam" /> : null}
+                {channel.id === "games" ? <ChannelBeam /> : null}
                 <span className="channel-icon flex items-center justify-between gap-2">
                   <span className="flex size-11 items-center justify-center rounded-xl border border-current/30">
                     <Icon className="size-5" strokeWidth={1.75} aria-hidden />

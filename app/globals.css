@@ -572,11 +572,7 @@ a.channel-card::after {
   inset: 0;
   z-index: 0;
   border-radius: inherit;
-  background: radial-gradient(
-    140px circle at var(--spot-x, 50%) var(--spot-y, 30%),
-    color-mix(in srgb, var(--lab-primary) 42%, transparent),
-    transparent 68%
-  );
+  background: none;
   opacity: 0;
   pointer-events: none;
   transition: opacity 160ms ease-out;
@@ -586,9 +582,29 @@ a.channel-card > * {
   z-index: 1;
 }
 @media (pointer: fine) {
-  a.channel-card:hover::after {
+  a.channel-card[data-lit="true"]:hover::after {
     opacity: 1;
+    background: radial-gradient(
+      140px circle at var(--spot-x, 50%) var(--spot-y, 30%),
+      color-mix(in srgb, var(--lab-primary) 42%, transparent),
+      transparent 68%
+    );
   }
+}
+a.channel-card:focus-visible::after {
+  opacity: 1;
+  background: radial-gradient(
+    140px circle at 50% 30%,
+    color-mix(in srgb, var(--lab-primary) 42%, transparent),
+    transparent 68%
+  );
+}
+.spotlight-pad[data-lit="true"] {
+  background: radial-gradient(
+    80px circle at var(--spot-x, 50%) var(--spot-y, 30%),
+    color-mix(in srgb, var(--lab-primary) 55%, transparent),
+    transparent 70%
+  );
 }
 
 @property --beam {
@@ -690,6 +706,10 @@ a.channel-card > * {
   width: max-content;
   animation: marquee-run 22s linear infinite;
 }
+.beam-demo {
+  opacity: 1;
+  animation: beam-spin 2.6s linear infinite;
+}
 .marquee:hover .marquee-track,
 .marquee:focus-within .marquee-track,
 .marquee[data-paused="true"] .marquee-track {
@@ -737,6 +757,18 @@ a.channel-card > * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .marquee-track,
+  .type-caret,
+  .channel-beam,
+  .beam-demo {
+    animation: none !important;
+  }
+  .marquee-track {
+    transform: none !important;
+  }
+  .type-caret {
+    opacity: 1 !important;
   }
 }
 
