@@ -50,11 +50,11 @@ function FeedLine({ item, titleClass }: { item: HomeUpdate; titleClass: string }
 }
 
 /** 右侧阅读。八条同一行结构，分类留在全站栏目里。 */
-export function HomeFeed({ updates }: { updates: readonly HomeUpdate[] }) {
+export function HomeFeed({ updates, className = "" }: { updates: readonly HomeUpdate[]; className?: string }) {
   const selected = selectHomeUpdates(updates, "all");
 
   return (
-    <section aria-labelledby="home-feed" className="min-w-0 lg:col-span-7 lg:col-start-6">
+    <section aria-labelledby="home-feed" className={`min-w-0 lg:col-span-7 lg:col-start-6 ${className}`}>
       <h2 id="home-feed" className="text-[11px] tracking-[0.18em] text-lab-primary">
         最新动态
       </h2>

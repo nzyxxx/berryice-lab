@@ -88,7 +88,7 @@ export function MobileNav() {
         aria-modal="true"
         aria-label="站点导航"
         tabIndex={-1}
-        className="absolute inset-x-3 top-3 rounded-2xl border border-lab-hairline bg-lab-canvas p-3 outline-none"
+        className="nav-drawer absolute inset-x-3 top-3 rounded-2xl border border-lab-hairline bg-lab-canvas p-3 outline-none"
       >
         <div className="flex items-center justify-between px-3 pb-1">
           <span className="text-sm text-lab-ink-subtle">菜单</span>

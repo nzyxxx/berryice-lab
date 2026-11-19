@@ -69,7 +69,7 @@ export default async function GameSpacePage({ params, searchParams }: PageProps)
 
   return (
     <PageShell backHref="/games" backLabel="游戏">
-      <PageContainer className="max-w-3xl">
+      <PageContainer>
         <p className="text-[11px] tracking-[0.18em] text-lab-primary">02 / {game.title}</p>
         <h1 className="mt-3 text-display-section text-balance">{game.title}</h1>
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-lab-ink-muted">{game.blurb}</p>

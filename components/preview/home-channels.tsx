@@ -1,7 +1,11 @@
-import { homeChannels, type HomeChannelId } from "@/lib/content/home-channels";
+"use client";
+
 import { glassSurfaceClass } from "@/components/uiverse/glass-surface";
+import { spotMove, useStagger } from "@/components/lab/motion-play";
+import { homeChannels, type HomeChannelId } from "@/lib/content/home-channels";
 import { Gamepad2, Library, ListMusic, PenLine, Sticker, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import { useRef } from "react";
 
 const ICONS: Record<HomeChannelId, LucideIcon> = {
   wiki: Library,
@@ -13,24 +17,34 @@ const ICONS: Record<HomeChannelId, LucideIcon> = {
 };
 
 /**
- * 六栏是同一块玻璃索引。静止时标题是正文色，不是链接蓝。
- * 悬停、按住、键盘焦点让图标、标题、说明和底线一起动。
- * 已访问也停在正文色，避免点过一次就粘成蓝色。
+ * 六栏是同一块玻璃索引。静止时标题是正文色。
+ * 悬停和键盘焦点让图标、标题、说明、底线一起变，并轻轻抬起来。
+ * 聚光只跟精细指针。游戏这一格在悬停时沿边走一圈细光。
  */
 export function HomeChannels() {
+  const list = useRef<HTMLUListElement>(null);
+  useStagger(list);
+
   return (
     <nav aria-label="栏目" className="mt-12 border-t border-lab-hairline pt-6 md:mt-16">
-      <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        {homeChannels.map((channel) => {
+      <ul ref={list} className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        {homeChannels.map((channel, index) => {
           const Icon = ICONS[channel.id];
           return (
-            <li key={channel.id} className="min-w-0">
+            <li
+              key={channel.id}
+              data-stagger=""
+              style={{ animationDelay: `${index * 50}ms` }}
+              className="stagger-item min-w-0"
+            >
               <Link
                 href={channel.href}
+                onPointerMove={spotMove}
                 className={glassSurfaceClass(
-                  "channel-card group flex min-h-11 min-w-0 flex-col gap-3 rounded-2xl p-3 text-lab-ink-subtle outline-none transition-transform duration-200 ease-out focus-visible:ring-2 focus-visible:ring-lab-primary"
+                  "channel-card group flex min-h-11 min-w-0 flex-col gap-3 rounded-2xl p-3 text-lab-ink-subtle outline-none transition-[transform,box-shadow] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-lab-primary motion-reduce:transition-none"
                 )}
               >
+                {channel.id === "games" ? <span aria-hidden className="channel-beam" /> : null}
                 <span className="channel-icon flex items-center justify-between gap-2">
                   <span className="flex size-11 items-center justify-center rounded-xl border border-current/30">
                     <Icon className="size-5" strokeWidth={1.75} aria-hidden />

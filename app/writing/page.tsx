@@ -30,6 +30,15 @@ export default function WritingPage() {
           description="长文和随记。"
           headingLevel="h1"
         />
+        <p className="mt-6 max-w-xl text-sm leading-relaxed text-lab-ink-subtle">
+          <Link
+            href="/writing/motion"
+            className="text-lab-ink underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-lab-primary"
+          >
+            动效笔记
+          </Link>
+          记的是这个站怎么动。它不是攻略，也不进游戏目录。
+        </p>
 
         {empty ? (
           <div className="mt-12">

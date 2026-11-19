@@ -315,6 +315,19 @@ export function CommunityCodesView({ showHero = true }: { showHero?: boolean }) 
             显示 {filteredCodes.length} / {communityCodes.length} 条
             {activeCategory !== "all" && ` · ${weaponTypeLabel(activeCategory)}`}
             {weaponFilter !== "all" && ` · ${weaponFilter}`}
+            {(searchQuery || activeCategory !== "all" || weaponFilter !== "all") && (
+              <button
+                type="button"
+                className="ml-3 inline-flex min-h-11 items-center underline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveCategory("all");
+                  setWeaponFilter("all");
+                }}
+              >
+                清除条件
+              </button>
+            )}
             <button type="button" className="ml-3 underline" onClick={() => setShowStale((value) => !value)}>
               {showStale ? "隐藏过季" : "显示过季"}
             </button>
